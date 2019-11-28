@@ -10,16 +10,13 @@
 #include <bios.h>
 #include <ctype.h>
 
-
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
 #define CLI()                disable()
 #define STI()                enable()
 
-
-typedef enum {false, true} boolean;
+typedef enum { false, true } boolean;
 typedef unsigned char byte;
-
 
 #define TRANSMIT_HOLDING_REGISTER            0x00
 #define RECEIVE_BUFFER_REGISTER              0x00
@@ -79,22 +76,17 @@ typedef unsigned char byte;
 #define DIVISOR_LATCH_LOW                    0x00
 #define DIVISOR_LATCH_HIGH                   0x01
 
-
-
 #define	QUESIZE	2048
 
-typedef struct
-{
-	long	head, tail;		// bytes are put on head and pulled from tail
-	unsigned char	data[QUESIZE];
+typedef struct {
+    long head, tail;            // bytes are put on head and pulled from tail
+    unsigned char data[QUESIZE];
 } que_t;
 
-void InitPort (void);
-void ShutdownPort (void);
+void InitPort(void);
+void ShutdownPort(void);
 
-int read_byte( void );
-void write_byte( int c );
+int read_byte(void);
+void write_byte(int c);
 
-
-void Error (char *error, ...);
-
+void Error(char *error, ...);

@@ -1,28 +1,28 @@
 
  /* 
- 
- Copyright(C) 2011 Simon Howard
 
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- as published by the Free Software Foundation; either version 2
- of the License, or (at your option) any later version.
+    Copyright(C) 2011 Simon Howard
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- 02111-1307, USA.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
- --
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+    02111-1307, USA.
 
- Functions for interacting with the Doom -control API.
+    --
 
- */
+    Functions for interacting with the Doom -control API.
+
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +31,7 @@
 
 #include "control.h"
 
-typedef struct
-{
+typedef struct {
     long intnum;
     ticcmd_t ticcmd;
 } control_buf_t;
@@ -46,7 +45,7 @@ static int doom_argc;
 static char **doom_argv;
 
 static int force_vector = 0;
-static void interrupt (*old_isr)();
+static void interrupt(*old_isr) ();
 
 // Interrupt service routine.
 
@@ -62,7 +61,7 @@ static int interrupt_vector_available(int intnum)
 {
     unsigned char far *vector;
 
-    vector = *( (char far * far *) (intnum * 4));
+    vector = *((char far * far *)(intnum * 4));
 
     return vector == NULL || *vector == 0xcf;
 }
@@ -110,11 +109,11 @@ static int find_interrupt_num(void)
 
 static void hook_interrupt_handler(int intnum)
 {
-    void interrupt (*isr)();
+    void interrupt(*isr) ();
 
     old_isr = getvect(intnum);
 
-    isr = MK_FP(_CS, (int) control_isr);
+    isr = MK_FP(_CS, (int)control_isr);
     setvect(intnum, isr);
 }
 
@@ -211,7 +210,7 @@ static int count_extra_args(char **extra_args)
         return 0;
     }
 
-    for (i = 0; extra_args[i] != NULL; ++i);
+    for (i = 0; extra_args[i] != NULL; ++i) ;
 
     return i;
 }
@@ -242,9 +241,8 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
 
     num_extra_args = count_extra_args(extra_args);
     actual_argv = malloc((doom_argc + num_extra_args + 3) * sizeof(char *));
-    
-    memcpy(actual_argv, doom_argv,
-           doom_argc * sizeof(char *));
+
+    memcpy(actual_argv, doom_argv, doom_argc * sizeof(char *));
     actual_argc = doom_argc;
 
     // Add extra args:
@@ -256,7 +254,7 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
     // Add the -control argument.
 
     actual_argv[actual_argc] = "-control";
-    flataddr = (long) _DS * 16 + (unsigned) (&control_buf);
+    flataddr = (long)_DS *16 + (unsigned)(&control_buf);
     sprintf(addr_string, "%li", flataddr);
     actual_argv[actual_argc + 1] = addr_string;
     actual_argc += 2;
@@ -279,4 +277,3 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
 
     restore_interrupt_handler(intnum);
 }
-

@@ -19,7 +19,6 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
-
 #include <dos.h>
 #include <conio.h>
 #include <string.h>
@@ -29,22 +28,20 @@
 
 typedef unsigned char byte;
 
-unsigned portbase=0x378;
-unsigned irq=7;
+unsigned portbase = 0x378;
+unsigned irq = 7;
 
 #define BUFSIZE 512
-void interrupt (*oldisr)();
+void interrupt(*oldisr) ();
 byte oldmask;
-unsigned errcnt=0;
-unsigned icnt=0;
+unsigned errcnt = 0;
+unsigned icnt = 0;
 
 byte pktbuf[BUFSIZE];
 
-unsigned bufseg=0;
-unsigned bufofs=0;
-unsigned recv_count=0;
-
-
+unsigned bufseg = 0;
+unsigned bufofs = 0;
+unsigned recv_count = 0;
 
 void count_in_err(void)
 {
@@ -54,36 +51,33 @@ void count_in_err(void)
 
 extern void recv(void);
 
-
 void interrupt recvisr(void)
 {
 
-	icnt++;
-        recv();
-
-        outportb(0x20, 0x20);
-
-}
-
-
-void initisr(void)
-{
-byte mask;
-
-    // install new interrupt hander for the printer port
-    oldisr = getvect(irq+8);
-    setvect(irq+8, recvisr);
-
-    // enable interrupts from the printer port
-    outportb(portbase+2, inportb(portbase+2)|0x10);
-    oldmask = inportb(0x21);
-    mask = oldmask & ~(1<<irq);        // enable IRQ in ICR
-    outportb(0x21, mask);
+    icnt++;
+    recv();
 
     outportb(0x20, 0x20);
 
 }
 
+void initisr(void)
+{
+    byte mask;
+
+    // install new interrupt hander for the printer port
+    oldisr = getvect(irq + 8);
+    setvect(irq + 8, recvisr);
+
+    // enable interrupts from the printer port
+    outportb(portbase + 2, inportb(portbase + 2) | 0x10);
+    oldmask = inportb(0x21);
+    mask = oldmask & ~(1 << irq);       // enable IRQ in ICR
+    outportb(0x21, mask);
+
+    outportb(0x20, 0x20);
+
+}
 
 /*
 ==============
@@ -93,27 +87,26 @@ byte mask;
 ==============
 */
 
-void GetPort (void)
+void GetPort(void)
 {
-int p;
+    int p;
 
-    if (CheckParm ("-lpt2"))
+    if (CheckParm("-lpt2"))
         portbase = 0x278;
-    else if (CheckParm ("-lpt3"))
+    else if (CheckParm("-lpt3"))
         portbase = 0x3bc;
 
-    p = CheckParm ("-port");
+    p = CheckParm("-port");
     if (p)
-        sscanf (_argv[p+1],"0x%x",&portbase);
+        sscanf(_argv[p + 1], "0x%x", &portbase);
 
     p = CheckParm("-irq");
     if (p)
-        sscanf(_argv[p+1], "%u", &irq);
+        sscanf(_argv[p + 1], "%u", &irq);
 
-    printf ("Using parallel printer port with base address 0x%x and IRQ %u\n",
-        portbase, irq);
+    printf("Using parallel printer port with base address 0x%x and IRQ %u\n",
+           portbase, irq);
 }
-
 
 /*
 ===============
@@ -123,12 +116,12 @@ int p;
 ===============
 */
 
-void InitPort (void)
+void InitPort(void)
 {
 
-//
-// find the irq and io address of the port
-//
+    //
+    // find the irq and io address of the port
+    //
     GetPort();
 
     bufseg = FP_SEG(pktbuf);
@@ -138,7 +131,6 @@ void InitPort (void)
 
 }
 
-
 /*
 =============
 =
@@ -147,15 +139,12 @@ void InitPort (void)
 =============
 */
 
-void ShutdownPort ( void )
+void ShutdownPort(void)
 {
 
     outportb(0x21, oldmask);    // disable IRQs
-    setvect(irq+8, oldisr);       // restore vector
+    setvect(irq + 8, oldisr);   // restore vector
 
 }
 
-
 //==========================================================================
-
-

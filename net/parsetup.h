@@ -6,14 +6,13 @@
 //
 
 typedef unsigned char byte;
-typedef enum {false, true} boolean;
+typedef enum { false, true } boolean;
 
-void InitPort (void);
-void ShutdownPort (void);
+void InitPort(void);
+void ShutdownPort(void);
 
 byte readport(void);
 int getb(void);
 void putb(byte b);
 
-void Error (char *error, ...);
-
+void Error(char *error, ...);

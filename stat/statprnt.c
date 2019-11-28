@@ -1,29 +1,29 @@
 
  /* 
- 
- Copyright(C) 2007,2011 Simon Howard
 
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- as published by the Free Software Foundation; either version 2
- of the License, or (at your option) any later version.
+    Copyright(C) 2007,2011 Simon Howard
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- 02111-1307, USA.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
- --
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+    02111-1307, USA.
 
- Functions for presenting the information captured from the statistics
- buffer to a file.
+    --
 
- */
+    Functions for presenting the information captured from the statistics
+    buffer to a file.
+
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,28 +34,24 @@
 
 #define TICRATE 35
 
-typedef enum
-{
+typedef enum {
     doom1,
     doom2,
     indetermined
 } GameMode_t;
 
 /* Par times for E1M1-E1M9. */
-static const int doom1_par_times[] =
-{
+static const int doom1_par_times[] = {
     30, 75, 120, 90, 165, 180, 180, 30, 165,
 };
 
 /* Par times for MAP01-MAP09. */
-static const int doom2_par_times[] =
-{
+static const int doom2_par_times[] = {
     30, 90, 120, 120, 90, 150, 120, 120, 270,
 };
 
 /* Player colors. */
-static const char *player_colors[] =
-{
+static const char *player_colors[] = {
     "Green", "Indigo", "Brown", "Red"
 };
 
@@ -77,7 +73,7 @@ void discover_gamemode(wbstartstruct_t *stats, int num_stats)
         return;
     }
 
-    for (i=0; i<num_stats; ++i)
+    for (i = 0; i < num_stats; ++i)
     {
         level = stats[i].last;
 
@@ -104,14 +100,14 @@ void discover_gamemode(wbstartstruct_t *stats, int num_stats)
         partime = stats[i].partime;
 
         if (partime == doom1_par_times[level] * TICRATE
-         && partime != doom2_par_times[level] * TICRATE)
+            && partime != doom2_par_times[level] * TICRATE)
         {
             gamemode = doom1;
             return;
         }
 
         if (partime != doom1_par_times[level] * TICRATE
-         && partime == doom2_par_times[level] * TICRATE)
+            && partime == doom2_par_times[level] * TICRATE)
         {
             gamemode = doom2;
             return;
@@ -126,7 +122,7 @@ static int get_num_players(wbstartstruct_t *stats)
     int i;
     int num_players = 0;
 
-    for (i=0; i<MAXPLAYERS; ++i)
+    for (i = 0; i < MAXPLAYERS; ++i)
     {
         if (stats->plyr[i].in)
         {
@@ -159,7 +155,7 @@ static void print_percentage(FILE *stream, int amount, int total)
 /* Display statistics for a single player. */
 
 static void print_player_stats(FILE *stream, wbstartstruct_t *stats,
-        int player_num)
+                               int player_num)
 {
     wbplayerstruct_t *player = &stats->plyr[player_num];
 
@@ -197,7 +193,7 @@ static void print_frags_table(FILE *stream, wbstartstruct_t *stats)
 
     fprintf(stream, "\t\t");
 
-    for (x=0; x<MAXPLAYERS; ++x)
+    for (x = 0; x < MAXPLAYERS; ++x)
     {
 
         if (!stats->plyr[x].in)
@@ -214,7 +210,7 @@ static void print_frags_table(FILE *stream, wbstartstruct_t *stats)
 
     /* Print table */
 
-    for (y=0; y<MAXPLAYERS; ++y)
+    for (y = 0; y < MAXPLAYERS; ++y)
     {
         if (!stats->plyr[y].in)
         {
@@ -223,7 +219,7 @@ static void print_frags_table(FILE *stream, wbstartstruct_t *stats)
 
         fprintf(stream, "\t%s\t|", player_colors[y]);
 
-        for (x=0; x<MAXPLAYERS; ++x)
+        for (x = 0; x < MAXPLAYERS; ++x)
         {
             if (!stats->plyr[x].in)
             {
@@ -249,16 +245,16 @@ static void print_level_name(FILE *stream, int episode, int level)
     switch (gamemode)
     {
 
-        case doom1:
-            fprintf(stream, "E%iM%i\n", episode + 1, level + 1);
-            break;
-        case doom2:
-            fprintf(stream, "MAP%02i\n", level + 1);
-            break;
-        case indetermined:
-            fprintf(stream, "E%iM%i / MAP%02i\n", 
-                    episode + 1, level + 1, level + 1);
-            break;
+    case doom1:
+        fprintf(stream, "E%iM%i\n", episode + 1, level + 1);
+        break;
+    case doom2:
+        fprintf(stream, "MAP%02i\n", level + 1);
+        break;
+    case indetermined:
+        fprintf(stream, "E%iM%i / MAP%02i\n",
+                episode + 1, level + 1, level + 1);
+        break;
     }
 
     print_banner(stream);
@@ -280,7 +276,7 @@ void print_stats(FILE *stream, wbstartstruct_t *stats)
     fprintf(stream, " (par: %i:%02i)\n", partime / 60, partime % 60);
     fprintf(stream, "\n");
 
-    for (i=0; i<MAXPLAYERS; ++i)
+    for (i = 0; i < MAXPLAYERS; ++i)
     {
         if (stats->plyr[i].in)
         {
@@ -295,4 +291,3 @@ void print_stats(FILE *stream, wbstartstruct_t *stats)
 
     fprintf(stream, "\n");
 }
-

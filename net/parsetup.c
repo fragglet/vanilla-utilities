@@ -19,7 +19,6 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
-
 #include <bios.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -31,14 +30,13 @@
 #include "parsetup.h"
 #include "doomnet.h"
 
-unsigned newpkt=0;
+unsigned newpkt = 0;
 
 extern void recv(void);
 extern void send_pkt(void);
 extern byte pktbuf[];
 extern unsigned recv_count;
 extern unsigned errcnt;
-
 
 /*
 =================
@@ -50,25 +48,24 @@ extern unsigned errcnt;
 =================
 */
 
-void Error (char *error, ...)
+void Error(char *error, ...)
 {
-va_list argptr;
+    va_list argptr;
 
-        ShutdownPort();
+    ShutdownPort();
 
-	if (error)
-	{
-		va_start (argptr,error);
-		vprintf (error,argptr);
-		va_end (argptr);
-		printf ("\n");
-		exit (1);
-	}
+    if (error)
+    {
+        va_start(argptr, error);
+        vprintf(error, argptr);
+        va_end(argptr);
+        printf("\n");
+        exit(1);
+    }
 
-        printf ("Clean exit from PARSETUP\n");
-	exit (0);
+    printf("Clean exit from PARSETUP\n");
+    exit(0);
 }
-
 
 /*
 ================
@@ -83,15 +80,15 @@ va_list argptr;
 boolean ReadPacket(void)
 {
 
-        if (newpkt) {
-                newpkt=0;
-                return true;   // true - got a good packet
-                }
+    if (newpkt)
+    {
+        newpkt = 0;
+        return true;            // true - got a good packet
+    }
 
-        return (false);     // false - no packet available
+    return (false);             // false - no packet available
 
 }
-
 
 /*
 =============
@@ -104,21 +101,20 @@ boolean ReadPacket(void)
 int WritePacket(byte *data, unsigned len)
 {
 
-        _CX = len;
-        _DS = FP_SEG(data);
-        _SI = FP_OFF(data);
-        _ES = _DI = 0;
-        send_pkt();
+    _CX = len;
+    _DS = FP_SEG(data);
+    _SI = FP_OFF(data);
+    _ES = _DI = 0;
+    send_pkt();
 
-        asm jnc sendok;
+    asm jnc sendok;
 
-        return (_DH);
+    return (_DH);
 
-sendok:
-	return (0);
+ sendok:
+    return (0);
 
 }
-
 
 /*
 =============
@@ -128,32 +124,29 @@ sendok:
 =============
 */
 
-void interrupt NetISR (void)
+void interrupt NetISR(void)
 {
-	if (doomcom.command == CMD_SEND)
-	{
-                // I_ColorBlack (0,0,63);
-		WritePacket ((char *)&doomcom.data, doomcom.datalength);
-	}
-	else if (doomcom.command == CMD_GET)
-	{
+    if (doomcom.command == CMD_SEND)
+    {
+        // I_ColorBlack (0,0,63);
+        WritePacket((char *)&doomcom.data, doomcom.datalength);
+    }
+    else if (doomcom.command == CMD_GET)
+    {
         //I_ColorBlack (63,63,0);
 
-        if (ReadPacket () && recv_count <= sizeof(doomcom.data) )
-		{
-			doomcom.remotenode = 1;
-                        doomcom.datalength = recv_count;
-                        memcpy (&doomcom.data, &pktbuf, recv_count);
-		}
-		else
-			doomcom.remotenode = -1;
+        if (ReadPacket() && recv_count <= sizeof(doomcom.data))
+        {
+            doomcom.remotenode = 1;
+            doomcom.datalength = recv_count;
+            memcpy(&doomcom.data, &pktbuf, recv_count);
+        }
+        else
+            doomcom.remotenode = -1;
 
-	}
-        //I_ColorBlack (0,0,0);
+    }
+    //I_ColorBlack (0,0,0);
 }
-
-
-
 
 /*
 =================
@@ -164,69 +157,67 @@ void interrupt NetISR (void)
 =================
 */
 
-void Connect (void)
+void Connect(void)
 {
-struct time     time;
-int             oldsec;
-int     localstage, remotestage;
-char    str[20];
+    struct time time;
+    int oldsec;
+    int localstage, remotestage;
+    char str[20];
 
+    printf
+        ("Attempting to connect across parallel link, press escape to abort.\n");
 
-    printf ("Attempting to connect across parallel link, press escape to abort.\n");
+    //
+    // wait for a good packet
+    //
 
+    oldsec = -1;
+    localstage = remotestage = 0;
 
-        //
-        // wait for a good packet
-        //
+    do
+    {
+        while (bioskey(1))
+        {
+            if ((bioskey(0) & 0xff) == 27)
+                Error("\n\nNetwork game synchronization aborted.");
+        }
 
-	oldsec = -1;
-	localstage = remotestage = 0;
+        while (ReadPacket())
+        {
+            pktbuf[recv_count] = 0;
+            printf("read: %s\n", pktbuf);
+            if (recv_count != 7)
+                goto badpacket;
+            if (strncmp(pktbuf, "PLAY", 4))
+                goto badpacket;
+            remotestage = pktbuf[6] - '0';
+            localstage = remotestage + 1;
+            if (pktbuf[4] == '0' + doomcom.consoleplayer)
+            {
+                doomcom.consoleplayer ^= 1;
+                localstage = remotestage = 0;
+            }
+            oldsec = -1;
+        }
+ badpacket:
 
-	do
-	{
-		while ( bioskey(1) )
-		{
-			if ( (bioskey (0) & 0xff) == 27)
-				Error ("\n\nNetwork game synchronization aborted.");
-		}
+        gettime(&time);
+        if (time.ti_sec != oldsec)
+        {
+            oldsec = time.ti_sec;
+            sprintf(str, "PLAY%i_%i", doomcom.consoleplayer, localstage);
+            WritePacket(str, strlen(str));
+            printf("wrote: %s\n", str);
+        }
 
-		while (ReadPacket ())
-		{
-			pktbuf[recv_count] = 0;
-			printf ("read: %s\n",pktbuf);
-			if (recv_count != 7)
-				goto badpacket;
-			if (strncmp(pktbuf,"PLAY",4) )
-				goto badpacket;
-			remotestage = pktbuf[6] - '0';
-			localstage = remotestage+1;
-			if (pktbuf[4] == '0'+doomcom.consoleplayer)
-			{
-				doomcom.consoleplayer ^= 1;
-				localstage = remotestage = 0;
-			}
-			oldsec = -1;
-		}
-badpacket:
+    } while (remotestage < 1);
 
-		gettime (&time);
-		if (time.ti_sec != oldsec)
-		{
-			oldsec = time.ti_sec;
-			sprintf (str,"PLAY%i_%i",doomcom.consoleplayer,localstage);
-			WritePacket (str,strlen(str));
-                printf ("wrote: %s\n",str);
-		}
-
-	} while (remotestage < 1);
-
-//
-// flush out any extras
-//
-	while (ReadPacket ())
-	;
+    //
+    // flush out any extras
+    //
+    while (ReadPacket())
+        ;
 }
-
 
 /*
 =================
@@ -238,47 +229,46 @@ badpacket:
 
 void main(void)
 {
-int p;
-time_t t;
+    int p;
+    time_t t;
 
-        //
-        // set network characteristics
-        //
-	doomcom.ticdup = 1;
-	doomcom.extratics = 0;
-	doomcom.numnodes = 2;
-	doomcom.numplayers = 2;
-	doomcom.drone = 0;
+    //
+    // set network characteristics
+    //
+    doomcom.ticdup = 1;
+    doomcom.extratics = 0;
+    doomcom.numnodes = 2;
+    doomcom.numplayers = 2;
+    doomcom.drone = 0;
 
-	t = time(&t);
+    t = time(&t);
 
-	printf("\n"
-                "DOOM PRINTER PORT DEVICE DRIVER version 1.1\n"
-                "Brought to you by the American Society of Reverse Engineers\n"
-                "Send comments or (gasp!) bug reports to asre@uiuc.edu\n\n");
+    printf("\n"
+           "DOOM PRINTER PORT DEVICE DRIVER version 1.1\n"
+           "Brought to you by the American Society of Reverse Engineers\n"
+           "Send comments or (gasp!) bug reports to asre@uiuc.edu\n\n");
 
-//
-// allow override of automatic player ordering to allow a slower computer
-// to be set as player 1 always
-//
-	if (CheckParm ("-player1"))
-		doomcom.consoleplayer = 1;
-	else
-		doomcom.consoleplayer = 0;
+    //
+    // allow override of automatic player ordering to allow a slower computer
+    // to be set as player 1 always
+    //
+    if (CheckParm("-player1"))
+        doomcom.consoleplayer = 1;
+    else
+        doomcom.consoleplayer = 0;
 
-//
-// establish communications
-//
-	InitPort ();
+    //
+    // establish communications
+    //
+    InitPort();
 
-        Connect ();
+    Connect();
 
-//
-// launch DOOM
-//
-	LaunchDOOM ();
+    //
+    // launch DOOM
+    //
+    LaunchDOOM();
 
-	Error (NULL);
+    Error(NULL);
 
 }
-

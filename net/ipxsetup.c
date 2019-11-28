@@ -11,11 +11,10 @@
 
 #include "ipxnet.h"
 
-int			gameid;
-int			numnetnodes;
+int gameid;
+int numnetnodes;
 
-setupdata_t	nodesetup[MAXNETNODES];
-
+setupdata_t nodesetup[MAXNETNODES];
 
 /*
 =================
@@ -27,20 +26,19 @@ setupdata_t	nodesetup[MAXNETNODES];
 =================
 */
 
-void Error (char *error, ...)
+void Error(char *error, ...)
 {
-	va_list argptr;
+    va_list argptr;
 
-	if (vectorishooked)
-		setvect (doomcom.intnum,olddoomvect);
+    if (vectorishooked)
+        setvect(doomcom.intnum, olddoomvect);
 
-	va_start (argptr,error);
-	vprintf (error,argptr);
-	va_end (argptr);
-	printf ("\n");
-	exit (1);
+    va_start(argptr, error);
+    vprintf(error, argptr);
+    va_end(argptr);
+    printf("\n");
+    exit(1);
 }
-
 
 /*
 =============
@@ -50,24 +48,22 @@ void Error (char *error, ...)
 =============
 */
 
-void interrupt NetISR (void)
+void interrupt NetISR(void)
 {
-	if (doomcom.command == CMD_SEND)
-	{
-//I_ColorBlack (63,0,0);
-		localtime++;
-		SendPacket (doomcom.remotenode);
-//I_ColorBlack (0,0,0);
-	}
-	else if (doomcom.command == CMD_GET)
-	{
-//I_ColorBlack (0,63,0);
-		GetPacket ();
-//I_ColorBlack (0,0,0);
-	}
+    if (doomcom.command == CMD_SEND)
+    {
+        //I_ColorBlack (63,0,0);
+        localtime++;
+        SendPacket(doomcom.remotenode);
+        //I_ColorBlack (0,0,0);
+    }
+    else if (doomcom.command == CMD_GET)
+    {
+        //I_ColorBlack (0,63,0);
+        GetPacket();
+        //I_ColorBlack (0,0,0);
+    }
 }
-
-
 
 /*
 ===================
@@ -80,150 +76,147 @@ void interrupt NetISR (void)
 ===================
 */
 
-void LookForNodes (void)
+void LookForNodes(void)
 {
-	int             i,j,k;
-	int             netids[MAXNETNODES];
-	int             netplayer[MAXNETNODES];
-	struct time		time;
-	int				oldsec;
-	setupdata_t		*setup, *dest;
-	char			str[80];
-	int			total, console;
+    int i, j, k;
+    int netids[MAXNETNODES];
+    int netplayer[MAXNETNODES];
+    struct time time;
+    int oldsec;
+    setupdata_t *setup, *dest;
+    char str[80];
+    int total, console;
 
-//
-// wait until we get [numnetnodes] packets, then start playing
-// the playernumbers are assigned by netid
-//
-	printf("Attempting to find all players for %i player net play. "
-		"Press ESC to exit.\n", numnetnodes);
+    //
+    // wait until we get [numnetnodes] packets, then start playing
+    // the playernumbers are assigned by netid
+    //
+    printf("Attempting to find all players for %i player net play. "
+           "Press ESC to exit.\n", numnetnodes);
 
-	printf ("Looking for a node");
+    printf("Looking for a node");
 
-	oldsec = -1;
-	setup = (setupdata_t *)&doomcom.data;
-	localtime = -1;		// in setup time, not game time
+    oldsec = -1;
+    setup = (setupdata_t *) & doomcom.data;
+    localtime = -1;             // in setup time, not game time
 
-//
-// build local setup info
-//
-	nodesetup[0].nodesfound = 1;
-	nodesetup[0].nodeswanted = numnetnodes;
-	doomcom.numnodes = 1;
+    //
+    // build local setup info
+    //
+    nodesetup[0].nodesfound = 1;
+    nodesetup[0].nodeswanted = numnetnodes;
+    doomcom.numnodes = 1;
 
-	do
-	{
-//
-// check for aborting
-//
-		while ( bioskey(1) )
-		{
-			if ( (bioskey (0) & 0xff) == 27)
-				Error ("\n\nNetwork game synchronization aborted.");
-		}
+    do
+    {
+        //
+        // check for aborting
+        //
+        while (bioskey(1))
+        {
+            if ((bioskey(0) & 0xff) == 27)
+                Error("\n\nNetwork game synchronization aborted.");
+        }
 
-//
-// listen to the network
-//
-		while (GetPacket ())
-		{
-			if (doomcom.remotenode == -1)
-				dest = &nodesetup[doomcom.numnodes];
-			else
-				dest = &nodesetup[doomcom.remotenode];
+        //
+        // listen to the network
+        //
+        while (GetPacket())
+        {
+            if (doomcom.remotenode == -1)
+                dest = &nodesetup[doomcom.numnodes];
+            else
+                dest = &nodesetup[doomcom.remotenode];
 
-			if (remotetime != -1)
-			{	// an early game packet, not a setup packet
-				if (doomcom.remotenode == -1)
-					Error ("Got an unknown game packet during setup");
-				// if it allready started, it must have found all nodes
-				dest->nodesfound = dest->nodeswanted;
-				continue;
-			}
+            if (remotetime != -1)
+            {                   // an early game packet, not a setup packet
+                if (doomcom.remotenode == -1)
+                    Error("Got an unknown game packet during setup");
+                // if it allready started, it must have found all nodes
+                dest->nodesfound = dest->nodeswanted;
+                continue;
+            }
 
-			// update setup ingo
-			memcpy (dest, setup, sizeof(*dest) );
+            // update setup ingo
+            memcpy(dest, setup, sizeof(*dest));
 
-			if (doomcom.remotenode != -1)
-				continue;			// allready know that node address
+            if (doomcom.remotenode != -1)
+                continue;       // allready know that node address
 
-			//
-			// this is a new node
-			//
-			memcpy (&nodeadr[doomcom.numnodes], &remoteadr
-			, sizeof(nodeadr[doomcom.numnodes]) );
+            //
+            // this is a new node
+            //
+            memcpy(&nodeadr[doomcom.numnodes], &remoteadr,
+                   sizeof(nodeadr[doomcom.numnodes]));
 
-			//
-			// if this node has a lower address, take all startup info
-			//
-			if ( memcmp (&remoteadr, &nodeadr[0], sizeof(&remoteadr) ) < 0 )
-			{
-			}
+            //
+            // if this node has a lower address, take all startup info
+            //
+            if (memcmp(&remoteadr, &nodeadr[0], sizeof(&remoteadr)) < 0)
+            {
+            }
 
-			doomcom.numnodes++;
+            doomcom.numnodes++;
 
-			printf ("\nFound a node!\n");
+            printf("\nFound a node!\n");
 
-			if (doomcom.numnodes < numnetnodes)
-				printf ("Looking for node");
-		}
-//
-// we are done if all nodes have found all other nodes
-//
-		for (i=0 ; i<doomcom.numnodes ; i++)
-			if (nodesetup[i].nodesfound != nodesetup[i].nodeswanted)
-				break;
+            if (doomcom.numnodes < numnetnodes)
+                printf("Looking for node");
+        }
+        //
+        // we are done if all nodes have found all other nodes
+        //
+        for (i = 0; i < doomcom.numnodes; i++)
+            if (nodesetup[i].nodesfound != nodesetup[i].nodeswanted)
+                break;
 
-		if (i == nodesetup[0].nodeswanted)
-			break;		// got them all
+        if (i == nodesetup[0].nodeswanted)
+            break;              // got them all
 
-//
-// send out a broadcast packet every second
-//
-		gettime (&time);
-		if (time.ti_sec == oldsec)
-			continue;
-		oldsec = time.ti_sec;
+        //
+        // send out a broadcast packet every second
+        //
+        gettime(&time);
+        if (time.ti_sec == oldsec)
+            continue;
+        oldsec = time.ti_sec;
 
-		printf (".");
-		doomcom.datalength = sizeof(*setup);
+        printf(".");
+        doomcom.datalength = sizeof(*setup);
 
-		nodesetup[0].nodesfound = doomcom.numnodes;
+        nodesetup[0].nodesfound = doomcom.numnodes;
 
-		memcpy (&doomcom.data, &nodesetup[0], sizeof(*setup));
+        memcpy(&doomcom.data, &nodesetup[0], sizeof(*setup));
 
-		SendPacket (MAXNETNODES);	// send to all
+        SendPacket(MAXNETNODES);        // send to all
 
-	} while (1);
+    } while (1);
 
-//
-// count players
-//
-	total = 0;
-	console = 0;
+    //
+    // count players
+    //
+    total = 0;
+    console = 0;
 
-	for (i=0 ; i<numnetnodes ; i++)
-	{
-		if (nodesetup[i].drone)
-			continue;
-		total++;
-		if (total > MAXPLAYERS)
-			Error ("More than %i players specified!",MAXPLAYERS);
-		if (memcmp (&nodeadr[i], &nodeadr[0], sizeof(nodeadr[0])) < 0)
-			console++;
-	}
+    for (i = 0; i < numnetnodes; i++)
+    {
+        if (nodesetup[i].drone)
+            continue;
+        total++;
+        if (total > MAXPLAYERS)
+            Error("More than %i players specified!", MAXPLAYERS);
+        if (memcmp(&nodeadr[i], &nodeadr[0], sizeof(nodeadr[0])) < 0)
+            console++;
+    }
 
+    if (!total)
+        Error("No players specified for game!");
 
-	if (!total)
-		Error ("No players specified for game!");
+    doomcom.consoleplayer = console;
+    doomcom.numplayers = total;
 
-	doomcom.consoleplayer = console;
-	doomcom.numplayers = total;
-
-	printf ("Console is player %i of %i\n", console+1, total);
+    printf("Console is player %i of %i\n", console + 1, total);
 }
-
-
 
 /*
 =============
@@ -233,51 +226,47 @@ void LookForNodes (void)
 =============
 */
 
-void main (void)
+void main(void)
 {
-	int	i;
+    int i;
 
-//
-// determine game parameters
-//
-	gameid = 0;
-	numnetnodes = 2;
-	doomcom.ticdup = 1;
-	doomcom.extratics = 1;
-	doomcom.episode = 1;
-	doomcom.map = 1;
-	doomcom.skill = 2;
-	doomcom.deathmatch = 0;
+    //
+    // determine game parameters
+    //
+    gameid = 0;
+    numnetnodes = 2;
+    doomcom.ticdup = 1;
+    doomcom.extratics = 1;
+    doomcom.episode = 1;
+    doomcom.map = 1;
+    doomcom.skill = 2;
+    doomcom.deathmatch = 0;
 
+    printf("\n"
+           "--------------------------\n"
+           "DOOM NETWORK DEVICE DRIVER\n" "--------------------------\n");
 
-	printf("\n"
-		   "--------------------------\n"
-		   "DOOM NETWORK DEVICE DRIVER\n"
-		   "--------------------------\n");
+    i = CheckParm("-nodes");
+    if (i && i < _argc - 1)
+    {
+        numnetnodes = atoi(_argv[i + 1]);
+    }
 
-	i = CheckParm ("-nodes");
-	if (i && i < _argc-1)
-	{
-		numnetnodes = atoi(_argv[i+1]);
-	}
+    // make sure the network exists and create a bunch of buffers
+    InitNetwork();
 
-// make sure the network exists and create a bunch of buffers
-	InitNetwork ();
+    // get addresses of all nodes
+    LookForNodes();
 
-// get addresses of all nodes
-	LookForNodes ();
+    localtime = 0;              // no longer in setup
 
-	localtime = 0;			// no longer in setup
+    //
+    // launch DOOM
+    //
+    LaunchDOOM();
 
-//
-// launch DOOM
-//
-	LaunchDOOM ();
+    // cleanup
+    ShutdownNetwork();
 
-// cleanup
-	ShutdownNetwork ();
-
-	Error (NULL);
+    Error(NULL);
 }
-
-

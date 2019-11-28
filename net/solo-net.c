@@ -24,7 +24,7 @@
 
 doomcom_t doomcom;
 doomdata_t *packet;
-void interrupt (*olddoomvect) (void);
+void interrupt(*olddoomvect) (void);
 int vectorishooked;
 
 // Receive queue. We place packets onto the queue for receiving and
@@ -41,8 +41,7 @@ void QueuePacket(doomdata_t *sendpacket)
         return;
     }
 
-    memcpy(&recv_queue[recv_queue_tail], sendpacket,
-           sizeof(doomdata_t));
+    memcpy(&recv_queue[recv_queue_tail], sendpacket, sizeof(doomdata_t));
 
     recv_queue_tail = (recv_queue_tail + 1) % RECV_QUEUE_LEN;
 }
@@ -180,7 +179,7 @@ void LaunchGame(int argc, char **argv)
     actual_argv[argc + 1] = addr_string;
     actual_argv[argc + 2] = NULL;
 
-    flataddr = (long) _DS * 16 + (unsigned) (&doomcom);
+    flataddr = (long)_DS *16 + (unsigned)(&doomcom);
     sprintf(addr_string, "%li", flataddr);
 
     spawnv(P_WAIT, actual_argv[0], actual_argv);
@@ -190,7 +189,7 @@ void LaunchGame(int argc, char **argv)
 void InitDoomcom(void)
 {
     doomcom.id = DOOMCOM_ID;
-    doomcom.intnum = 0;  // Default = determine automatically
+    doomcom.intnum = 0;         // Default = determine automatically
     doomcom.numnodes = 1;
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
@@ -208,7 +207,7 @@ void InitDoomcom(void)
     doomcom.map = 1;
     doomcom.skill = 3;
 
-    packet = (doomdata_t *) &doomcom.data;
+    packet = (doomdata_t *) & doomcom.data;
 }
 
 // Parse command line options and set fields in doomcom appropriately.
@@ -254,9 +253,9 @@ int ParseCommandLine(int *argc, char ***argv)
 int VectorAvailable(int intnum)
 {
     unsigned char far *vector;
-    vector = *(char far * far *) (intnum * 4);
+    vector = *(char far * far *)(intnum * 4);
 
-    return vector != NULL && vector != (unsigned char far *) 0xcf;
+    return vector != NULL && vector != (unsigned char far *)0xcf;
 }
 
 // Hook our ISR into the specified interrupt vector.
@@ -281,8 +280,7 @@ void HookVector(void)
     }
 
     olddoomvect = getvect(doomcom.intnum);
-    setvect(doomcom.intnum,
-            (void interrupt (*)(void))MK_FP(_CS, (int)NetISR));
+    setvect(doomcom.intnum, (void interrupt(*)(void))MK_FP(_CS, (int)NetISR));
     vectorishooked = 1;
 }
 
@@ -299,15 +297,14 @@ void RestoreVector(void)
 
 void Usage(void)
 {
-    printf(
-    "Usage:\n\n"
-    "solo-net [-nodes n] [-ticdup n] [-vector 0xNN] doom2.exe [args]\n"
-    "\n"
-    "  -nodes n     - Simulate a game containing n other players.\n"
-    "                 Default is to simulate a netgame with a single player.\n"
-    "  -ticdup n    - Duplicate tics, reducing the game's granularity.\n"
-    "  -vector 0xNN - Hook the network driver at the given interrupt vector.\n"
-    "\n");
+    printf("Usage:\n\n"
+           "solo-net [-nodes n] [-ticdup n] [-vector 0xNN] doom2.exe [args]\n"
+           "\n"
+           "  -nodes n     - Simulate a game containing n other players.\n"
+           "                 Default is to simulate a netgame with a single player.\n"
+           "  -ticdup n    - Duplicate tics, reducing the game's granularity.\n"
+           "  -vector 0xNN - Hook the network driver at the given interrupt vector.\n"
+           "\n");
 }
 
 int main(int argc, char *argv[])
@@ -325,4 +322,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

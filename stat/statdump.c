@@ -1,30 +1,30 @@
 
  /* 
- 
- Copyright(C) 2007,2011 Simon Howard
 
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- as published by the Free Software Foundation; either version 2
- of the License, or (at your option) any later version.
+    Copyright(C) 2007,2011 Simon Howard
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- 02111-1307, USA.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
- --
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+    02111-1307, USA.
 
- Implementation of an external statistics driver using Doom's
- -statcopy command line parameter, using the -control API to provide
- an interrupt callback to check the statistics buffer.
+    --
 
- */
+    Implementation of an external statistics driver using Doom's
+    -statcopy command line parameter, using the -control API to provide
+    an interrupt callback to check the statistics buffer.
+
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,20 +80,18 @@ static void control_callback(ticcmd_t *ticcmd, void *unused)
 
 static void usage(char *program_name)
 {
-    printf("Usage: %s [options] program [program options]\n",
-           program_name);
+    printf("Usage: %s [options] program [program options]\n", program_name);
     printf("\n"
            "Options:\n"
            "\t-o <filename>   :  Write output to the given file.\n"
-           "\t-cvector [vect] :  Interrupt vector for control API.\n"
-           "\n");
+           "\t-cvector [vect] :  Interrupt vector for control API.\n" "\n");
 
     printf("Examples:\n");
     printf("\t%s doom -warp 1\n"
            "\t   - Start doom.exe, warping to level 1.\n", program_name);
     printf("\t%s -o stats.txt ipxsetup -nodes 4 -warp 1 4\n"
            "\t   - Start a 4 player IPX multiplayer game, "
-                   "warping to E1M4.\n"
+           "warping to E1M4.\n"
            "\t     Output is saved to stats.txt.\n", program_name);
 
     exit(-1);
@@ -131,7 +129,7 @@ static void write_stats(void)
 
     // Write the statistics for each level to the file.
 
-    for (i=0; i<num_captured_stats; ++i)
+    for (i = 0; i < num_captured_stats; ++i)
     {
         print_stats(outfile, &captured_stats[i]);
     }
@@ -149,10 +147,9 @@ static void set_output_filename(char *args[])
     output_filename = args[0];
 }
 
-static control_param_t params[] =
-{
-    { "-o", 1, set_output_filename },
-    { NULL, 0, NULL },
+static control_param_t params[] = {
+    {"-o", 1, set_output_filename},
+    {NULL, 0, NULL},
 };
 
 int main(int argc, char *argv[])
@@ -173,7 +170,7 @@ int main(int argc, char *argv[])
     extra_params[1] = bufaddr;
     extra_params[2] = NULL;
 
-    flataddr = (long) _DS * 16 + (unsigned) (&stats_buffer);
+    flataddr = (long)_DS *16 + (unsigned)(&stats_buffer);
     sprintf(bufaddr, "%li", flataddr);
 
     stats_buffer.maxfrags = 1;
@@ -188,4 +185,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

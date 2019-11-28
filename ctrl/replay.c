@@ -1,29 +1,29 @@
 
  /* 
- 
- Copyright(C) 2011 Simon Howard
 
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- as published by the Free Software Foundation; either version 2
- of the License, or (at your option) any later version.
+    Copyright(C) 2011 Simon Howard
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
- 02111-1307, USA.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
- --
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+    02111-1307, USA.
 
- Program to use the -control API to play back a recorded .lmp
- demo. The game can be continued when the demo finishes.
+    --
 
- */
+    Program to use the -control API to play back a recorded .lmp
+    demo. The game can be continued when the demo finishes.
+
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,17 +122,15 @@ static void set_strife(char *args[])
     is_strife = 1;
 }
 
-static control_param_t params[] =
-{
-    { "-playdemo", 1, set_demo_filename },
-    { "-strife", 0, set_strife },
-    { NULL, 0, NULL },
+static control_param_t params[] = {
+    {"-playdemo", 1, set_demo_filename},
+    {"-strife", 0, set_strife},
+    {NULL, 0, NULL},
 };
 
 int main(int argc, char *argv[])
 {
-    if (!control_parse_cmd_line(argc, argv, params)
-     || demo_filename == NULL)
+    if (!control_parse_cmd_line(argc, argv, params) || demo_filename == NULL)
     {
         printf("Usage: %s -playdemo <lmp> [-strife] <exe> [params]\n"
                "eg. %s -playdemo mydemo.lmp doom2.exe -warp 1\n",
@@ -146,4 +144,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

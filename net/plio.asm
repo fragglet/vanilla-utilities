@@ -16,7 +16,7 @@ ver equ     0
 ;   along with this program; if not, write to the Free Software
 ;   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-include defs.asm
+include net/defs.asm
 
 .model small
 
@@ -223,8 +223,7 @@ send_nibble_2:
 	ret
 
 
-        extrn   _count_in_err: near
-        extrn   _count_out_err: near
+        extrn   _CountInErr: near
 
 recv_char	db	'0'
 
@@ -282,7 +281,7 @@ recv_1:
 	jmp	short recv_free
 
 recv_err:
-	call    _count_in_err
+	call    _CountInErr
 
 recv_free:
 

@@ -18,7 +18,7 @@
 #include <dos.h>
 #include <process.h>
 
-#include "doomnet.h"
+#include "net/doomnet.h"
 
 #define RECV_QUEUE_LEN 8
 

@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stats.h"
-#include "statprnt.h"
+#include "stat/stats.h"
+#include "stat/statprnt.h"
 
 #define TICRATE 35
 

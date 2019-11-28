@@ -1,7 +1,7 @@
 // port.c
 
-#include "doomnet.h"
-#include "sersetup.h"
+#include "net/doomnet.h"
+#include "net/sersetup.h"
 
 void JumpStart(void);
 

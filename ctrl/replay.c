@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "control.h"
+#include "ctrl/control.h"
 
 static byte *demo_buf, *demo_end;
 static byte *demo_p;

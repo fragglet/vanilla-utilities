@@ -27,8 +27,8 @@
 #include <dos.h>
 #include <time.h>
 #include <string.h>
-#include "parsetup.h"
-#include "doomnet.h"
+#include "net/parsetup.h"
+#include "net/doomnet.h"
 
 unsigned newpkt = 0;
 

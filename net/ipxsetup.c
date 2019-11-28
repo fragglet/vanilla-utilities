@@ -9,7 +9,7 @@
 #include <stdarg.h>
 #include <bios.h>
 
-#include "ipxnet.h"
+#include "net/ipxnet.h"
 
 int gameid;
 int numnetnodes;

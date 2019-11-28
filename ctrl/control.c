@@ -29,7 +29,7 @@
 #include <dos.h>
 #include <process.h>
 
-#include "control.h"
+#include "ctrl/control.h"
 
 typedef struct {
     long intnum;

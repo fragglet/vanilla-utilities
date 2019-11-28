@@ -23,8 +23,8 @@
 #include <conio.h>
 #include <string.h>
 #include <stdio.h>
-#include "doomnet.h"
-#include "parsetup.h"
+#include "net/doomnet.h"
+#include "net/parsetup.h"
 
 typedef unsigned char byte;
 

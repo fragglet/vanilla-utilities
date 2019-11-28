@@ -31,9 +31,9 @@
 #include <string.h>
 #include <process.h>
 
-#include "control.h"
-#include "stats.h"
-#include "statprnt.h"
+#include "ctrl/control.h"
+#include "stat/stats.h"
+#include "stat/statprnt.h"
 
 // Array of end-of-level statistics that have been captured.
 

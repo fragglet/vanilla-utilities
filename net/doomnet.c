@@ -5,7 +5,7 @@
 #include <conio.h>
 #include <dos.h>
 
-#include "doomnet.h"
+#include "net/doomnet.h"
 
 doomcom_t doomcom;
 int vectorishooked;

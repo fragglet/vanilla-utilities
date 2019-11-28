@@ -7,7 +7,7 @@
 #include <process.h>
 #include <values.h>
 
-#include "ipxnet.h"
+#include "net/ipxnet.h"
 
 /*
 =============================================================================

@@ -1,7 +1,7 @@
 // sersetup.c
 
-#include "sersetup.h"
-#include "DoomNet.h"
+#include "net/sersetup.h"
+#include "net/doomnet.h"
 
 extern que_t inque, outque;
 

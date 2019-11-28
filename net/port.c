@@ -3,9 +3,9 @@
 #include "doomnet.h"
 #include "sersetup.h"
 
-void jump_start(void);
+void JumpStart(void);
 
-void interrupt isr_8250(void);
+void interrupt ISR8250(void);
 
 union REGS regs;
 struct SREGS sregs;
@@ -140,7 +140,7 @@ void InitPort(void)
     irqintnum = irq + 8;
 
     oldirqvect = getvect(irqintnum);
-    setvect(irqintnum, isr_8250);
+    setvect(irqintnum, ISR8250);
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));
 
@@ -188,7 +188,7 @@ void ShutdownPort(void)
     int86(0x14, &regs, &regs);
 }
 
-int read_byte(void)
+int ReadByte(void)
 {
     int c;
 
@@ -199,7 +199,7 @@ int read_byte(void)
     return c;
 }
 
-void write_byte(int c)
+void WriteByte(int c)
 {
     outque.data[outque.head % QUESIZE] = c;
     outque.head++;
@@ -210,12 +210,12 @@ void write_byte(int c)
 /*
 ==============
 =
-= isr_8250
+= ISR8250
 =
 ==============
 */
 
-void interrupt isr_8250(void)
+void interrupt ISR8250(void)
 {
     int c;
     int count;
@@ -283,13 +283,13 @@ void interrupt isr_8250(void)
 /*
 ===============
 =
-= jump_start
+= JumpStart
 =
 = Start up the transmition interrupts by sending the first char
 ===============
 */
 
-void jump_start(void)
+void JumpStart(void)
 {
     int c;
 

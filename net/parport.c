@@ -43,7 +43,7 @@ unsigned bufseg = 0;
 unsigned bufofs = 0;
 unsigned recv_count = 0;
 
-void count_in_err(void)
+void CountInErr(void)
 {
 
     errcnt++;
@@ -51,7 +51,7 @@ void count_in_err(void)
 
 extern void recv(void);
 
-void interrupt recvisr(void)
+void interrupt ReceiveISR(void)
 {
 
     icnt++;
@@ -61,13 +61,13 @@ void interrupt recvisr(void)
 
 }
 
-void initisr(void)
+void InitISR(void)
 {
     byte mask;
 
     // install new interrupt hander for the printer port
     oldisr = getvect(irq + 8);
-    setvect(irq + 8, recvisr);
+    setvect(irq + 8, ReceiveISR);
 
     // enable interrupts from the printer port
     outportb(portbase + 2, inportb(portbase + 2) | 0x10);
@@ -127,7 +127,7 @@ void InitPort(void)
     bufseg = FP_SEG(pktbuf);
     bufofs = FP_OFF(pktbuf);
 
-    initisr();
+    InitISR();
 
 }
 

@@ -62,7 +62,7 @@ static GameMode_t gamemode = indetermined;
  * how to format the level name.  Unfortunately, in some cases it is
  * impossible to determine whether this is Doom 1 or Doom 2. */
 
-void discover_gamemode(wbstartstruct_t *stats, int num_stats)
+void DiscoverGamemode(wbstartstruct_t *stats, int num_stats)
 {
     int partime;
     int level;
@@ -117,7 +117,7 @@ void discover_gamemode(wbstartstruct_t *stats, int num_stats)
 
 /* Returns the number of players active in the given stats buffer. */
 
-static int get_num_players(wbstartstruct_t *stats)
+static int GetNumPlayers(wbstartstruct_t *stats)
 {
     int i;
     int num_players = 0;
@@ -133,12 +133,12 @@ static int get_num_players(wbstartstruct_t *stats)
     return num_players;
 }
 
-static void print_banner(FILE *stream)
+static void PrintBanner(FILE *stream)
 {
     fprintf(stream, "===========================================\n");
 }
 
-static void print_percentage(FILE *stream, int amount, int total)
+static void PrintPercentage(FILE *stream, int amount, int total)
 {
     if (total == 0)
     {
@@ -154,7 +154,7 @@ static void print_percentage(FILE *stream, int amount, int total)
 
 /* Display statistics for a single player. */
 
-static void print_player_stats(FILE *stream, wbstartstruct_t *stats,
+static void PrintPlayerStats(FILE *stream, wbstartstruct_t *stats,
                                int player_num)
 {
     wbplayerstruct_t *player = &stats->plyr[player_num];
@@ -165,25 +165,25 @@ static void print_player_stats(FILE *stream, wbstartstruct_t *stats,
     /* Kills percentage */
 
     fprintf(stream, "\tKills: ");
-    print_percentage(stream, player->skills, stats->maxkills);
+    PrintPercentage(stream, player->skills, stats->maxkills);
     fprintf(stream, "\n");
 
     /* Items percentage */
 
     fprintf(stream, "\tItems: ");
-    print_percentage(stream, player->sitems, stats->maxitems);
+    PrintPercentage(stream, player->sitems, stats->maxitems);
     fprintf(stream, "\n");
 
     /* Secrets percentage */
 
     fprintf(stream, "\tSecrets: ");
-    print_percentage(stream, player->ssecret, stats->maxsecret);
+    PrintPercentage(stream, player->ssecret, stats->maxsecret);
     fprintf(stream, "\n");
 }
 
 /* Frags table for multiplayer games. */
 
-static void print_frags_table(FILE *stream, wbstartstruct_t *stats)
+static void PrintFragsTable(FILE *stream, wbstartstruct_t *stats)
 {
     int x, y;
 
@@ -238,9 +238,9 @@ static void print_frags_table(FILE *stream, wbstartstruct_t *stats)
 
 /* Displays the level name: MAPxy or ExMy, depending on game mode. */
 
-static void print_level_name(FILE *stream, int episode, int level)
+static void PrintLevelName(FILE *stream, int episode, int level)
 {
-    print_banner(stream);
+    PrintBanner(stream);
 
     switch (gamemode)
     {
@@ -257,17 +257,17 @@ static void print_level_name(FILE *stream, int episode, int level)
         break;
     }
 
-    print_banner(stream);
+    PrintBanner(stream);
 }
 
 /* Print details of a statistics buffer to the given file. */
 
-void print_stats(FILE *stream, wbstartstruct_t *stats)
+void PrintStats(FILE *stream, wbstartstruct_t *stats)
 {
     int leveltime, partime;
     int i;
 
-    print_level_name(stream, stats->epsd, stats->last);
+    PrintLevelName(stream, stats->epsd, stats->last);
     fprintf(stream, "\n");
 
     leveltime = stats->plyr[0].stime / TICRATE;
@@ -280,13 +280,13 @@ void print_stats(FILE *stream, wbstartstruct_t *stats)
     {
         if (stats->plyr[i].in)
         {
-            print_player_stats(stream, stats, i);
+            PrintPlayerStats(stream, stats, i);
         }
     }
 
-    if (get_num_players(stats) >= 2)
+    if (GetNumPlayers(stats) >= 2)
     {
-        print_frags_table(stream, stats);
+        PrintFragsTable(stream, stats);
     }
 
     fprintf(stream, "\n");

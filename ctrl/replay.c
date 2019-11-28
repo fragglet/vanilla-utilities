@@ -35,7 +35,7 @@ static byte *demo_p;
 static char *demo_filename = NULL;
 static int is_strife = 0;
 
-static void replay_callback(ticcmd_t *ticcmd, void *unused)
+static void ReplayCallback(ticcmd_t *ticcmd, void *unused)
 {
     int space_needed;
 
@@ -67,7 +67,7 @@ static void replay_callback(ticcmd_t *ticcmd, void *unused)
     }
 }
 
-static void load_demo(char *filename)
+static void LoadDemo(char *filename)
 {
     FILE *fs;
     size_t len;
@@ -112,25 +112,25 @@ static void load_demo(char *filename)
     demo_end = demo_buf + len;
 }
 
-static void set_demo_filename(char *args[])
+static void SetDemoFilename(char *args[])
 {
     demo_filename = args[0];
 }
 
-static void set_strife(char *args[])
+static void SetStrife(char *args[])
 {
     is_strife = 1;
 }
 
 static control_param_t params[] = {
-    {"-playdemo", 1, set_demo_filename},
-    {"-strife", 0, set_strife},
+    {"-playdemo", 1, SetDemoFilename},
+    {"-strife", 0, SetStrife},
     {NULL, 0, NULL},
 };
 
 int main(int argc, char *argv[])
 {
-    if (!control_parse_cmd_line(argc, argv, params) || demo_filename == NULL)
+    if (!ControlParseCmdLine(argc, argv, params) || demo_filename == NULL)
     {
         printf("Usage: %s -playdemo <lmp> [-strife] <exe> [params]\n"
                "eg. %s -playdemo mydemo.lmp doom2.exe -warp 1\n",
@@ -138,9 +138,9 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    load_demo(demo_filename);
+    LoadDemo(demo_filename);
 
-    control_launch_doom(NULL, replay_callback, NULL);
+    ControlLaunchDoom(NULL, ReplayCallback, NULL);
 
     return 0;
 }

@@ -58,7 +58,7 @@ static char *output_filename = NULL;
 // stats buffer into the captured_stats array for later processing.
 ///
 
-static void control_callback(ticcmd_t *ticcmd, void *unused)
+static void ControlCallback(ticcmd_t *ticcmd, void *unused)
 {
     if (stats_buffer.maxfrags == 0)
     {
@@ -78,7 +78,7 @@ static void control_callback(ticcmd_t *ticcmd, void *unused)
 
 // Help page.
 
-static void usage(char *program_name)
+static void Usage(char *program_name)
 {
     printf("Usage: %s [options] program [program options]\n", program_name);
     printf("\n"
@@ -99,7 +99,7 @@ static void usage(char *program_name)
 
 // Write the statistics to the output file.
 
-static void write_stats(void)
+static void WriteStats(void)
 {
     FILE *outfile;
     int i;
@@ -125,13 +125,13 @@ static void write_stats(void)
 
     // Work out if this was Doom 1 or Doom 2.
 
-    discover_gamemode(captured_stats, num_captured_stats);
+    DiscoverGamemode(captured_stats, num_captured_stats);
 
     // Write the statistics for each level to the file.
 
     for (i = 0; i < num_captured_stats; ++i)
     {
-        print_stats(outfile, &captured_stats[i]);
+        PrintStats(outfile, &captured_stats[i]);
     }
 
     // Close the output file
@@ -142,13 +142,13 @@ static void write_stats(void)
     }
 }
 
-static void set_output_filename(char *args[])
+static void SetOutputFilename(char *args[])
 {
     output_filename = args[0];
 }
 
 static control_param_t params[] = {
-    {"-o", 1, set_output_filename},
+    {"-o", 1, SetOutputFilename},
     {NULL, 0, NULL},
 };
 
@@ -158,9 +158,9 @@ int main(int argc, char *argv[])
     char *extra_params[3];
     long flataddr;
 
-    if (!control_parse_cmd_line(argc, argv, params))
+    if (!ControlParseCmdLine(argc, argv, params))
     {
-        usage(argv[0]);
+        Usage(argv[0]);
         exit(-1);
     }
 
@@ -175,13 +175,13 @@ int main(int argc, char *argv[])
 
     stats_buffer.maxfrags = 1;
 
-    control_launch_doom(extra_params, control_callback, NULL);
+    ControlLaunchDoom(extra_params, ControlCallback, NULL);
 
     printf("Statistics captured for %i level(s)\n", num_captured_stats);
 
     // Write statistics to the output file.
 
-    write_stats();
+    WriteStats();
 
     return 0;
 }

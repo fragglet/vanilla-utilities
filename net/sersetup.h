@@ -86,7 +86,7 @@ typedef struct {
 void InitPort(void);
 void ShutdownPort(void);
 
-int read_byte(void);
-void write_byte(int c);
+int ReadByte(void);
+void WriteByte(int c);
 
 void Error(char *error, ...);

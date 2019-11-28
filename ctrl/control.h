@@ -48,8 +48,8 @@ typedef struct {
 
 typedef void (*control_callback_t)(ticcmd_t *ticcmd, void *user_data);
 
-int control_parse_cmd_line(int argc, char *argv[], control_param_t *params);
-void control_launch_doom(char **extra_args, control_callback_t callback,
-                         void *user_data);
+int ControlParseCmdLine(int argc, char *argv[], control_param_t *params);
+void ControlLaunchDoom(char **extra_args, control_callback_t callback,
+                       void *user_data);
 
 #endif                          /* CONTROL_H */

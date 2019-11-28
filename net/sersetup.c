@@ -5,7 +5,7 @@
 
 extern que_t inque, outque;
 
-void jump_start(void);
+void JumpStart(void);
 extern int uart;
 
 int usemodem;
@@ -16,12 +16,12 @@ void ModemCommand(char *str);
 /*
 ================
 =
-= write_buffer
+= WriteBuffer
 =
 ================
 */
 
-void write_buffer(char *buffer, unsigned int count)
+void WriteBuffer(char *buffer, unsigned int count)
 {
     int i;
 
@@ -30,10 +30,10 @@ void write_buffer(char *buffer, unsigned int count)
         outque.tail = outque.head;
 
     while (count--)
-        write_byte(*buffer++);
+        WriteByte(*buffer++);
 
     if (INPUT(uart + LINE_STATUS_REGISTER) & 0x40)
-        jump_start();
+        JumpStart();
 }
 
 /*
@@ -121,7 +121,7 @@ boolean ReadPacket(void)
 
     do
     {
-        c = read_byte();
+        c = ReadByte();
         if (c < 0)
             return false;       // haven't read a complete packet
         //printf ("%c",c);
@@ -175,7 +175,7 @@ void WritePacket(char *buffer, int len)
     localbuffer[b++] = FRAMECHAR;
     localbuffer[b++] = 0;
 
-    write_buffer(localbuffer, b);
+    WriteBuffer(localbuffer, b);
 }
 
 /*
@@ -291,8 +291,8 @@ void Connect(void)
 void ModemCommand(char *str)
 {
     printf("Modem command : %s\n", str);
-    write_buffer(str, strlen(str));
-    write_buffer("\r", 1);
+    WriteBuffer(str, strlen(str));
+    WriteBuffer("\r", 1);
 }
 
 /*
@@ -322,7 +322,7 @@ void ModemResponse(char *resp)
                 if ((bioskey(0) & 0xff) == 27)
                     Error("\nModem response aborted.");
             }
-            c = read_byte();
+            c = ReadByte();
             if (c == -1)
                 continue;
             if (c == '\n' || respptr == 79)
@@ -412,9 +412,9 @@ void Dial(void)
     ModemCommand(cmd);
     ModemResponse("CONNECT");
     if (strncmp(response + 8, "9600", 4))
-        Error
-            ("The connection MUST be made at 9600 baud, no error correction, no compression!\n"
-             "Check your modem initialization string!");
+        Error("The connection MUST be made at 9600 baud, "
+	      "no error correction, no compression!\n"
+              "Check your modem initialization string!");
     doomcom.consoleplayer = 1;
 }
 
@@ -462,7 +462,8 @@ void main(void)
 
     printf("\n"
            "-------------------------\n"
-           "DOOM SERIAL DEVICE DRIVER\n" "-------------------------\n");
+           "DOOM SERIAL DEVICE DRIVER\n"
+	   "-------------------------\n");
     //
     // allow override of automatic player ordering to allow a slower computer
     // to be set as player 1 allways

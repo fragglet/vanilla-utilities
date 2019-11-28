@@ -23,7 +23,7 @@
 #ifndef STATPRNT_H
 #define STATPRNT_H
 
-void discover_gamemode(wbstartstruct_t *stats, int num_stats);
-void print_stats(FILE *stream, wbstartstruct_t *stats);
+void DiscoverGamemode(wbstartstruct_t *stats, int num_stats);
+void PrintStats(FILE *stream, wbstartstruct_t *stats);
 
 #endif                          /* #ifndef STATPRNT_H */

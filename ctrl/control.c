@@ -49,7 +49,7 @@ static void interrupt(*old_isr) ();
 
 // Interrupt service routine.
 
-static void interrupt control_isr()
+static void interrupt ControlISR()
 {
     memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
     int_callback(&control_buf.ticcmd, int_user_data);
@@ -57,7 +57,7 @@ static void interrupt control_isr()
 
 // Check if an interrupt vector is available.
 
-static int interrupt_vector_available(int intnum)
+static int InterruptVectorAvailable(int intnum)
 {
     unsigned char far *vector;
 
@@ -68,7 +68,7 @@ static int interrupt_vector_available(int intnum)
 
 // Find what interrupt number to use.
 
-static int find_interrupt_num(void)
+static int FindInterruptNum(void)
 {
     int intnum;
     int i;
@@ -77,7 +77,7 @@ static int find_interrupt_num(void)
 
     if (force_vector)
     {
-        if (interrupt_vector_available(force_vector))
+        if (InterruptVectorAvailable(force_vector))
         {
             return force_vector;
         }
@@ -93,7 +93,7 @@ static int find_interrupt_num(void)
 
     for (i = 0x60; i <= 0x66; ++i)
     {
-        if (interrupt_vector_available(i))
+        if (InterruptVectorAvailable(i))
         {
             return i;
         }
@@ -107,26 +107,26 @@ static int find_interrupt_num(void)
 
 // Install the interrupt handler on the specified interrupt vector.
 
-static void hook_interrupt_handler(int intnum)
+static void HookInterruptHandler(int intnum)
 {
     void interrupt(*isr) ();
 
     old_isr = getvect(intnum);
 
-    isr = MK_FP(_CS, (int)control_isr);
+    isr = MK_FP(_CS, (int)ControlISR);
     setvect(intnum, isr);
 }
 
 // Unload the interrupt handler.
 
-static void restore_interrupt_handler(int intnum)
+static void RestoreInterruptHandler(int intnum)
 {
     setvect(intnum, old_isr);
 }
 
 // Look up the specified parameter in the given list of supported parameters.
 
-static control_param_t *lookup_param(control_param_t *params, char *arg)
+static control_param_t *LookupParam(control_param_t *params, char *arg)
 {
     int i;
 
@@ -147,9 +147,9 @@ static control_param_t *lookup_param(control_param_t *params, char *arg)
 }
 
 // Parse the command line arguments. This must be called before
-// control_launch_doom. Returns non-zero for success.
+// ControlLaunchDoom. Returns non-zero for success.
 
-int control_parse_cmd_line(int argc, char *argv[], control_param_t *params)
+int ControlParseCmdLine(int argc, char *argv[], control_param_t *params)
 {
     control_param_t *param;
     int i;
@@ -170,7 +170,7 @@ int control_parse_cmd_line(int argc, char *argv[], control_param_t *params)
 
         // Custom parameter?
 
-        param = lookup_param(params, argv[i]);
+        param = LookupParam(params, argv[i]);
 
         if (param != NULL)
         {
@@ -201,7 +201,7 @@ int control_parse_cmd_line(int argc, char *argv[], control_param_t *params)
     return 0;
 }
 
-static int count_extra_args(char **extra_args)
+static int CountExtraArgs(char **extra_args)
 {
     int i;
 
@@ -215,10 +215,10 @@ static int count_extra_args(char **extra_args)
     return i;
 }
 
-// Launch the game. control_parse_cmd_line must have been called first.
+// Launch the game. ControlParseCmdLine must have been called first.
 
-void control_launch_doom(char **extra_args, control_callback_t callback,
-                         void *user_data)
+void ControlLaunchDoom(char **extra_args, control_callback_t callback,
+                       void *user_data)
 {
     int actual_argc;
     char **actual_argv;
@@ -227,7 +227,7 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
     int intnum;
     int num_extra_args;
 
-    intnum = find_interrupt_num();
+    intnum = FindInterruptNum();
     printf("Control API: Using interrupt vector 0x%x\n", intnum);
 
     // Initialise the interrupt handler.
@@ -235,11 +235,11 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
     int_callback = callback;
     int_user_data = user_data;
     control_buf.intnum = intnum;
-    hook_interrupt_handler(intnum);
+    HookInterruptHandler(intnum);
 
     // Build the command line arguments.
 
-    num_extra_args = count_extra_args(extra_args);
+    num_extra_args = CountExtraArgs(extra_args);
     actual_argv = malloc((doom_argc + num_extra_args + 3) * sizeof(char *));
 
     memcpy(actual_argv, doom_argv, doom_argc * sizeof(char *));
@@ -275,5 +275,5 @@ void control_launch_doom(char **extra_args, control_callback_t callback,
 
     free(actual_argv);
 
-    restore_interrupt_handler(intnum);
+    RestoreInterruptHandler(intnum);
 }

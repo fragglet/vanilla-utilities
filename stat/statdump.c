@@ -32,21 +32,19 @@
 #include <process.h>
 
 #include "ctrl/control.h"
+#include "lib/flag.h"
 #include "stat/stats.h"
 #include "stat/statprnt.h"
 
 // Array of end-of-level statistics that have been captured.
-
 #define MAX_CAPTURES 32
 static wbstartstruct_t captured_stats[MAX_CAPTURES];
 static int num_captured_stats = 0;
 
 // Statistics buffer that Doom writes into.
-
 static wbstartstruct_t stats_buffer;
 
 // Output file to write statistics to.  If NULL, print to stdout.
-
 static char *output_filename = NULL;
 
 //
@@ -57,7 +55,6 @@ static char *output_filename = NULL;
 // buffer has been written to.  If it has, save the contents of the
 // stats buffer into the captured_stats array for later processing.
 ///
-
 static void ControlCallback(ticcmd_t *ticcmd, void *unused)
 {
     if (stats_buffer.maxfrags == 0)
@@ -76,29 +73,7 @@ static void ControlCallback(ticcmd_t *ticcmd, void *unused)
     }
 }
 
-// Help page.
-
-static void Usage(char *program_name)
-{
-    printf("Usage: %s [options] program [program options]\n", program_name);
-    printf("\n"
-           "Options:\n"
-           "\t-o <filename>   :  Write output to the given file.\n"
-           "\t-cvector [vect] :  Interrupt vector for control API.\n" "\n");
-
-    printf("Examples:\n");
-    printf("\t%s doom -warp 1\n"
-           "\t   - Start doom.exe, warping to level 1.\n", program_name);
-    printf("\t%s -o stats.txt ipxsetup -nodes 4 -warp 1 4\n"
-           "\t   - Start a 4 player IPX multiplayer game, "
-           "warping to E1M4.\n"
-           "\t     Output is saved to stats.txt.\n", program_name);
-
-    exit(-1);
-}
-
 // Write the statistics to the output file.
-
 static void WriteStats(void)
 {
     FILE *outfile;
@@ -142,45 +117,29 @@ static void WriteStats(void)
     }
 }
 
-static void SetOutputFilename(char *args[])
-{
-    output_filename = args[0];
-}
-
-static control_param_t params[] = {
-    {"-o", 1, SetOutputFilename},
-    {NULL, 0, NULL},
-};
-
 int main(int argc, char *argv[])
 {
+    char **args;
     char bufaddr[20];
-    char *extra_params[3];
     long flataddr;
 
-    if (!ControlParseCmdLine(argc, argv, params))
-    {
-        Usage(argv[0]);
-        exit(-1);
-    }
+    StringFlag("-o", &output_filename, "filename",
+               "file to write captured statistics");
+    ControlRegisterFlags();
+    args = ParseCommandLine(argc, argv);
 
     // Launch Doom
-
-    extra_params[0] = "-statcopy";
-    extra_params[1] = bufaddr;
-    extra_params[2] = NULL;
-
     flataddr = (long)_DS *16 + (unsigned)(&stats_buffer);
     sprintf(bufaddr, "%li", flataddr);
+    args = AppendArgs(args, "-statcopy", bufaddr, NULL);
 
     stats_buffer.maxfrags = 1;
 
-    ControlLaunchDoom(extra_params, ControlCallback, NULL);
+    ControlLaunchDoom(args, ControlCallback, NULL);
 
     printf("Statistics captured for %i level(s)\n", num_captured_stats);
 
     // Write statistics to the output file.
-
     WriteStats();
 
     return 0;

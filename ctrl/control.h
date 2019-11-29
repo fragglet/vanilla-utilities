@@ -40,16 +40,10 @@ typedef struct {
     long inventoryitem;
 } ticcmd_t;
 
-typedef struct {
-    char *name;
-    int args;
-    void (*callback)(char *args[]);
-} control_param_t;
-
 typedef void (*control_callback_t)(ticcmd_t *ticcmd, void *user_data);
 
-int ControlParseCmdLine(int argc, char *argv[], control_param_t *params);
-void ControlLaunchDoom(char **extra_args, control_callback_t callback,
+void ControlRegisterFlags(void);
+void ControlLaunchDoom(char **args, control_callback_t callback,
                        void *user_data);
 
 #endif                          /* CONTROL_H */

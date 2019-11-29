@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "ctrl/control.h"
+#include "lib/flag.h"
 
 static byte *demo_buf, *demo_end;
 static byte *demo_p;
@@ -112,35 +113,25 @@ static void LoadDemo(char *filename)
     demo_end = demo_buf + len;
 }
 
-static void SetDemoFilename(char *args[])
-{
-    demo_filename = args[0];
-}
-
-static void SetStrife(char *args[])
-{
-    is_strife = 1;
-}
-
-static control_param_t params[] = {
-    {"-playdemo", 1, SetDemoFilename},
-    {"-strife", 0, SetStrife},
-    {NULL, 0, NULL},
-};
-
 int main(int argc, char *argv[])
 {
-    if (!ControlParseCmdLine(argc, argv, params) || demo_filename == NULL)
+    char **args;
+
+    StringFlag("-playdemo", &demo_filename,
+               "filename", "play back the specified demo file");
+    BoolFlag("-strife", &is_strife, "play back a Strife demo");
+    ControlRegisterFlags();
+    args = ParseCommandLine(argc, argv);
+
+    if (demo_filename == NULL)
     {
-        printf("Usage: %s -playdemo <lmp> [-strife] <exe> [params]\n"
-               "eg. %s -playdemo mydemo.lmp doom2.exe -warp 1\n",
-               argv[0], argv[0]);
-        exit(-1);
+        printf("Demo file not specified.\n");
+        exit(1);
     }
 
     LoadDemo(demo_filename);
 
-    ControlLaunchDoom(NULL, ReplayCallback, NULL);
+    ControlLaunchDoom(args, ReplayCallback, NULL);
 
     return 0;
 }

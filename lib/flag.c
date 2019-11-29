@@ -69,9 +69,26 @@ void StringFlag(const char *name, char **ptr,
 static void Usage(FILE *output, const char *program)
 {
     struct flag *f;
+    int columns;
     int i, cnt;
 
     fprintf(output, "Usage: %s [args] [command]\n", program);
+
+    columns = 0;
+
+    for (i = 0; i < num_flags; ++i)
+    {
+        f = &flags[i];
+        cnt = 6 + strlen(f->name);
+        if (f->type != FLAG_BOOL)
+        {
+            cnt += 3 + strlen(f->param_name);
+        }
+        if (cnt > columns)
+        {
+            columns = cnt;
+        }
+    }
 
     for (i = 0; i < num_flags; ++i)
     {
@@ -79,9 +96,9 @@ static void Usage(FILE *output, const char *program)
         cnt = fprintf(output, "  %s", f->name);
         if (f->type != FLAG_BOOL)
         {
-            cnt += fprintf(output, " [%s]", f->param_name);
+            cnt += fprintf(output, " <%s>", f->param_name);
         }
-        while (cnt < 24)
+        while (cnt < columns)
         {
             cnt += fprintf(output, " ");
         }

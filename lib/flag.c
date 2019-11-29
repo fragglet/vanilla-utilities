@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
@@ -153,37 +154,34 @@ static int MustParseInt(const char *flag_name, char *val)
     return (int) result;
 }
 
-void ParseCommandLine(int *argc, char ***argv)
+char **ParseCommandLine(int argc, char **argv)
 {
     struct flag *f;
-    long l;
     int i;
 
-    if (*argc == 1)
+    if (argc == 1)
     {
         goto help;
     }
 
-    for (i = 1; i < *argc; ++i)
+    for (i = 1; i < argc; ++i)
     {
-        if ((*argv)[i][0] != '-')
+        if (argv[i][0] != '-')
         {
-            *argc -= i;
-            *argv += i;
-            return;
+            return AppendArgList(NULL, argc - i, argv + i);
         }
-        if (!strcmp((*argv)[i], "-h") || !strcmp((*argv)[i], "-help")
-         || !strcmp((*argv)[i], "--help"))
+        if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "-help")
+         || !strcmp(argv[i], "--help"))
         {
             goto help;
         }
 
-        f = MustFindFlagForName((*argv)[0], (*argv)[i]);
+        f = MustFindFlagForName(argv[0], argv[i]);
         if (f->type != FLAG_BOOL &&
-            (i + 1 >= *argc || (*argv)[i + 1][0] == '-'))
+            (i + 1 >= argc || argv[i + 1][0] == '-'))
         {
             fprintf(stderr, "No value given for '%s'.\n", f->name);
-            Usage(stderr, (*argv)[0]);
+            Usage(stderr, argv[0]);
             exit(1);
         }
 
@@ -194,11 +192,11 @@ void ParseCommandLine(int *argc, char ***argv)
                 break;
 
             case FLAG_INT:
-                *f->value.i = MustParseInt(f->name, (*argv)[i + 1]);
+                *f->value.i = MustParseInt(f->name, argv[i + 1]);
                 break;
 
             case FLAG_STRING:
-                *f->value.s = (*argv)[i + 1];
+                *f->value.s = argv[i + 1];
                 break;
         }
         // Skip over parameter:
@@ -209,11 +207,74 @@ void ParseCommandLine(int *argc, char ***argv)
     }
 
     fprintf(stderr, "No command given.\n");
-    Usage(stderr, (*argv)[0]);
+    Usage(stderr, argv[0]);
     exit(1);
 
 help:
-    Usage(stdout, (*argv)[0]);
+    Usage(stdout, argv[0]);
     exit(0);
+    return NULL;  // unreachable
+}
+
+static char **ExtendArgList(char **args, int *current_argc, int extra_args)
+{
+    int i;
+
+    *current_argc = 0;
+
+    if (args != NULL)
+    {
+        for (i = 0; args[i] != NULL; ++i)
+        {
+            ++*current_argc;
+        }
+    }
+
+    args = realloc(args, sizeof(*args) * (*current_argc + extra_args + 1));
+    assert(args != NULL);
+    return args;
+}
+
+char **AppendArgList(char **args, int argc, char **argv)
+{
+    int current_argc;
+
+    args = ExtendArgList(args, &current_argc, argc);
+    memcpy(&args[current_argc], argv, argc * sizeof(*argv));
+    args[current_argc + argc] = NULL;
+
+    return args;
+}
+
+char **AppendArgs(char **args, ...)
+{
+    va_list a;
+    int current_argc, argc;
+    int i;
+    char *arg;
+
+    va_start(a, args);
+    argc = 0;
+    while (va_arg(a, char *) != NULL)
+    {
+        ++argc;
+    }
+    va_end(a);
+
+    args = ExtendArgList(args, &current_argc, argc);
+    va_start(a, args);
+    for (i = current_argc;; ++i)
+    {
+        arg = va_arg(a, char *);
+        if (arg == NULL)
+        {
+            break;
+        }
+        args[i] = arg;
+    }
+    args[i] = NULL;
+    va_end(a);
+
+    return args;
 }
 

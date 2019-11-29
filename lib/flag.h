@@ -3,4 +3,7 @@ void IntFlag(const char *name, int *ptr,
              const char *param_name, const char *help_text);
 void StringFlag(const char *name, char **ptr,
              const char *param_name, const char *help_text);
-void ParseCommandLine(int *argc, char ***argv);
+char **ParseCommandLine(int argc, char **argv);
+char **AppendArgList(char **args, int argc, char **argv);
+char **AppendArgs(char **args, ...);
+

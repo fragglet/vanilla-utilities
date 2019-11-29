@@ -9,7 +9,7 @@
 
 #include "lib/flag.h"
 
-#define MAX_FLAGS 8
+#define MAX_FLAGS 12
 
 enum flag_type {
     FLAG_BOOL,

@@ -227,16 +227,23 @@ void Connect(void)
 =================
 */
 
-void main(void)
+void main(int argc, char *argv[])
 {
-    int p;
+    char **args;
+    int force_player1;
     time_t t;
+
+    BoolFlag("-player1", &force_player1, "force this side to be player 1");
+    ParallelRegisterFlags();
+    NetRegisterFlags();
+    args = ParseCommandLine(argc, argv);
 
     //
     // set network characteristics
     //
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
+    doomcom.consoleplayer = 0;
     doomcom.numnodes = 2;
     doomcom.numplayers = 2;
     doomcom.drone = 0;
@@ -252,10 +259,10 @@ void main(void)
     // allow override of automatic player ordering to allow a slower computer
     // to be set as player 1 always
     //
-    if (CheckParm("-player1"))
+    if (force_player1)
+    {
         doomcom.consoleplayer = 1;
-    else
-        doomcom.consoleplayer = 0;
+    }
 
     //
     // establish communications
@@ -267,7 +274,7 @@ void main(void)
     //
     // launch DOOM
     //
-    LaunchDOOM();
+    LaunchDOOM(args);
 
     Error(NULL);
 

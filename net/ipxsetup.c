@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <bios.h>
 
+#include "lib/flag.h"
 #include "net/ipxnet.h"
 
 int gameid;
@@ -226,8 +227,9 @@ void LookForNodes(void)
 =============
 */
 
-void main(void)
+void main(int argc, char *argv[])
 {
+    char **args;
     int i;
 
     //
@@ -244,13 +246,14 @@ void main(void)
 
     printf("\n"
            "--------------------------\n"
-           "DOOM NETWORK DEVICE DRIVER\n" "--------------------------\n");
+           "DOOM NETWORK DEVICE DRIVER\n"
+           "--------------------------\n");
 
-    i = CheckParm("-nodes");
-    if (i && i < _argc - 1)
-    {
-        numnetnodes = atoi(_argv[i + 1]);
-    }
+    IntFlag("-nodes", &numnetnodes, "n",
+            "number of nodes (players) in game, default 2");
+    IPXRegisterFlags();
+    NetRegisterFlags();
+    args = ParseCommandLine(argc, argv);
 
     // make sure the network exists and create a bunch of buffers
     InitNetwork();
@@ -263,7 +266,7 @@ void main(void)
     //
     // launch DOOM
     //
-    LaunchDOOM();
+    LaunchDOOM(args);
 
     // cleanup
     ShutdownNetwork();

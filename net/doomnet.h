@@ -46,6 +46,6 @@ extern doomcom_t doomcom;
 extern void interrupt(*olddoomvect) (void);
 extern int vectorishooked;
 
-int CheckParm(char *check);
-void LaunchDOOM(void);
+void NetRegisterFlags(void);
+void LaunchDOOM(char **args);
 void interrupt NetISR(void);

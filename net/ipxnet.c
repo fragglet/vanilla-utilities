@@ -7,7 +7,10 @@
 #include <process.h>
 #include <values.h>
 
+#include "lib/flag.h"
 #include "net/ipxnet.h"
+
+#define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */
 
 /*
 =============================================================================
@@ -25,7 +28,8 @@ nodeadr_t remoteadr;            // set by each GetPacket
 
 localadr_t localadr;            // set at startup
 
-int socketid = 0x869c;          // 0x869c is the official DOOM socket
+static int port_flag = DOOM_DEFAULT_PORT;
+static int socketid;
 
 union REGS regs;                // scratch for int86 calls
 struct SREGS sregs;
@@ -91,6 +95,11 @@ void GetLocalAddress(void)
         Error("Get inet addr: 0x%x", regs.h.al);
 }
 
+void IPXRegisterFlags(void)
+{
+    IntFlag("-port", &port_flag, "port", "use alternate IPX port number");
+}
+
 /*
 ====================
 =
@@ -117,13 +126,11 @@ void InitNetwork(void)
     //
     // allocate a socket for sending and receiving
     //
-    i = CheckParm("-port");
-    if (i > 0 && i < _argc - 1)
+    socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
+    if (port_flag != (int) DOOM_DEFAULT_PORT)
     {
-        socketid = atoi(_argv[i + 1]);
-        printf("Using alternate port %i for network\n", socketid);
+        printf("Using alternate port %i for network\n", port_flag);
     }
-    socketid = OpenSocket((socketid >> 8) + ((socketid & 255) << 8));
 
     GetLocalAddress();
 

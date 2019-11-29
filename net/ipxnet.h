@@ -85,10 +85,10 @@ extern nodeadr_t remoteadr;
 
 void Error(char *error, ...);
 
+void IPXRegisterFlags(void);
 void InitNetwork(void);
 void ShutdownNetwork(void);
 void SendPacket(int destination);
 int GetPacket(void);
-int CheckParm(char *check);
 
 void PrintAddress(nodeadr_t *adr, char *str);

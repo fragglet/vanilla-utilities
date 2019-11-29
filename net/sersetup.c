@@ -1,5 +1,6 @@
 // sersetup.c
 
+#include "lib/flag.h"
 #include "net/sersetup.h"
 #include "net/doomnet.h"
 
@@ -397,7 +398,7 @@ void InitModem(void)
 =============
 */
 
-void Dial(void)
+void Dial(char *dial_no)
 {
     char cmd[80];
     int p;
@@ -406,15 +407,16 @@ void Dial(void)
     InitModem();
 
     printf("\nDialing...\n\n");
-    p = CheckParm("-dial");
-    sprintf(cmd, "ATDT%s", _argv[p + 1]);
+    sprintf(cmd, "ATDT%s", dial_no);
 
     ModemCommand(cmd);
     ModemResponse("CONNECT");
     if (strncmp(response + 8, "9600", 4))
+    {
         Error("The connection MUST be made at 9600 baud, "
 	      "no error correction, no compression!\n"
               "Check your modem initialization string!");
+    }
     doomcom.consoleplayer = 1;
 }
 
@@ -447,15 +449,28 @@ void Answer(void)
 =================
 */
 
-void main(void)
+void main(int argc, char *argv[])
 {
-    int p;
+    int answer = 0;
+    int force_player1 = 0;
+    char *dial_no = NULL;
+    char **args;
+
+    BoolFlag("-answer", &answer, "listen for incoming call");
+    StringFlag("-dial", &dial_no, "phone number",
+               "dial the given phone number");
+    BoolFlag("-player1", &force_player1, "force this side to be player 1");
+    SerialRegisterFlags();
+    NetRegisterFlags();
+
+    args = ParseCommandLine(argc, argv);
 
     //
     // set network characteristics
     //
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
+    doomcom.consoleplayer = 0;
     doomcom.numnodes = 2;
     doomcom.numplayers = 2;
     doomcom.drone = 0;
@@ -466,60 +481,33 @@ void main(void)
 	   "-------------------------\n");
     //
     // allow override of automatic player ordering to allow a slower computer
-    // to be set as player 1 allways
+    // to be set as player 1 always
     //
-    if (CheckParm("-player1"))
+    if (force_player1)
+    {
         doomcom.consoleplayer = 1;
-    else
-        doomcom.consoleplayer = 0;
+    }
 
     //
     // establish communications
     //
     InitPort();
 
-    if (CheckParm("-dial"))
-        Dial();
-    else if (CheckParm("-answer"))
+    if (dial_no != NULL)
+    {
+        Dial(dial_no);
+    }
+    else if (answer)
+    {
         Answer();
+    }
 
     Connect();
 
     //
     // launch DOOM
     //
-    LaunchDOOM();
-
-#if 0
-    {
-        union REGS regs;
-
-        delay(1000);
-        doomcom.command = CMD_SEND;
-        doomcom.datalength = 12;
-        memcpy(doomcom.data, "abcdefghijklmnop", 12);
-        int86(doomcom.intnum, &regs, &regs);
-
-        delay(1000);
-        doomcom.command = CMD_GET;
-        doomcom.datalength = 0;
-        int86(doomcom.intnum, &regs, &regs);
-        printf("datalength: %i\n", doomcom.datalength);
-
-        delay(1000);
-        doomcom.command = CMD_SEND;
-        doomcom.datalength = 12;
-        memcpy(doomcom.data, "abcdefghijklmnop", 12);
-        int86(doomcom.intnum, &regs, &regs);
-
-        delay(1000);
-        doomcom.command = CMD_GET;
-        doomcom.datalength = 0;
-        int86(doomcom.intnum, &regs, &regs);
-        printf("datalength: %i\n", doomcom.datalength);
-
-    }
-#endif
+    LaunchDOOM(args);
 
     Error(NULL);
 }

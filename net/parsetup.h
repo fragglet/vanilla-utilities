@@ -8,6 +8,7 @@
 typedef unsigned char byte;
 typedef enum { false, true } boolean;
 
+void ParallelRegisterFlags(void);
 void InitPort(void);
 void ShutdownPort(void);
 

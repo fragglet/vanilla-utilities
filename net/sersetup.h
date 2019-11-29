@@ -83,6 +83,7 @@ typedef struct {
     unsigned char data[QUESIZE];
 } que_t;
 
+void SerialRegisterFlags(void);
 void InitPort(void);
 void ShutdownPort(void);
 

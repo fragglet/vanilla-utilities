@@ -5,33 +5,18 @@
 #include <conio.h>
 #include <dos.h>
 
+#include "lib/flag.h"
 #include "net/doomnet.h"
 
+static int force_vector = 0;
 doomcom_t doomcom;
 int vectorishooked;
 void interrupt(*olddoomvect) (void);
 
-/*
-=================
-=
-= CheckParm
-=
-= Checks for the given parameter in the program's command line arguments
-=
-= Returns the argument number (1 to argc-1) or 0 if not present
-=
-=================
-*/
-
-int CheckParm(char *check)
+void NetRegisterFlags(void)
 {
-    int i;
-
-    for (i = 1; i < _argc; i++)
-        if (!stricmp(check, _argv[i]))
-            return i;
-
-    return 0;
+    IntFlag("-vector", &force_vector, "v",
+            "use interrupt vector v for network API");
 }
 
 /*
@@ -52,23 +37,18 @@ These fields in doomcom should be filled in before calling:
 =============
 */
 
-void LaunchDOOM(void)
+void LaunchDOOM(char **args)
 {
-    char *newargs[99];
-    char adrstring[10];
+    char addrstring[10];
     long flatadr;
-    int p;
     unsigned char far *vector;
 
     // prepare for DOOM
     doomcom.id = DOOMCOM_ID;
 
-    // hook an interrupt vector
-    p = CheckParm("-vector");
-
-    if (p)
+    if (force_vector)
     {
-        doomcom.intnum = sscanf("0x%x", _argv[p + 1]);
+        doomcom.intnum = force_vector;
     }
     else
     {
@@ -85,23 +65,17 @@ void LaunchDOOM(void)
             doomcom.intnum = 0x66;
         }
     }
+
     printf("Communicating with interupt vector 0x%x\n", doomcom.intnum);
 
     olddoomvect = getvect(doomcom.intnum);
     setvect(doomcom.intnum, NetISR);
     vectorishooked = 1;
 
-    // build the argument list for DOOM, adding a -net &doomcom
-    memcpy(newargs, _argv, (_argc + 1) * 2);
-    newargs[_argc] = "-net";
+    // Add -net &doomcom
     flatadr = (long)_DS *16 + (unsigned)&doomcom;
-    sprintf(adrstring, "%lu", flatadr);
-    newargs[_argc + 1] = adrstring;
-    newargs[_argc + 2] = NULL;
+    sprintf(addrstring, "%lu", flatadr);
+    args = AppendArgs(args, "-net", addrstring, NULL);
 
-    //     spawnv  (P_WAIT, "m:\\newdoom\\doom", newargs);
-    spawnv(P_WAIT, "doom", newargs);
-
-    printf("Returned from DOOM\n");
-
+    spawnv(P_WAIT, args[0], args);
 }

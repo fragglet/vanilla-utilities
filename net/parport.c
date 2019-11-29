@@ -43,6 +43,10 @@ unsigned bufseg = 0;
 unsigned bufofs = 0;
 unsigned recv_count = 0;
 
+// Flags:
+static int lpt2, lpt3;
+static int port_flag;
+
 void CountInErr(void)
 {
 
@@ -79,6 +83,15 @@ void InitISR(void)
 
 }
 
+void ParallelRegisterFlags(void)
+{
+    BoolFlag("-lpt2", &lpt2, "use LPT2 instead of LPT1");
+    BoolFlag("-lpt3", &lpt3, "use LPT3");
+    IntFlag("-port", &port_flag, "port number",
+            "use I/O ports at given base address");
+    IntFlag("-irq", &irq, "irq", "IRQ number for parallel port");
+}
+
 /*
 ==============
 =
@@ -89,20 +102,18 @@ void InitISR(void)
 
 void GetPort(void)
 {
-    int p;
-
-    if (CheckParm("-lpt2"))
+    if (port_flag != 0)
+    {
+        portbase = port_flag;
+    }
+    else if (lpt2)
+    {
         portbase = 0x278;
-    else if (CheckParm("-lpt3"))
+    }
+    else if (lpt3)
+    {
         portbase = 0x3bc;
-
-    p = CheckParm("-port");
-    if (p)
-        sscanf(_argv[p + 1], "0x%x", &portbase);
-
-    p = CheckParm("-irq");
-    if (p)
-        sscanf(_argv[p + 1], "%u", &irq);
+    }
 
     printf("Using parallel printer port with base address 0x%x and IRQ %u\n",
            portbase, irq);

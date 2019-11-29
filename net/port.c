@@ -1,5 +1,6 @@
 // port.c
 
+#include "lib/flag.h"
 #include "net/doomnet.h"
 #include "net/sersetup.h"
 
@@ -24,6 +25,19 @@ int irqintnum;
 
 int comport;
 
+// Flags:
+int com2 = 0, com3 = 0, com4 = 0;
+int port_flag = 0, irq_flag = 0;
+
+void SerialRegisterFlags(void)
+{
+    BoolFlag("-com2", &com2, "use COM2 instead of COM1");
+    BoolFlag("-com3", &com3, "use COM3");
+    BoolFlag("-com4", &com4, "use COM4");
+    IntFlag("-port", &port_flag, "port", "explicit I/O port for UART");
+    IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
+}
+
 /*
 ==============
 =
@@ -41,11 +55,11 @@ void GetUart(void)
     static int MCA_IRQs[] = { 4, 3, 3, 3 };
     int p;
 
-    if (CheckParm("-com2"))
+    if (com2)
         comport = 2;
-    else if (CheckParm("-com3"))
+    else if (com3)
         comport = 3;
-    else if (CheckParm("-com4"))
+    else if (com4)
         comport = 4;
     else
         comport = 1;
@@ -70,12 +84,14 @@ void GetUart(void)
         uart = ISA_uarts[comport - 1];
     }
 
-    p = CheckParm("-port");
-    if (p)
-        scanf(_argv[p + 1], "0x%x", &uart);
-    p = CheckParm("-irq");
-    if (p)
-        scanf(_argv[p + 1], "%i", &irq);
+    if (port_flag != 0)
+    {
+        uart = port_flag;
+    }
+    if (irq_flag != 0)
+    {
+        irq = irq_flag;
+    }
 
     printf("Looking for UART at port 0x%x, irq %i\n", uart, irq);
 }

@@ -28,7 +28,7 @@
 
 typedef unsigned char byte;
 
-static unsigned int portbase = 0x378;
+unsigned int portbase = 0x378;
 unsigned irq = 7;
 
 #define BUFSIZE 512
@@ -39,8 +39,8 @@ static unsigned icnt = 0;
 
 byte pktbuf[BUFSIZE];
 
-static unsigned int bufseg = 0;
-static unsigned int bufofs = 0;
+unsigned int bufseg = 0;
+unsigned int bufofs = 0;
 unsigned int recv_count = 0;
 
 // Flags:

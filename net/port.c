@@ -26,7 +26,7 @@ static int irqintnum;
 static int comport;
 
 // Flags:
-static static static int com2 = 0, com3 = 0, com4 = 0;
+static int com2 = 0, com3 = 0, com4 = 0;
 static int port_flag = 0, irq_flag = 0;
 
 void SerialRegisterFlags(void)

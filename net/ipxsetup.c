@@ -37,6 +37,7 @@ void Error(char *error, ...)
     vprintf(error, argptr);
     va_end(argptr);
     printf("\n");
+    ShutdownNetwork();
     exit(1);
 }
 

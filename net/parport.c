@@ -28,20 +28,20 @@
 
 typedef unsigned char byte;
 
-unsigned portbase = 0x378;
+static unsigned int portbase = 0x378;
 unsigned irq = 7;
 
 #define BUFSIZE 512
-void interrupt(*oldisr) ();
-byte oldmask;
-unsigned errcnt = 0;
-unsigned icnt = 0;
+static void interrupt(*oldisr) ();
+static byte oldmask;
+unsigned int errcnt = 0;
+static unsigned icnt = 0;
 
 byte pktbuf[BUFSIZE];
 
-unsigned bufseg = 0;
-unsigned bufofs = 0;
-unsigned recv_count = 0;
+static unsigned int bufseg = 0;
+static unsigned int bufofs = 0;
+unsigned int recv_count = 0;
 
 // Flags:
 static int lpt2, lpt3;

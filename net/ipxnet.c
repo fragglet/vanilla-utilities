@@ -20,28 +20,28 @@
 =============================================================================
 */
 
-packet_t packets[NUMPACKETS];
+static packet_t packets[NUMPACKETS];
 
 nodeadr_t nodeadr[MAXNETNODES + 1];     // first is local, last is broadcast
 
 nodeadr_t remoteadr;            // set by each GetPacket
 
-localadr_t localadr;            // set at startup
+static localadr_t localadr;            // set at startup
 
 static int port_flag = DOOM_DEFAULT_PORT;
 static int socketid;
 
-union REGS regs;                // scratch for int86 calls
-struct SREGS sregs;
+static union REGS regs;                // scratch for int86 calls
+static struct SREGS sregs;
 
-unsigned short enteripx[2];
+static unsigned short enteripx[2];
 
 long localtime;                 // for time stamp in packets
 long remotetime;
 
 //===========================================================================
 
-char *hex = "0123456789abcdef";
+static const char *hex = "0123456789abcdef";
 
 void PrintAddress(nodeadr_t *adr, char *str)
 {

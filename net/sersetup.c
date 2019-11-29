@@ -9,8 +9,8 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
-int usemodem;
-char startup[256], shutdown[256];
+static int usemodem;
+static char startup[256], shutdown[256];
 
 void ModemCommand(char *str);
 
@@ -97,9 +97,9 @@ void Error(char *error, ...)
 #define	FRAMECHAR	0x70
 
 char packet[MAXPACKET];
-int packetlen;
-int inescape;
-int newpacket;
+static int packetlen;
+static int inescape;
+static int newpacket;
 
 boolean ReadPacket(void)
 {
@@ -305,7 +305,7 @@ void ModemCommand(char *str)
 ==============
 */
 
-char response[80];
+static char response[80];
 
 void ModemResponse(char *resp)
 {

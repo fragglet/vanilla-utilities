@@ -8,26 +8,26 @@ void JumpStart(void);
 
 void interrupt ISR8250(void);
 
-union REGS regs;
-struct SREGS sregs;
+static union REGS regs;
+static struct SREGS sregs;
 
 que_t inque, outque;
 
 int uart;                       // io address
-enum { UART_8250, UART_16550 } uart_type;
+static enum { UART_8250, UART_16550 } uart_type;
 int irq;
 
-int modem_status = -1;
-int line_status = -1;
+static int modem_status = -1;
+static int line_status = -1;
 
-void interrupt(*oldirqvect) (void);
-int irqintnum;
+static void interrupt(*oldirqvect) (void);
+static int irqintnum;
 
-int comport;
+static int comport;
 
 // Flags:
-int com2 = 0, com3 = 0, com4 = 0;
-int port_flag = 0, irq_flag = 0;
+static static static int com2 = 0, com3 = 0, com4 = 0;
+static int port_flag = 0, irq_flag = 0;
 
 void SerialRegisterFlags(void)
 {

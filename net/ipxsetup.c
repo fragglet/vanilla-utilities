@@ -12,10 +12,9 @@
 #include "lib/flag.h"
 #include "net/ipxnet.h"
 
-int gameid;
-int numnetnodes;
+static int numnetnodes;
 
-setupdata_t nodesetup[MAXNETNODES];
+static setupdata_t nodesetup[MAXNETNODES];
 
 /*
 =================
@@ -235,7 +234,6 @@ void main(int argc, char *argv[])
     //
     // determine game parameters
     //
-    gameid = 0;
     numnetnodes = 2;
     doomcom.ticdup = 1;
     doomcom.extratics = 1;

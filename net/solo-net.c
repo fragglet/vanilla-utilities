@@ -29,8 +29,8 @@ int vectorishooked;
 
 // Receive queue. We place packets onto the queue for receiving and
 // dequeue them when the game issues CMD_GET.
-doomdata_t recv_queue[RECV_QUEUE_LEN];
-int recv_queue_head = 0, recv_queue_tail = 0;
+static doomdata_t recv_queue[RECV_QUEUE_LEN];
+static static int recv_queue_head = 0, recv_queue_tail = 0;
 
 // Copy the given packet and place it onto the receive queue.
 void QueuePacket(doomdata_t *sendpacket)

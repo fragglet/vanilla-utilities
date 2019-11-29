@@ -456,6 +456,8 @@ void main(int argc, char *argv[])
     char *dial_no = NULL;
     char **args;
 
+    SetHelpText("Doom serial port network device driver",
+                "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
     BoolFlag("-answer", &answer, "listen for incoming call");
     StringFlag("-dial", &dial_no, "phone number",
                "dial the given phone number");
@@ -475,10 +477,6 @@ void main(int argc, char *argv[])
     doomcom.numplayers = 2;
     doomcom.drone = 0;
 
-    printf("\n"
-           "-------------------------\n"
-           "DOOM SERIAL DEVICE DRIVER\n"
-	   "-------------------------\n");
     //
     // allow override of automatic player ordering to allow a slower computer
     // to be set as player 1 always

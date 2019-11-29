@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
     char bufaddr[20];
     long flataddr;
 
+    SetHelpText("Doom statistics driver",
+                "%s -o stats.txt doom2.exe -skill 4");
     StringFlag("-o", &output_filename, "filename",
                "file to write captured statistics");
     ControlRegisterFlags();

@@ -244,11 +244,8 @@ void main(int argc, char *argv[])
     doomcom.skill = 2;
     doomcom.deathmatch = 0;
 
-    printf("\n"
-           "--------------------------\n"
-           "DOOM NETWORK DEVICE DRIVER\n"
-           "--------------------------\n");
-
+    SetHelpText("Doom IPX network device driver",
+                "%s -nodes 4 doom.exe -warp 2 2 -deathmatch -skill 4");
     IntFlag("-nodes", &numnetnodes, "n",
             "number of nodes (players) in game, default 2");
     IPXRegisterFlags();

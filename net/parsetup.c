@@ -233,6 +233,8 @@ void main(int argc, char *argv[])
     int force_player1;
     time_t t;
 
+    SetHelpText("Doom parallel port network device driver",
+                "%s doom2.exe -warp 15 -skill 3");
     BoolFlag("-player1", &force_player1, "force this side to be player 1");
     ParallelRegisterFlags();
     NetRegisterFlags();
@@ -249,11 +251,6 @@ void main(int argc, char *argv[])
     doomcom.drone = 0;
 
     t = time(&t);
-
-    printf("\n"
-           "DOOM PRINTER PORT DEVICE DRIVER version 1.1\n"
-           "Brought to you by the American Society of Reverse Engineers\n"
-           "Send comments or (gasp!) bug reports to asre@uiuc.edu\n\n");
 
     //
     // allow override of automatic player ordering to allow a slower computer

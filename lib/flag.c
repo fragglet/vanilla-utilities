@@ -28,8 +28,15 @@ struct flag {
     } value;
 };
 
+static char *description, *example;
 static struct flag flags[MAX_FLAGS];
 static int num_flags;
+
+void SetHelpText(char *program_description, char *example_cmd)
+{
+    description = program_description;
+    example = example_cmd;
+}
 
 static struct flag *NewFlag(const char *name, const char *help_text)
 {
@@ -73,6 +80,10 @@ static void Usage(FILE *output, const char *program)
     int columns;
     int i, cnt;
 
+    if (description != NULL)
+    {
+        fprintf(output, "%s\n\n", description);
+    }
     fprintf(output, "Usage: %s [args] [command]\n", program);
 
     columns = 0;
@@ -110,18 +121,12 @@ static void Usage(FILE *output, const char *program)
         fprintf(output, "%s\n", f->help_text);
     }
 
-    fprintf(output, "\nExample:\n");
-    fprintf(output, "  %s ", program);
-    for (i = 0; i < num_flags; ++i)
+    if (example != NULL)
     {
-        f = &flags[i];
-        if (f->type == FLAG_BOOL)
-        {
-            fprintf(output, "%s ", f->name);
-            break;
-        }
+        fprintf(output, "\nExample:\n  ");
+        fprintf(output, example, program);
+        fprintf(output, "\n\n");
     }
-    fprintf(output, "doom.exe -skill 4 -warp 2 2\n\n");
 }
 
 static struct flag *MustFindFlagForName(const char *program, const char *name)

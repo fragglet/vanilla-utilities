@@ -94,6 +94,10 @@ static void Usage(FILE *output, const char *program)
     for (i = 0; i < num_flags; ++i)
     {
         f = &flags[i];
+        if (f->help_text == NULL)
+        {
+            continue;
+        }
         cnt = fprintf(output, "  %s", f->name);
         if (f->type != FLAG_BOOL)
         {

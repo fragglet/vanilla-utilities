@@ -31,9 +31,9 @@ int port_flag = 0, irq_flag = 0;
 
 void SerialRegisterFlags(void)
 {
-    BoolFlag("-com2", &com2, "use COM2 instead of COM1");
-    BoolFlag("-com3", &com3, "use COM3");
-    BoolFlag("-com4", &com4, "use COM4");
+    BoolFlag("-com2", &com2, "(and -com3, -com4) use COMx instead of COM1");
+    BoolFlag("-com3", &com3, NULL);
+    BoolFlag("-com4", &com4, NULL);
     IntFlag("-port", &port_flag, "port", "explicit I/O port for UART");
     IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
 }

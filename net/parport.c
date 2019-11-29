@@ -85,8 +85,8 @@ void InitISR(void)
 
 void ParallelRegisterFlags(void)
 {
-    BoolFlag("-lpt2", &lpt2, "use LPT2 instead of LPT1");
-    BoolFlag("-lpt3", &lpt3, "use LPT3");
+    BoolFlag("-lpt2", &lpt2, "(and -lpt3) use LPTx instead of LPT1");
+    BoolFlag("-lpt3", &lpt3, NULL);
     IntFlag("-port", &port_flag, "port number",
             "use I/O ports at given base address");
     IntFlag("-irq", &irq, "irq", "IRQ number for parallel port");

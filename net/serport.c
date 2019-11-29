@@ -1,4 +1,4 @@
-// port.c
+// serport.c
 
 #include "lib/flag.h"
 #include "net/doomnet.h"

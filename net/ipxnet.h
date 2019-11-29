@@ -59,6 +59,8 @@ typedef struct ECBStructure {
 
     WORD fAddress[2];           /* offset-segment */
     WORD fSize;                 /* low-high */
+    WORD f2Address[2];          /* offset-segment */
+    WORD f2Size;                /* low-high */
 } ECB;
 
 // time is used by the communication driver to sequence packets returned

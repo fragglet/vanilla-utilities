@@ -141,7 +141,6 @@ void InitNetwork(void)
 
     for (i = 1; i < NUMPACKETS; i++)
     {
-        packets[i].ecb.InUseFlag = 0x1d;
         packets[i].ecb.ECBSocket = socketid;
         packets[i].ecb.FragmentCount = 1;
         packets[i].ecb.fAddress[0] = FP_OFF(&packets[i].ipx);
@@ -157,13 +156,15 @@ void InitNetwork(void)
     memset(&packets[0], 0, sizeof(packets[0]));
 
     packets[0].ecb.ECBSocket = socketid;
-    packets[0].ecb.FragmentCount = 1;
+    packets[0].ecb.FragmentCount = 2;
     packets[0].ecb.fAddress[0] = FP_OFF(&packets[0].ipx);
     packets[0].ecb.fAddress[1] = FP_SEG(&packets[0].ipx);
     for (j = 0; j < 4; j++)
         packets[0].ipx.dNetwork[j] = localadr.network[j];
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
+    packets[0].ecb.f2Address[0] = FP_OFF(&doomcom.data);
+    packets[0].ecb.f2Address[1] = FP_SEG(&doomcom.data);
 
     // known local node at 0
     for (i = 0; i < 6; i++)
@@ -201,11 +202,6 @@ void SendPacket(int destination)
 {
     int j;
 
-    // find a free packet buffer to use
-    while (packets[0].ecb.InUseFlag)
-    {
-    }
-
     // set the time
     packets[0].time = localtime;
 
@@ -215,10 +211,8 @@ void SendPacket(int destination)
             nodeadr[destination].node[j];
 
     // set the length (ipx + time + datalength)
-    packets[0].ecb.fSize = sizeof(IPXPacket) + 4 + doomcom.datalength + 4;
-
-    // put the data into an ipx packet
-    memcpy(&packets[0].data, &doomcom.data, doomcom.datalength);
+    packets[0].ecb.fSize = sizeof(IPXPacket) + 4;
+    packets[0].ecb.f2Size = doomcom.datalength + 4;
 
     // send the packet
     regs.x.si = FP_OFF(&packets[0]);
@@ -229,6 +223,13 @@ void SendPacket(int destination)
 
     if (regs.h.al)
         Error("SendPacket: 0x%x", regs.h.al);
+
+    while (packets[0].ecb.InUseFlag != 0)
+    {
+        // IPX Relinquish Control - polled drivers MUST have this here!
+        regs.x.bx = 10;
+        int86x(0x7a, &regs, &regs, &sregs);
+    }
 }
 
 unsigned short ShortSwap(unsigned short i)

@@ -9,12 +9,18 @@
 #include "net/doomnet.h"
 
 static int force_vector = 0;
+static int dup = 0, extratics = 0;
 doomcom_t doomcom;
 int vectorishooked;
 void interrupt(*olddoomvect) (void);
 
 void NetRegisterFlags(void)
 {
+    IntFlag("-dup", &dup, "n",
+            "reduce game solution by factor n");
+    IntFlag("-extratics", &extratics, "n",
+            "send n extra tics per packet as insurance");
+    BoolFlag("-extratic", &extratics, NULL);
     IntFlag("-vector", &force_vector, "v",
             "use interrupt vector v for network API");
 }
@@ -42,6 +48,15 @@ void LaunchDOOM(char **args)
     char addrstring[10];
     long flatadr;
     unsigned char far *vector;
+
+    if (dup != 0)
+    {
+	doomcom.ticdup = (short) dup;
+    }
+    if (extratics != 0)
+    {
+	doomcom.extratics = (short) extratics;
+    }
 
     // prepare for DOOM
     doomcom.id = DOOMCOM_ID;

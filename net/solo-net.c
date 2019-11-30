@@ -18,22 +18,20 @@
 #include <dos.h>
 #include <process.h>
 
+#include "lib/flag.h"
 #include "net/doomnet.h"
 
 #define RECV_QUEUE_LEN 8
 
-doomcom_t doomcom;
-doomdata_t *packet;
-void interrupt(*olddoomvect) (void);
-int vectorishooked;
+static doompacket_t *packet;
 
 // Receive queue. We place packets onto the queue for receiving and
 // dequeue them when the game issues CMD_GET.
-static doomdata_t recv_queue[RECV_QUEUE_LEN];
-static static int recv_queue_head = 0, recv_queue_tail = 0;
+static doompacket_t recv_queue[RECV_QUEUE_LEN];
+static int recv_queue_head = 0, recv_queue_tail = 0;
 
 // Copy the given packet and place it onto the receive queue.
-void QueuePacket(doomdata_t *sendpacket)
+static void QueuePacket(doompacket_t *sendpacket)
 {
     // Don't overflow the queue. Drop packets if necessary.
     if (((recv_queue_tail + 1) % RECV_QUEUE_LEN) == recv_queue_head)
@@ -41,21 +39,21 @@ void QueuePacket(doomdata_t *sendpacket)
         return;
     }
 
-    memcpy(&recv_queue[recv_queue_tail], sendpacket, sizeof(doomdata_t));
+    memcpy(&recv_queue[recv_queue_tail], sendpacket, sizeof(doompacket_t));
 
     recv_queue_tail = (recv_queue_tail + 1) % RECV_QUEUE_LEN;
 }
 
 // Calculate the size (in bytes) of the given packet. This is important
 // because the game will discard packets of the wrong length.
-int PacketSize(doomdata_t *sendpacket)
+static int PacketSize(doompacket_t *sendpacket)
 {
     return 8 + sizeof(ticcmd_t) * sendpacket->numtics;
 }
 
 // Calculate the checksum for the given packet and fill in the checksum
 // field. If a packet has the wrong checksum the game will discard it.
-void CalculateChecksum(doomdata_t *sendpacket)
+static void CalculateChecksum(doompacket_t *sendpacket)
 {
     unsigned long c;
     unsigned long *p;
@@ -78,9 +76,9 @@ void CalculateChecksum(doomdata_t *sendpacket)
 }
 
 // Invoked when the game wants to send a packet.
-void SendPacket(void)
+static void SendPacket(void)
 {
-    static doomdata_t reply;
+    static doompacket_t reply;
     int i;
 
     // The game sent a packet to us with some tics. To keep the game
@@ -128,7 +126,7 @@ void SendPacket(void)
 }
 
 // Invoked when the game wants to check if a packet can be received.
-void ReceivePacket(void)
+static void ReceivePacket(void)
 {
     // Receive queue empty?
     if (recv_queue_head == recv_queue_tail)
@@ -139,7 +137,7 @@ void ReceivePacket(void)
     }
 
     // Dequeue a packet.
-    memcpy(packet, &recv_queue[recv_queue_head], sizeof(doomdata_t));
+    memcpy(packet, &recv_queue[recv_queue_head], sizeof(doompacket_t));
     recv_queue_head = (recv_queue_head + 1) % RECV_QUEUE_LEN;
 
     // Use the player number inside the packet as the remotenode.
@@ -164,32 +162,9 @@ void interrupt NetISR(void)
     }
 }
 
-// Launch the game with the specified command line options. The magic
-// -net parameter will be appended to them.
-void LaunchGame(int argc, char **argv)
-{
-    char addr_string[32];
-    char **actual_argv;
-    long flataddr;
-
-    // Construct a new arguments array with -net argument appended.
-    actual_argv = malloc(sizeof(char *) * (argc + 3));
-    memcpy(actual_argv, argv, sizeof(char *) * argc);
-    actual_argv[argc] = "-net";
-    actual_argv[argc + 1] = addr_string;
-    actual_argv[argc + 2] = NULL;
-
-    flataddr = (long)_DS *16 + (unsigned)(&doomcom);
-    sprintf(addr_string, "%li", flataddr);
-
-    spawnv(P_WAIT, actual_argv[0], actual_argv);
-}
-
 // Initialize the doomcom structure to default values.
-void InitDoomcom(void)
+static void InitDoomcom(void)
 {
-    doomcom.id = DOOMCOM_ID;
-    doomcom.intnum = 0;         // Default = determine automatically
     doomcom.numnodes = 1;
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
@@ -207,118 +182,22 @@ void InitDoomcom(void)
     doomcom.map = 1;
     doomcom.skill = 3;
 
-    packet = (doomdata_t *) & doomcom.data;
-}
-
-// Parse command line options and set fields in doomcom appropriately.
-int ParseCommandLine(int *argc, char ***argv)
-{
-    int i;
-
-    for (i = 1; i < *argc; ++i)
-    {
-        if (!strcmp((*argv)[i], "-vector") && (i + 1) < *argc)
-        {
-            sscanf((*argv)[i + 1], "0x%x", &doomcom.intnum);
-            ++i;
-        }
-        else if (!strcmp((*argv)[i], "-ticdup") && (i + 1) < *argc)
-        {
-            doomcom.ticdup = atoi((*argv)[i + 1]);
-            ++i;
-        }
-        else if (!strcmp((*argv)[i], "-nodes") && (i + 1) < *argc)
-        {
-            doomcom.numplayers = doomcom.numnodes = atoi((*argv)[i + 1]);
-            ++i;
-        }
-        else if ((*argv)[i][0] == '-')
-        {
-            // Last argument must be the executable eg. doom.exe
-            // It can't be another argument.
-            return 0;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    *argc -= i;
-    *argv += i;
-
-    return *argc >= 1;
-}
-
-int VectorAvailable(int intnum)
-{
-    unsigned char far *vector;
-    vector = *(char far * far *)(intnum * 4);
-
-    return vector != NULL && vector != (unsigned char far *)0xcf;
-}
-
-// Hook our ISR into the specified interrupt vector.
-void HookVector(void)
-{
-    // If no vector was specified with -vector, find one to use automatically.
-    if (doomcom.intnum == 0)
-    {
-        for (doomcom.intnum = 0x60; doomcom.intnum <= 0x66; doomcom.intnum++)
-        {
-            if (VectorAvailable(doomcom.intnum))
-            {
-                break;
-            }
-        }
-    }
-
-    if (!VectorAvailable(doomcom.intnum))
-    {
-        fprintf(stderr, "Can't use vector 0x%x.\n", doomcom.intnum);
-        exit(-1);
-    }
-
-    olddoomvect = getvect(doomcom.intnum);
-    setvect(doomcom.intnum, (void interrupt(*)(void))MK_FP(_CS, (int)NetISR));
-    vectorishooked = 1;
-}
-
-// Restore the old interrupt vector that was in place before we
-// installed ours.
-void RestoreVector(void)
-{
-    if (vectorishooked)
-    {
-        setvect(doomcom.intnum, olddoomvect);
-        vectorishooked = 0;
-    }
-}
-
-void Usage(void)
-{
-    printf("Usage:\n\n"
-           "solo-net [-nodes n] [-ticdup n] [-vector 0xNN] doom2.exe [args]\n"
-           "\n"
-           "  -nodes n     - Simulate a game containing n other players.\n"
-           "                 Default is to simulate a netgame with a single player.\n"
-           "  -ticdup n    - Duplicate tics, reducing the game's granularity.\n"
-           "  -vector 0xNN - Hook the network driver at the given interrupt vector.\n"
-           "\n");
+    packet = (doompacket_t *) &doomcom.data;
 }
 
 int main(int argc, char *argv[])
 {
-    InitDoomcom();
-    if (!ParseCommandLine(&argc, &argv))
-    {
-        Usage();
-        exit(-1);
-    }
-    HookVector();
-    LaunchGame(argc, argv);
+    char **args;
+    int nodes = 1;
 
-    RestoreVector();
+    IntFlag("-nodes", &nodes, "n", "number of players in game");
+    NetRegisterFlags();
+    args = ParseCommandLine(argc, argv);
+    InitDoomcom();
+    doomcom.numplayers = nodes;
+    doomcom.numnodes = nodes;
+
+    LaunchDOOM(args);
 
     return 0;
 }

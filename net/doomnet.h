@@ -42,6 +42,43 @@ typedef struct {
     char data[512];
 } doomcom_t;
 
+#define BACKUPTICS 12
+
+#define NCMD_EXIT       0x80000000l
+#define NCMD_RETRANSMIT 0x40000000l
+#define NCMD_SETUP      0x20000000l
+#define NCMD_KILL       0x10000000l     // kill game
+#define NCMD_CHECKSUM   0x0fffffffl
+
+// The data sampled per tick (single player)
+// and transmitted to other peers (multiplayer).
+// Mainly movements/button commands per game tick,
+// plus a checksum for internal state consistency.
+typedef struct
+{
+    char        forwardmove;    // *2048 for move
+    char        sidemove;       // *2048 for move
+    short       angleturn;      // <<16 for angle delta
+    short       consistancy;    // checks for net game
+    unsigned char chatchar;
+    unsigned char buttons;
+} ticcmd_t;
+
+//
+// Network packet data.
+//
+typedef struct
+{
+    // High bit is retransmit request.
+    unsigned long       checksum;
+    // Only valid if NCMD_RETRANSMIT.
+    unsigned char       retransmitfrom;
+    unsigned char       starttic;
+    unsigned char       player;
+    unsigned char       numtics;
+    ticcmd_t            cmds[BACKUPTICS];
+} doompacket_t;
+
 extern doomcom_t doomcom;
 extern void interrupt(*olddoomvect) (void);
 extern int vectorishooked;

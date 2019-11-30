@@ -210,14 +210,14 @@ int ReadByte(void)
 
     if (inque.tail >= inque.head)
         return -1;
-    c = inque.data[inque.tail % QUESIZE];
+    c = inque.data[inque.tail & (QUESIZE - 1)];
     inque.tail++;
     return c;
 }
 
 void WriteByte(int c)
 {
-    outque.data[outque.head % QUESIZE] = c;
+    outque.data[outque.head & (QUESIZE - 1)] = c;
     outque.head++;
 }
 
@@ -263,7 +263,7 @@ void interrupt ISR8250(void)
                     count = 1;
                 do
                 {
-                    c = outque.data[outque.tail % QUESIZE];
+                    c = outque.data[outque.tail & (QUESIZE - 1)];
                     outque.tail++;
                     OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
                 } while (--count && outque.tail < outque.head);
@@ -278,7 +278,7 @@ void interrupt ISR8250(void)
             do
             {
                 c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                inque.data[inque.head % QUESIZE] = c;
+                inque.data[inque.head & (QUESIZE - 1)] = c;
                 inque.head++;
             } while (uart_type == UART_16550
                      && INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
@@ -311,7 +311,7 @@ void JumpStart(void)
 
     if (outque.tail < outque.head)
     {
-        c = outque.data[outque.tail % QUESIZE];
+        c = outque.data[outque.tail & (QUESIZE - 1)];
         outque.tail++;
         OUTPUT(uart, c);
     }

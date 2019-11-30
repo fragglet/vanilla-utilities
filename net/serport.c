@@ -6,7 +6,8 @@
 
 void JumpStart(void);
 
-void interrupt ISR8250(void);
+static void interrupt ISR8250(void);
+static void interrupt ISR16550(void);
 
 static union REGS regs;
 static struct SREGS sregs;
@@ -24,16 +25,19 @@ static void interrupt(*oldirqvect) (void);
 static int irqintnum;
 
 static int comport;
+static int baudbits = 0xc;  // 9600 default
 
 // Flags:
 static int com2 = 0, com3 = 0, com4 = 0;
 static int port_flag = 0, irq_flag = 0;
+static int force_8250 = 0;
 
 void SerialRegisterFlags(void)
 {
     BoolFlag("-com2", &com2, "(and -com3, -com4) use COMx instead of COM1");
     BoolFlag("-com3", &com3, NULL);
     BoolFlag("-com4", &com4, NULL);
+    BoolFlag("-8250", &force_8250, "force detect 8250 UART, not 16550");
     IntFlag("-port", &port_flag, "port", "explicit I/O port for UART");
     IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
 }
@@ -108,6 +112,7 @@ void InitPort(void)
 {
     int mcr;
     int temp;
+    int u;
 
     //
     // find the irq and io address of the port
@@ -115,40 +120,76 @@ void InitPort(void)
     GetUart();
 
     //
+    // disable all uart interrupts
+    //
+    OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, 0);
+
+    //
     // init com port settings
     //
-    regs.x.ax = 0xf3;           //f3= 9600 n 8 1
-    regs.x.dx = comport - 1;
-    int86(0x14, &regs, &regs);
+
+    printf("Setting port to %lu baud\n", 115200l / baudbits);
+
+    // set baud rate
+    OUTPUT(uart + LINE_CONTROL_REGISTER, 0x83);
+    OUTPUT(uart, baudbits);
+    OUTPUT(uart + 1, 0);
+
+    // set line control register (N81)
+    OUTPUT(uart + LINE_CONTROL_REGISTER, 0x03);
+
+    // set modem control register (OUT2+RTS+DTR)
+    OUTPUT(uart + MODEM_CONTROL_REGISTER, 8 + 2 + 1);
 
     //
     // check for a 16550
     //
-    OUTPUT(uart + FIFO_CONTROL_REGISTER, FCR_FIFO_ENABLE + FCR_TRIGGER_04);
-    temp = INPUT(uart + INTERRUPT_ID_REGISTER);
-    if ((temp & 0xf8) == 0xc0)
+    if (force_8250)
     {
-        uart_type = UART_16550;
-        printf("UART is a 16550\n\n");
+        // allow a forced 8250
+        uart_type = UART_8250;
     }
     else
     {
-        uart_type = UART_8250;
-        OUTPUT(uart + FIFO_CONTROL_REGISTER, 0);
-        printf("UART is an 8250\n\n");
+        OUTPUT(uart + FIFO_CONTROL_REGISTER, FCR_FIFO_ENABLE + FCR_TRIGGER_04);
+        temp = INPUT(uart + INTERRUPT_ID_REGISTER);
+        if ((temp & 0xf8) == 0xc0)
+        {
+            uart_type = UART_16550;
+        }
+        else
+        {
+            uart_type = UART_8250;
+            OUTPUT(uart + FIFO_CONTROL_REGISTER, 0);
+        }
     }
 
     //
-    // prepare for interrupts
+    // clear out any pending uart events
     //
-    OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, 0);
-    mcr = INPUT(uart + MODEM_CONTROL_REGISTER);
-    mcr |= MCR_OUT2;
-    mcr &= ~MCR_LOOPBACK;
-    OUTPUT(uart + MODEM_CONTROL_REGISTER, mcr);
+    for (u = 0; u < 16; u++)    // clear an entire 16550 silo
+        INPUT(uart + RECEIVE_BUFFER_REGISTER);
 
-    INPUT(uart);                // Clear any pending interrupts
-    INPUT(uart + INTERRUPT_ID_REGISTER);
+    do
+    {
+        switch (u = INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
+        {
+        case IIR_MODEM_STATUS_INTERRUPT:
+            modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
+            break;
+
+        case IIR_LINE_STATUS_INTERRUPT:
+            line_status = INPUT(uart + LINE_STATUS_REGISTER);
+            break;
+
+        case IIR_TX_HOLDING_REGISTER_INTERRUPT:
+            break;
+
+        case IIR_RX_DATA_READY_INTERRUPT:
+            INPUT(uart + RECEIVE_BUFFER_REGISTER);
+            break;
+        }
+    } while (!(u & 1));
 
     //
     // hook the irq vector
@@ -156,7 +197,16 @@ void InitPort(void)
     irqintnum = irq + 8;
 
     oldirqvect = getvect(irqintnum);
-    setvect(irqintnum, ISR8250);
+    if (uart_type == UART_16550)
+    {
+        setvect(irqintnum, ISR16550);
+        printf("UART = 16550\n\n");
+    }
+    else
+    {
+        setvect(irqintnum, ISR8250);
+        printf("UART = 8250\n\n");
+    }
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));
 
@@ -171,12 +221,7 @@ void InitPort(void)
 
     OUTPUT(0x20, 0xc2);
 
-    // set DTR
-    OUTPUT(uart + MODEM_CONTROL_REGISTER,
-           INPUT(uart + MODEM_CONTROL_REGISTER) | MCR_DTR);
-
     STI();
-
 }
 
 /*
@@ -189,8 +234,13 @@ void InitPort(void)
 
 void ShutdownPort(void)
 {
+    int u;
+
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, 0);
     OUTPUT(uart + MODEM_CONTROL_REGISTER, 0);
+
+    for (u = 0; u < 16; u++)    // clear an entire 16550 silo
+        INPUT(uart + RECEIVE_BUFFER_REGISTER);
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) | (1 << irq));
 
@@ -221,17 +271,7 @@ void WriteByte(int c)
     outque.head++;
 }
 
-//==========================================================================
-
-/*
-==============
-=
-= ISR8250
-=
-==============
-*/
-
-void interrupt ISR8250(void)
+static void interrupt ISR8250(void)
 {
     int c;
     int count;
@@ -257,16 +297,63 @@ void interrupt ISR8250(void)
             //I_ColorBlack (63,0,0);
             if (outque.tail < outque.head)
             {
-                if (uart_type == UART_16550)
-                    count = 16;
-                else
-                    count = 1;
-                do
-                {
-                    c = outque.data[outque.tail & (QUESIZE - 1)];
-                    outque.tail++;
-                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
-                } while (--count && outque.tail < outque.head);
+                c = outque.data[outque.tail & (QUESIZE - 1)];
+                outque.tail++;
+                OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+            }
+            break;
+
+            //
+            // receive
+            //
+        case IIR_RX_DATA_READY_INTERRUPT:
+            //I_ColorBlack (0,63,0);
+            c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
+            inque.data[inque.head & (QUESIZE - 1)] = c;
+            inque.head++;
+            break;
+
+            //
+            // done
+            //
+        default:
+            //I_ColorBlack (0,0,0);
+            OUTPUT(0x20, 0x20);
+            return;
+        }
+    }
+}
+
+static void interrupt ISR16550(void)
+{
+    int c;
+    int count;
+
+    while (1)
+    {
+        switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
+        {
+            // not enabled
+        case IIR_MODEM_STATUS_INTERRUPT:
+            modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
+            break;
+
+            // not enabled
+        case IIR_LINE_STATUS_INTERRUPT:
+            line_status = INPUT(uart + LINE_STATUS_REGISTER);
+            break;
+
+            //
+            // transmit
+            //
+        case IIR_TX_HOLDING_REGISTER_INTERRUPT:
+            //I_ColorBlack (63,0,0);
+            count = 16;
+            while (outque.tail < outque.head && count--)
+            {
+                c = outque.data[outque.tail & (QUESIZE - 1)];
+                outque.tail++;
+                OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
             }
             break;
 
@@ -280,8 +367,7 @@ void interrupt ISR8250(void)
                 c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
                 inque.data[inque.head & (QUESIZE - 1)] = c;
                 inque.head++;
-            } while (uart_type == UART_16550
-                     && INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
+            } while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
 
             break;
 

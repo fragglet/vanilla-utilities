@@ -411,12 +411,6 @@ void Dial(char *dial_no)
 
     ModemCommand(cmd);
     ModemResponse("CONNECT");
-    if (strncmp(response + 8, "9600", 4))
-    {
-        Error("The connection MUST be made at 9600 baud, "
-	      "no error correction, no compression!\n"
-              "Check your modem initialization string!");
-    }
     doomcom.consoleplayer = 1;
 }
 

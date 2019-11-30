@@ -9,7 +9,7 @@
 
 #include "lib/flag.h"
 
-#define MAX_FLAGS 12
+#define MAX_FLAGS 20
 
 enum flag_type {
     FLAG_BOOL,
@@ -91,7 +91,7 @@ static void Usage(FILE *output, const char *program)
     for (i = 0; i < num_flags; ++i)
     {
         f = &flags[i];
-        cnt = 6 + strlen(f->name);
+        cnt = 4 + strlen(f->name);
         if (f->type != FLAG_BOOL)
         {
             cnt += 3 + strlen(f->param_name);

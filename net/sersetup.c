@@ -11,6 +11,7 @@ extern int uart;
 
 static int usemodem;
 static char startup[256], shutdown[256];
+static long baudrate = 9600;
 
 void ModemCommand(char *str);
 
@@ -345,49 +346,36 @@ void ModemResponse(char *resp)
 /*
 =============
 =
-= ReadLine
-=
-=============
-*/
-
-void ReadLine(FILE *f, char *dest)
-{
-    int c;
-
-    do
-    {
-        c = fgetc(f);
-        if (c == EOF)
-            Error("EOF in modem.cfg");
-        if (c == '\r' || c == '\n')
-            break;
-        *dest++ = c;
-    } while (1);
-    *dest = 0;
-}
-
-/*
-=============
-=
 = InitModem
 =
 =============
 */
 
-void InitModem(void)
+static void ReadModemCfg(void)
 {
+    char baudline[16];
     int mcr;
     FILE *f;
 
     f = fopen("modem.cfg", "r");
     if (!f)
+    {
         Error("Couldn't read MODEM.CFG");
-    ReadLine(f, startup);
-    ReadLine(f, shutdown);
+    }
+    if (fgets(startup, sizeof(startup), f) == NULL
+     || fgets(shutdown, sizeof(shutdown), f) == NULL
+     || fgets(baudline, sizeof(baudline), f) == NULL)
+    {
+        Error("Unexpected error reading from MODEM.CFG");
+    }
     fclose(f);
 
-    ModemCommand(startup);
-    ModemResponse("OK");
+    errno = 0;
+    baudrate = strtol(baudline, NULL, 10);
+    if (baudrate == 0 && errno != 0)
+    {
+        Error("Error parsing baud rate '%s'", baudline);
+    }
 }
 
 /*
@@ -404,7 +392,8 @@ void Dial(char *dial_no)
     int p;
 
     usemodem = true;
-    InitModem();
+    ModemCommand(startup);
+    ModemResponse("OK");
 
     printf("\nDialing...\n\n");
     sprintf(cmd, "ATDT%s", dial_no);
@@ -425,7 +414,8 @@ void Dial(char *dial_no)
 void Answer(void)
 {
     usemodem = true;
-    InitModem();
+    ModemCommand(startup);
+    ModemResponse("OK");
     printf("\nWaiting for ring...\n\n");
 
     ModemResponse("RING");
@@ -453,7 +443,7 @@ void main(int argc, char *argv[])
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
     BoolFlag("-answer", &answer, "listen for incoming call");
-    StringFlag("-dial", &dial_no, "phone number",
+    StringFlag("-dial", &dial_no, "phone#",
                "dial the given phone number");
     BoolFlag("-player1", &force_player1, "force this side to be player 1");
     SerialRegisterFlags();
@@ -480,10 +470,15 @@ void main(int argc, char *argv[])
         doomcom.consoleplayer = 1;
     }
 
+    if (dial_no != NULL || answer)
+    {
+	ReadModemCfg();
+    }
+
     //
     // establish communications
     //
-    InitPort();
+    InitPort(baudrate);
 
     if (dial_no != NULL)
     {

@@ -84,7 +84,7 @@ typedef struct {
 } que_t;
 
 void SerialRegisterFlags(void);
-void InitPort(void);
+void InitPort(long baudrate);
 void ShutdownPort(void);
 
 int ReadByte(void);

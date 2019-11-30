@@ -25,18 +25,28 @@ static void interrupt(*oldirqvect) (void);
 static int irqintnum;
 
 static int comport;
-static int baudbits = 0xc;  // 9600 default
 
 // Flags:
 static int com2 = 0, com3 = 0, com4 = 0;
 static int port_flag = 0, irq_flag = 0;
 static int force_8250 = 0;
+static int baud_9600 = 0, baud_14400 = 0, baud_19200 = 0;
+static int baud_38400 = 0, baud_57600 = 0, baud_115200 = 0;
 
 void SerialRegisterFlags(void)
 {
     BoolFlag("-com2", &com2, "(and -com3, -com4) use COMx instead of COM1");
     BoolFlag("-com3", &com3, NULL);
     BoolFlag("-com4", &com4, NULL);
+
+    BoolFlag("-9600", &baud_9600,
+             "(and -14400, -19200, -38400, -57600, -115200) baud rate");
+    BoolFlag("-14400", &baud_14400, NULL);
+    BoolFlag("-19200", &baud_19200, NULL);
+    BoolFlag("-38400", &baud_38400, NULL);
+    BoolFlag("-57600", &baud_57600, NULL);
+    BoolFlag("-115200", &baud_115200, NULL);
+
     BoolFlag("-8250", &force_8250, "force detect 8250 UART, not 16550");
     IntFlag("-port", &port_flag, "port", "explicit I/O port for UART");
     IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
@@ -100,6 +110,32 @@ void GetUart(void)
     printf("Looking for UART at port 0x%x, irq %i\n", uart, irq);
 }
 
+static long OverrideBaudRate(long baudrate)
+{
+    int i;
+    struct {
+        int *flag;
+        long baud;
+    } bauds[] = {
+        {&baud_9600,   9600L},
+        {&baud_14400,  14400L},
+        {&baud_19200,  19200L},
+        {&baud_38400,  38400L},
+        {&baud_57600,  57600L},
+        {&baud_115200, 115200L},
+    };
+
+    for (i = 0; i < sizeof(bauds) / sizeof(*bauds); ++i)
+    {
+        if (*bauds[i].flag)
+        {
+            return bauds[i].baud;
+        }
+    }
+
+    return baudrate;
+}
+
 /*
 ===============
 =
@@ -108,11 +144,15 @@ void GetUart(void)
 ===============
 */
 
-void InitPort(void)
+void InitPort(long baudrate)
 {
+    int baudbits;
     int mcr;
     int temp;
     int u;
+
+    // Allow baud rate override via command line:
+    baudrate = OverrideBaudRate(baudrate);
 
     //
     // find the irq and io address of the port
@@ -128,9 +168,10 @@ void InitPort(void)
     // init com port settings
     //
 
-    printf("Setting port to %lu baud\n", 115200l / baudbits);
+    printf("Setting port to %lu baud\n", baudrate);
 
     // set baud rate
+    baudbits = 115200L / baudrate;
     OUTPUT(uart + LINE_CONTROL_REGISTER, 0x83);
     OUTPUT(uart, baudbits);
     OUTPUT(uart + 1, 0);

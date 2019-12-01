@@ -17,7 +17,7 @@ void interrupt(*olddoomvect) (void);
 void NetRegisterFlags(void)
 {
     IntFlag("-dup", &dup, "n",
-            "reduce game solution by factor n");
+            "reduce movement resolution & bandwidth by factor n");
     IntFlag("-extratics", &extratics, "n",
             "send n extra tics per packet as insurance");
     BoolFlag("-extratic", &extratics, NULL);

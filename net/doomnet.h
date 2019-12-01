@@ -6,7 +6,7 @@
 #define I_ColorBlack(r,g,b) {outp(PEL_WRITE_ADR,0);outp(PEL_DATA,r);outp(PEL_DATA,g);outp(PEL_DATA,b);};
 
 #define	MAXNETNODES		8       // max computers in a game
-#define	MAXPLAYERS		4       // 4 players max + drones
+#define	MAXPLAYERS		8       // up to 8 with Hexen/Strife
 
 #define	CMD_SEND	1
 #define	CMD_GET		2

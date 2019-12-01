@@ -29,7 +29,7 @@
 #ifndef STATS_H
 #define STATS_H
 
-#define MAXPLAYERS 4
+#define DOOM_MAXPLAYERS 4
 
 typedef struct {
     long in;                    /* whether the player is in game */
@@ -39,7 +39,7 @@ typedef struct {
     long sitems;
     long ssecret;
     long stime;
-    long frags[MAXPLAYERS];
+    long frags[DOOM_MAXPLAYERS];
     long score;                 /* current score on entry, modified on return */
 
 } wbplayerstruct_t;
@@ -65,7 +65,7 @@ typedef struct {
     /* index of this player in game */
     long pnum;
 
-    wbplayerstruct_t plyr[MAXPLAYERS];
+    wbplayerstruct_t plyr[DOOM_MAXPLAYERS];
 
 } wbstartstruct_t;
 

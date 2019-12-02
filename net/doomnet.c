@@ -4,6 +4,7 @@
 #include <process.h>
 #include <conio.h>
 #include <dos.h>
+#include <assert.h>
 
 #include "lib/flag.h"
 #include "net/doomnet.h"
@@ -51,11 +52,11 @@ void LaunchDOOM(char **args)
 
     if (dup != 0)
     {
-	doomcom.ticdup = (short) dup;
+        doomcom.ticdup = (short) dup;
     }
     if (extratics != 0)
     {
-	doomcom.extratics = (short) extratics;
+        doomcom.extratics = (short) extratics;
     }
 
     // prepare for DOOM
@@ -94,3 +95,56 @@ void LaunchDOOM(char **args)
 
     spawnv(P_WAIT, args[0], args);
 }
+
+// NetLocateDoomcom reads from the given args list and returns a pointer to a
+// doomcom_t struct based on the first -net argument that is found. The list
+// is modified to remove the argument. If no -net argument is found, NULL
+// is returned.
+doomcom_t far *NetLocateDoomcom(char **args)
+{
+    doomcom_t far *result = NULL;
+    int i, j;
+
+    for (i = 0, j = 0; args[i] != NULL; ++i, ++j)
+    {
+        if (!strcmp(args[i], "-net"))
+        {
+            long l;
+
+            assert(args[i + 1] != NULL);
+            l = strtol(args[i + 1], NULL, 10);
+            assert(l != 0);
+            result = (doomcom_t far *) l;
+            assert(result->id == DOOMCOM_ID);
+
+            i += 2;
+            break;
+        }
+    }
+
+    // Continue until end of list, shifting arguments back to overwrite -net.
+    do
+    {
+        args[j] = args[i];
+        ++i; ++j;
+    } while(args[i] != NULL);
+
+    return result;
+}
+
+void NetSendPacket(doomcom_t far *doomcom)
+{
+    union REGS regs;
+    doomcom->command = CMD_SEND;
+    int86(doomcom->intnum, &regs, &regs);
+}
+
+int NetGetPacket(doomcom_t far *doomcom)
+{
+    union REGS regs;
+    doomcom->command = CMD_GET;
+    int86(doomcom->intnum, &regs, &regs);
+    return doomcom->remotenode != -1;
+}
+
+

@@ -86,3 +86,7 @@ extern int vectorishooked;
 void NetRegisterFlags(void);
 void LaunchDOOM(char **args);
 void interrupt NetISR(void);
+doomcom_t far *NetLocateDoomcom(char **args);
+void NetSendPacket(doomcom_t far *doomcom);
+int NetGetPacket(doomcom_t far *doomcom);
+

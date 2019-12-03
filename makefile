@@ -9,6 +9,7 @@ SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj lib\flag.obj net\serport.obj
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj lib\flag.obj net\parport.obj \
                 net\plio.obj
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\flag.obj
+METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
                 lib\flag.obj
 
@@ -25,6 +26,8 @@ sersetup.exe: $(SERSETUP_OBJS)
 	tcc -e$* -o$@ $(SERSETUP_OBJS) >nul
 parsetup.exe: $(PARSETUP_OBJS)
 	tcc -e$* -o$@ $(PARSETUP_OBJS) >nul
+metanet.exe: $(METANET_OBJS)
+	tcc -e$* -o$@ $(METANET_OBJS) >nul
 statdump.exe: $(STATDUMP_OBJS)
 	tcc -e$* -o$@ $(STATDUMP_OBJS) >nul
 solo-net.exe: $(SOLO_NET_OBJS)

@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <time.h>
 #include <assert.h>
 
 #include "lib/flag.h"
@@ -15,6 +16,10 @@
 
 #define NODE_STATUS_GOT_DISCOVER  0x01
 #define NODE_STATUS_READY         0x02
+
+#define ADDR_DRIVER(x)  (((x) >> 5) & 0x1f)
+#define ADDR_NODE(x)    ((x) & 0x1f)
+#define MAKE_ADDRESS(driver, node)  (((driver) << 5) | node)
 
 // A node_addr_t is a routing path to take through the network
 // to reach the destination node. Each byte specifies the driver#
@@ -37,7 +42,7 @@ struct meta_header
 
 struct meta_data_msg
 {
-    struct meta_header hdr;
+    struct meta_header header;
     unsigned char data[1];  // [...]
 };
 
@@ -82,7 +87,7 @@ static int GetAndForward(int driver_index)
             continue;
         }
         _fmemmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
-        hdr->src[0] = (driver_index << 5) | dc->remotenode;
+        hdr->src[0] = MAKE_ADDRESS(driver_index, dc->remotenode);
         // Packet for ourself?
         if (hdr->dest == 0)
         {
@@ -90,8 +95,8 @@ static int GetAndForward(int driver_index)
         }
         // This is a forwarding packet.
         // Decode next hop from first byte of routing dest:
-        ddriver = (hdr->dest[0] >> 5) & 0x1f;
-        dnode = hdr->dest[0] & 0x1f;
+        ddriver = ADDR_DRIVER(hdr->dest[0]);
+        dnode = ADDR_NODE(hdr->dest[0]);
         if (ddriver >= num_drivers || dnode >= num_nodes
          || ddriver == driver_index || dnode == 0)
         {
@@ -227,6 +232,7 @@ static void GetPacket(void)
                 break;
             }
         }
+        // No more packets?
         if (i >= num_drivers)
         {
             doomcom.remotenode = -1;
@@ -235,18 +241,135 @@ static void GetPacket(void)
 
         if (HandlePacket(drivers[i]))
         {
+            // Got a data packet and populated doomcom
             return;
         }
     }
 }
 
+static void SendDiscover(unsigned int node)
+{
+    doomcom_t far *dc;
+    struct meta_discover_msg far *dsc;
+    unsigned int first_hop;
+    int d, n;
+
+    first_hop = node_addrs[node][0];
+    dc = drivers[ADDR_DRIVER(first_hop)];
+    dsc = (struct meta_discover_msg far *) &dc->data;
+    dsc->header.magic = META_MAGIC | META_PACKET_DISCOVER;
+    _fmemset(&dsc->header.src, 0, sizeof(node_addr_t));
+    _fmemcpy(&dsc->header.dest, node_addrs[node] + 1,
+             sizeof(node_addr_t) - 1);
+    dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
+
+    dsc->status = 0; // TODO
+    dsc->num_neighbors = 0;
+
+    for (d = 0; d < num_drivers; ++d)
+    {
+        // Don't include neighbors on the same interface as the node we're
+        // sending to, because they're already accessible on the same
+        // interface and including them could cause a routing loop.
+        // The destination only cares about what can be accessed *through*
+        // this node.
+        if (d == ADDR_DRIVER(first_hop))
+        {
+            continue;
+        }
+
+        for (n = 1; n < drivers[d]->numnodes; ++n)
+        {
+            if (dsc->num_neighbors < MAXNETNODES)
+            {
+                dsc->neighbors[dsc->num_neighbors] = MAKE_ADDRESS(d, n);
+                ++dsc->num_neighbors;
+            }
+        }
+    }
+
+    // Send packet.
+    dc->datalength = sizeof(struct meta_discover_msg);
+    dc->remotenode = ADDR_NODE(first_hop);
+    NetSendPacket(dc);
+}
+
+static void SendPacket(void)
+{
+    doomcom_t far *dc;
+    struct meta_data_msg far *msg;
+    int first_hop;
+
+    if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
+    {
+        return;
+    }
+
+    // First entry in node_addr is the first hop
+    first_hop = node_addrs[doomcom.remotenode][0];
+    dc = drivers[ADDR_DRIVER(first_hop)];
+    dc->remotenode = ADDR_NODE(first_hop);
+
+    dc->datalength = sizeof(struct meta_header) + doomcom.datalength;
+    msg = (struct meta_data_msg far *) &dc->data;
+    msg->header.magic = META_MAGIC | META_PACKET_DATA;
+    _fmemset(&msg->header.src, 0, sizeof(node_addr_t));
+    _fmemcpy(&msg->header.dest, node_addrs[doomcom.remotenode] + 1,
+             sizeof(node_addr_t) - 1);
+    msg->header.dest[sizeof(node_addr_t) - 1] = 0;
+    _fmemcpy(&msg->data, doomcom.data, doomcom.datalength);
+
+    NetSendPacket(dc);
+}
+
 static void DiscoverNodes(void)
 {
-    
+    unsigned int i, d, n;
+    clock_t now, last_send = 0;
+
+    num_nodes = 1;
+    memset(node_addrs, 0, sizeof(node_addrs));
+
+    for (d = 0; d < num_drivers; ++d)
+    {
+        for (n = 1; n < drivers[d]->numnodes; ++n)
+        {
+            if (num_nodes < MAXNETNODES)
+            {
+                node_addrs[num_nodes][0] = MAKE_ADDRESS(d, n);
+                ++num_nodes;
+            }
+        }
+    }
+
+    for (;;)
+    {
+        GetPacket();
+
+        now = clock();
+        if (now - last_send > CLOCKS_PER_SEC)
+        {
+            for (i = 1; i < num_nodes; ++i)
+            {
+                SendDiscover(i);
+            }
+            last_send = now;
+        }
+    }
 }
 
 void interrupt NetISR(void)
 {
+    switch (doomcom.command)
+    {
+        case CMD_SEND:
+            SendPacket();
+            break;
+
+        case CMD_GET:
+            GetPacket();
+            break;
+    }
 }
 
 int main(int argc, char *argv[])

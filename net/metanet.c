@@ -14,7 +14,7 @@
 // Magic number field overlaps with the normal Doom checksum field.
 // We ignore the top nybble so we can ignore NCMD_SETUP packets from
 // the underlying driver, and use the bottom nybble for packet type.
-#define META_MAGIC        0x01C36440
+#define META_MAGIC        0x01C36440L
 #define META_MAGIC_MASK   0x0FFFFFF0L
 
 #define NODE_STATUS_GOT_DISCOVER  0x01
@@ -72,6 +72,44 @@ static int num_drivers = 0;
 static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
 
+static void far_memmove(void far *dest, void far *src, size_t nbytes)
+{
+    unsigned char far *dest_p = (unsigned char far *) dest;
+    unsigned char far *src_p = (unsigned char far *) src;
+    int i;
+
+    if (dest < src)
+    {
+        for (i = 0; i < nbytes; ++i)
+        {
+            *dest_p = *src_p;
+            ++dest_p; ++src_p;
+        }
+    }
+    else
+    {
+        dest_p += nbytes - 1;
+        src_p += nbytes - 1;
+        for (i = 0; i < nbytes; ++i)
+        {
+            *dest_p = *src_p;
+            --dest_p; --src_p;
+        }
+    }
+}
+
+static void far_bzero(void far *dest, size_t nbytes)
+{
+    unsigned char far *dest_p = dest;
+    int i;
+
+    for (i = 0; i < nbytes; ++i)
+    {
+        *dest_p = 0;
+        ++dest_p;
+    }
+}
+
 // Read packets from the given interface, forwarding them to other
 // interfaces if destined for another machine, and returning true
 // if a packet is received for this machine.
@@ -84,7 +122,7 @@ static int GetAndForward(int driver_index)
     while (NetGetPacket(dc))
     {
         hdr = (struct meta_header far *) &dc->data;
-        if ((hdr->magic & NCMD_CHECKSUM) == NCMD_SETUP
+        if ((hdr->magic & ~NCMD_CHECKSUM) == NCMD_SETUP
          || (hdr->magic & META_MAGIC_MASK) != META_MAGIC)
         {
             continue;
@@ -96,10 +134,10 @@ static int GetAndForward(int driver_index)
         {
             continue;
         }
-        _fmemmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
+        far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
         hdr->src[0] = MAKE_ADDRESS(driver_index, dc->remotenode);
         // Packet for ourself?
-        if (hdr->dest == 0)
+        if (hdr->dest[0] == 0)
         {
             return 1;
         }
@@ -113,11 +151,11 @@ static int GetAndForward(int driver_index)
             continue;
         }
         // Update destination.
-        _fmemmove(hdr->dest, hdr->dest + 1, sizeof(hdr->dest) - 1);
+        far_memmove(hdr->dest, hdr->dest + 1, sizeof(hdr->dest) - 1);
         hdr->dest[sizeof(hdr->dest) - 1] = 0;
 
         // Copy into destination driver's buffer and send.
-        _fmemmove(&drivers[ddriver]->data, dc->data, dc->datalength);
+        far_memmove(&drivers[ddriver]->data, dc->data, dc->datalength);
         NetSendPacket(drivers[ddriver]);
     }
 
@@ -181,7 +219,7 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
     node_addr_t addr;
     int i;
 
-    _fmemcpy(addr, dsc->header.src, sizeof(node_addr_t));
+    far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
     node = NodeOrAddNode(addr);
     if (node == NULL)
     {
@@ -192,7 +230,7 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
 
     for (i = 0; i < dsc->num_neighbors && i < MAXNETNODES; ++i)
     {
-        _fmemcpy(addr, dsc->header.src, sizeof(node_addr_t));
+        far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
 
         if (AppendNextHop(addr, dsc->neighbors[i]))
         {
@@ -208,14 +246,15 @@ static int HandlePacket(doomcom_t far *dc)
     node_addr_t addr;
 
     hdr = (struct meta_header far *) &dc->data;
-    switch (hdr->magic & META_MAGIC_MASK)
+
+    switch (hdr->magic & ~META_MAGIC_MASK)
     {
         case META_PACKET_DATA:
             data = (struct meta_data_msg far *) hdr;
             doomcom.datalength =
                 dc->datalength - sizeof(struct meta_header);
-            _fmemmove(&doomcom.data, data->data, doomcom.datalength);
-            _fmemcpy(addr, hdr->src, sizeof(node_addr_t));
+            far_memmove(&doomcom.data, data->data, doomcom.datalength);
+            far_memmove(addr, hdr->src, sizeof(node_addr_t));
             doomcom.remotenode = NodeForAddr(addr);
             return doomcom.remotenode > 0;
 
@@ -269,14 +308,14 @@ static void SendDiscover(struct node_data *node)
     first_hop = node->addr[0];
     dc = drivers[ADDR_DRIVER(first_hop)];
     dsc = (struct meta_discover_msg far *) &dc->data;
-    dsc->header.magic = META_MAGIC | META_PACKET_DISCOVER;
-    _fmemset(&dsc->header.src, 0, sizeof(node_addr_t));
-    _fmemcpy(&dsc->header.dest, node->addr + 1,
-             sizeof(node_addr_t) - 1);
+    dsc->header.magic = META_MAGIC | (unsigned long) META_PACKET_DISCOVER;
+    far_bzero(dsc->header.src, sizeof(node_addr_t));
+    far_memmove(dsc->header.dest, node->addr + 1, sizeof(node_addr_t) - 1);
     dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
 
-    dsc->status = 0; // TODO
+    dsc->status = nodes[0].flags;
     dsc->num_neighbors = 0;
+    dsc->station_id = nodes[0].station_id;
 
     for (d = 0; d < num_drivers; ++d)
     {
@@ -326,12 +365,12 @@ static void SendPacket(void)
 
     dc->datalength = sizeof(struct meta_header) + doomcom.datalength;
     msg = (struct meta_data_msg far *) &dc->data;
-    msg->header.magic = META_MAGIC | META_PACKET_DATA;
-    _fmemset(&msg->header.src, 0, sizeof(node_addr_t));
-    _fmemcpy(&msg->header.dest, node->addr + 1,
+    msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
+    far_bzero(&msg->header.src, sizeof(node_addr_t));
+    far_memmove(&msg->header.dest, node->addr + 1,
              sizeof(node_addr_t) - 1);
     msg->header.dest[sizeof(node_addr_t) - 1] = 0;
-    _fmemcpy(&msg->data, doomcom.data, doomcom.datalength);
+    far_memmove(&msg->data, doomcom.data, doomcom.datalength);
 
     NetSendPacket(dc);
 }
@@ -448,13 +487,7 @@ static void DiscoverNodes(void)
 
     do
     {
-        for (i = 0; i < num_drivers; ++i)
-        {
-            if (GetAndForward(i))
-            {
-                break;
-            }
-        }
+        GetPacket();
 
         now = clock();
         if (now - last_send > CLOCKS_PER_SEC)
@@ -466,11 +499,11 @@ static void DiscoverNodes(void)
             last_send = now;
         }
 
-        if (CheckReady() && ready_start == 0)
+        if (ready_start == 0 && CheckReady())
         {
             ready_start = now + CLOCKS_PER_SEC;
         }
-    } while (ready_start == 0 || now >= ready_start);
+    } while (ready_start == 0 || now < ready_start);
 }
 
 void interrupt NetISR(void)

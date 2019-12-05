@@ -1,7 +1,10 @@
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+
+#include <bios.h>
 
 #include "lib/flag.h"
 #include "net/doomnet.h"
@@ -51,15 +54,22 @@ struct meta_discover_msg
     struct meta_header header;
     unsigned int status;
     int num_neighbors;
+    int station_id;
     // Next hop address byte for all immediate neighbors:
     unsigned char neighbors[MAXNETNODES];
+};
+
+struct node_data
+{
+    node_addr_t addr;
+    unsigned char flags;
+    int station_id;
 };
 
 static doomcom_t far *drivers[MAXDRIVERS];
 static int num_drivers = 0;
 
-static node_addr_t node_addrs[MAXNETNODES];
-static unsigned char node_flags[MAXNETNODES];
+static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
 
 // Read packets from the given interface, forwarding them to other
@@ -120,7 +130,7 @@ static int NodeForAddr(node_addr_t far addr)
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (!memcmp(&node_addrs[i], addr, sizeof(node_addr_t)))
+        if (!memcmp(&nodes[i].addr, addr, sizeof(node_addr_t)))
         {
             return i;
         }
@@ -143,40 +153,42 @@ static int AppendNextHop(node_addr_t addr, unsigned char next_hop)
     return 0;
 }
 
-static int NodeOrAddNode(node_addr_t addr)
+static struct node_data *NodeOrAddNode(node_addr_t addr)
 {
+    struct node_data *result;
     int node_idx;
 
     node_idx = NodeForAddr(addr);
     if (node_idx >= 0)
     {
-        return node_idx;
+        return &nodes[node_idx];
     }
     else if (num_nodes >= MAXNETNODES)
     {
-        return -1;
+        return NULL;
     }
 
-    node_idx = num_nodes;
+    result = &nodes[num_nodes];
     ++num_nodes;
-    memcpy(&node_addrs[node_idx], addr, sizeof(node_addr_t));
+    memcpy(&result->addr, addr, sizeof(node_addr_t));
 
-    return node_idx;
+    return result;
 }
 
 static void HandleDiscover(struct meta_discover_msg far *dsc)
 {
+    struct node_data *node;
     node_addr_t addr;
-    int node_idx;
     int i;
 
     _fmemcpy(addr, dsc->header.src, sizeof(node_addr_t));
-    node_idx = NodeOrAddNode(addr);
-    if (node_idx < 0)
+    node = NodeOrAddNode(addr);
+    if (node == NULL)
     {
         return;
     }
-    node_flags[node_idx] = dsc->status | NODE_STATUS_GOT_DISCOVER;
+    node->flags = dsc->status | NODE_STATUS_GOT_DISCOVER;
+    node->station_id = dsc->station_id;
 
     for (i = 0; i < dsc->num_neighbors && i < MAXNETNODES; ++i)
     {
@@ -247,19 +259,19 @@ static void GetPacket(void)
     }
 }
 
-static void SendDiscover(unsigned int node)
+static void SendDiscover(struct node_data *node)
 {
     doomcom_t far *dc;
     struct meta_discover_msg far *dsc;
     unsigned int first_hop;
     int d, n;
 
-    first_hop = node_addrs[node][0];
+    first_hop = node->addr[0];
     dc = drivers[ADDR_DRIVER(first_hop)];
     dsc = (struct meta_discover_msg far *) &dc->data;
     dsc->header.magic = META_MAGIC | META_PACKET_DISCOVER;
     _fmemset(&dsc->header.src, 0, sizeof(node_addr_t));
-    _fmemcpy(&dsc->header.dest, node_addrs[node] + 1,
+    _fmemcpy(&dsc->header.dest, node->addr + 1,
              sizeof(node_addr_t) - 1);
     dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
 
@@ -298,6 +310,7 @@ static void SendPacket(void)
 {
     doomcom_t far *dc;
     struct meta_data_msg far *msg;
+    struct node_data *node;
     int first_hop;
 
     if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
@@ -306,7 +319,8 @@ static void SendPacket(void)
     }
 
     // First entry in node_addr is the first hop
-    first_hop = node_addrs[doomcom.remotenode][0];
+    node = &nodes[doomcom.remotenode];
+    first_hop = node->addr[0];
     dc = drivers[ADDR_DRIVER(first_hop)];
     dc->remotenode = ADDR_NODE(first_hop);
 
@@ -314,7 +328,7 @@ static void SendPacket(void)
     msg = (struct meta_data_msg far *) &dc->data;
     msg->header.magic = META_MAGIC | META_PACKET_DATA;
     _fmemset(&msg->header.src, 0, sizeof(node_addr_t));
-    _fmemcpy(&msg->header.dest, node_addrs[doomcom.remotenode] + 1,
+    _fmemcpy(&msg->header.dest, node->addr + 1,
              sizeof(node_addr_t) - 1);
     msg->header.dest[sizeof(node_addr_t) - 1] = 0;
     _fmemcpy(&msg->data, doomcom.data, doomcom.datalength);
@@ -322,40 +336,141 @@ static void SendPacket(void)
     NetSendPacket(dc);
 }
 
-static void DiscoverNodes(void)
+static void InitNodes(void)
 {
-    unsigned int i, d, n;
-    clock_t now, last_send = 0;
+    unsigned int d, n;
 
     num_nodes = 1;
-    memset(node_addrs, 0, sizeof(node_addrs));
+    memset(nodes, 0, sizeof(nodes));
+    nodes[0].station_id = rand();
+    nodes[0].flags = NODE_STATUS_GOT_DISCOVER;
 
+    // Initially we're only aware of those nodes which are our
+    // immediate neighbors.
     for (d = 0; d < num_drivers; ++d)
     {
         for (n = 1; n < drivers[d]->numnodes; ++n)
         {
             if (num_nodes < MAXNETNODES)
             {
-                node_addrs[num_nodes][0] = MAKE_ADDRESS(d, n);
+                nodes[num_nodes].addr[0] = MAKE_ADDRESS(d, n);
                 ++num_nodes;
             }
         }
     }
+}
 
-    for (;;)
+static int CompareStationIDs(const void *_a, const void *_b)
+{
+    const struct node_data *a = *((struct node_data **) _a),
+                           *b = *((struct node_data **) _b);
+    if (a->station_id < b->station_id)
     {
-        GetPacket();
+        return -1;
+    }
+    else if (a->station_id > b->station_id)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+static void AssignPlayerNumber(void)
+{
+    struct node_data *players[MAXNETNODES];
+    int i;
+
+    for (i = 0; i < num_nodes; ++i)
+    {
+        players[i] = &nodes[i];
+    }
+
+    qsort(players, num_nodes, sizeof(struct node_data *),
+          CompareStationIDs);
+
+    for (i = 0; i < num_nodes; ++i)
+    {
+        if (players[i] == &nodes[0])
+        {
+            doomcom.consoleplayer = i;
+            break;
+        }
+    }
+
+    doomcom.numnodes = num_nodes;
+}
+
+static int CheckReady(void)
+{
+    int i, j;
+    int got_all_discovers = 1;
+
+    for (i = 0; i < num_nodes; ++i)
+    {
+        if ((nodes[i].flags & NODE_STATUS_GOT_DISCOVER) == 0)
+        {
+            got_all_discovers = 0;
+            continue;
+        }
+        for (j = i + 1; j < num_nodes; ++j)
+        {
+            if ((nodes[j].flags & NODE_STATUS_GOT_DISCOVER) == 0)
+            {
+                continue;
+            }
+            if (nodes[i].station_id == nodes[j].station_id)
+            {
+                fprintf(stderr, "Two nodes have the same station ID!\n"
+                                "Node %d and %d both have station ID %d\n",
+                                i, j, nodes[i].station_id);
+                exit(1);
+            }
+        }
+    }
+
+    if (got_all_discovers)
+    {
+        nodes[0].flags |= NODE_STATUS_READY;
+    }
+
+    return got_all_discovers;
+}
+
+static void DiscoverNodes(void)
+{
+    clock_t now, last_send, ready_start = 0;
+    int i;
+
+    InitNodes();
+
+    do
+    {
+        for (i = 0; i < num_drivers; ++i)
+        {
+            if (GetAndForward(i))
+            {
+                break;
+            }
+        }
 
         now = clock();
         if (now - last_send > CLOCKS_PER_SEC)
         {
             for (i = 1; i < num_nodes; ++i)
             {
-                SendDiscover(i);
+                SendDiscover(&nodes[i]);
             }
             last_send = now;
         }
-    }
+
+        if (CheckReady() && ready_start == 0)
+        {
+            ready_start = now + CLOCKS_PER_SEC;
+        }
+    } while (ready_start == 0 || now >= ready_start);
 }
 
 void interrupt NetISR(void)
@@ -372,10 +487,14 @@ void interrupt NetISR(void)
     }
 }
 
+
+
 int main(int argc, char *argv[])
 {
     doomcom_t far *d;
     char **args;
+
+    srand(biostime(0, 0));
 
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
@@ -392,6 +511,10 @@ int main(int argc, char *argv[])
         drivers[num_drivers] = d;
         ++num_drivers;
     }
+
+    DiscoverNodes();
+    AssignPlayerNumber();
+    LaunchDOOM(args);
 
     return 0;
 }

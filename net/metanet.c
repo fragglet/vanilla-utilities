@@ -72,6 +72,29 @@ static int num_drivers = 0;
 static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
 
+static unsigned int stats_rx_packets, stats_tx_packets;
+static unsigned int stats_wrong_magic, stats_too_many_hops, stats_invalid_dest;
+static unsigned int stats_node_limit, stats_bad_send, stats_unknown_type;
+static unsigned int stats_forwarded, stats_unknown_src, stats_setup_packets;
+
+static const struct
+{
+    unsigned int *ptr;
+    const char *name;
+} stats[] = {
+    { &stats_rx_packets,    "rx_packets" },
+    { &stats_tx_packets,    "tx_packets" },
+    { &stats_wrong_magic,   "wrong_magic" },
+    { &stats_too_many_hops, "too_many_hops" },
+    { &stats_invalid_dest,  "invalid_dest" },
+    { &stats_node_limit,    "node_limit" },
+    { &stats_bad_send,      "bad_send" },
+    { &stats_unknown_type,  "unknown_type" },
+    { &stats_forwarded,     "forwarded" },
+    { &stats_unknown_src,   "unknown_src" },
+    { &stats_setup_packets, "setup_packets" },
+};
+
 static void far_memmove(void far *dest, void far *src, size_t nbytes)
 {
     unsigned char far *dest_p = (unsigned char far *) dest;
@@ -122,9 +145,14 @@ static int GetAndForward(int driver_index)
     while (NetGetPacket(dc))
     {
         hdr = (struct meta_header far *) &dc->data;
-        if ((hdr->magic & ~NCMD_CHECKSUM) == NCMD_SETUP
-         || (hdr->magic & META_MAGIC_MASK) != META_MAGIC)
+        if ((hdr->magic & ~NCMD_CHECKSUM) == NCMD_SETUP)
         {
+            ++stats_setup_packets;
+            continue;
+        }
+        if ((hdr->magic & META_MAGIC_MASK) != META_MAGIC)
+        {
+            ++stats_wrong_magic;
             continue;
         }
         // Update src address to include return path; this is needed
@@ -132,6 +160,7 @@ static int GetAndForward(int driver_index)
         // an accurate source address.
         if (hdr->src[sizeof(hdr->src) - 1] != 0)
         {
+            ++stats_too_many_hops;
             continue;
         }
         far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
@@ -148,6 +177,7 @@ static int GetAndForward(int driver_index)
         if (ddriver >= num_drivers || dnode >= num_nodes
          || ddriver == driver_index || dnode == 0)
         {
+            ++stats_invalid_dest;
             continue;
         }
         // Update destination.
@@ -157,6 +187,7 @@ static int GetAndForward(int driver_index)
         // Copy into destination driver's buffer and send.
         far_memmove(&drivers[ddriver]->data, dc->data, dc->datalength);
         NetSendPacket(drivers[ddriver]);
+        ++stats_forwarded;
     }
 
     return 0;
@@ -188,6 +219,7 @@ static int AppendNextHop(node_addr_t addr, unsigned char next_hop)
             return 1;
         }
     }
+    ++stats_too_many_hops;
     return 0;
 }
 
@@ -203,6 +235,7 @@ static struct node_data *NodeOrAddNode(node_addr_t addr)
     }
     else if (num_nodes >= MAXNETNODES)
     {
+        ++stats_node_limit;
         return NULL;
     }
 
@@ -255,10 +288,12 @@ static int HandlePacket(doomcom_t far *dc)
             doomcom.remotenode = NodeForAddr(addr);
             if (doomcom.remotenode < 0)
             {
+                ++stats_unknown_src;
                 return 0;
             }
             doomcom.datalength = dc->datalength - sizeof(struct meta_header);
             far_memmove(doomcom.data, msg->data, doomcom.datalength);
+            ++stats_rx_packets;
             return 1;
 
         case META_PACKET_DISCOVER:
@@ -266,6 +301,7 @@ static int HandlePacket(doomcom_t far *dc)
             break;
 
         default:
+            ++stats_unknown_type;
             break;
     }
 
@@ -357,6 +393,7 @@ static void SendPacket(void)
 
     if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
     {
+        ++stats_bad_send;
         return;
     }
 
@@ -376,6 +413,7 @@ static void SendPacket(void)
     far_memmove(msg->data, doomcom.data, doomcom.datalength);
 
     NetSendPacket(dc);
+    ++stats_tx_packets;
 }
 
 static void InitNodes(void)
@@ -512,6 +550,20 @@ static void DiscoverNodes(void)
     } while (ready_start == 0 || now < ready_start);
 }
 
+static void PrintStats(void)
+{
+    int i;
+
+    printf("\n\n");
+    for (i = 0; i < sizeof(stats) / sizeof(*stats); ++i)
+    {
+        if (*stats[i].ptr != 0)
+        {
+            printf("%10s %6d\n", stats[i].name, *stats[i].ptr);
+        }
+    }
+}
+
 void interrupt NetISR(void)
 {
     switch (doomcom.command)
@@ -559,6 +611,8 @@ int main(int argc, char *argv[])
     DiscoverNodes();
     AssignPlayerNumber();
     LaunchDOOM(args);
+
+    PrintStats();
 
     return 0;
 }

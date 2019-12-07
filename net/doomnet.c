@@ -109,12 +109,14 @@ doomcom_t far *NetLocateDoomcom(char **args)
     {
         if (!strcmp(args[i], "-net"))
         {
-            long l;
+            unsigned long l;
+            unsigned int seg;
 
             assert(args[i + 1] != NULL);
             l = strtol(args[i + 1], NULL, 10);
             assert(l != 0);
-            result = (doomcom_t far *) l;
+            seg = (l >> 4) & 0xf000L;
+            result = MK_FP(seg, l & 0xffffL);
             assert(result->id == DOOMCOM_ID);
 
             i += 2;
@@ -128,6 +130,8 @@ doomcom_t far *NetLocateDoomcom(char **args)
         args[j] = args[i];
         ++i; ++j;
     } while(args[i] != NULL);
+
+    args[j] = NULL;
 
     return result;
 }

@@ -440,6 +440,9 @@ static void AssignPlayerNumber(void)
     }
 
     doomcom.numnodes = num_nodes;
+    doomcom.numplayers = num_nodes;
+    doomcom.ticdup = 1;
+    doomcom.extratics = 0;
 }
 
 static int CheckReady(void)

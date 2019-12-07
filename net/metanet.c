@@ -520,17 +520,16 @@ void interrupt NetISR(void)
     }
 }
 
-
-
 int main(int argc, char *argv[])
 {
     doomcom_t far *d;
     char **args;
-
-    srand(biostime(0, 0));
+    unsigned int entropy;
 
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
+
+    entropy = biostime(0, 0);
 
     for (;;)
     {
@@ -543,7 +542,13 @@ int main(int argc, char *argv[])
         assert(num_drivers < MAXDRIVERS);
         drivers[num_drivers] = d;
         ++num_drivers;
+
+        // So that different drivers started at the same time
+        // do not generate the same random seed.
+        entropy ^= (entropy << 8) | (d->numnodes << 4)  | d->consoleplayer;
     }
+
+    srand(entropy);
 
     DiscoverNodes();
     AssignPlayerNumber();

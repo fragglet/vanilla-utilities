@@ -162,7 +162,7 @@ static int GetAndForward(int driver_index)
     return 0;
 }
 
-static int NodeForAddr(node_addr_t far addr)
+static int NodeForAddr(node_addr_t addr)
 {
     unsigned int i;
 
@@ -216,7 +216,7 @@ static struct node_data *NodeOrAddNode(node_addr_t addr)
 static void HandleDiscover(struct meta_discover_msg far *dsc)
 {
     struct node_data *node;
-    node_addr_t addr;
+    static node_addr_t addr;
     int i;
 
     far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
@@ -242,27 +242,30 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
 static int HandlePacket(doomcom_t far *dc)
 {
     struct meta_header far *hdr;
-    struct meta_data_msg far *data;
-    node_addr_t addr;
+    struct meta_data_msg far *msg;
+    static node_addr_t addr;
 
-    hdr = (struct meta_header far *) &dc->data;
+    hdr = (struct meta_header far *) dc->data;
 
     switch (hdr->magic & ~META_MAGIC_MASK)
     {
         case META_PACKET_DATA:
-            data = (struct meta_data_msg far *) hdr;
-            doomcom.datalength =
-                dc->datalength - sizeof(struct meta_header);
-            far_memmove(&doomcom.data, data->data, doomcom.datalength);
-            far_memmove(addr, hdr->src, sizeof(node_addr_t));
+            msg = (struct meta_data_msg far *) dc->data;
+            far_memmove(&addr, &msg->header.src, sizeof(node_addr_t));
             doomcom.remotenode = NodeForAddr(addr);
-            return doomcom.remotenode > 0;
+            if (doomcom.remotenode < 0)
+            {
+                return 0;
+            }
+            doomcom.datalength = dc->datalength - sizeof(struct meta_header);
+            far_memmove(doomcom.data, msg->data, doomcom.datalength);
+            return 1;
 
         case META_PACKET_DISCOVER:
             HandleDiscover((struct meta_discover_msg far *) hdr);
             break;
 
-        case META_PACKET_STATUS:
+        default:
             break;
     }
 
@@ -364,13 +367,13 @@ static void SendPacket(void)
     dc->remotenode = ADDR_NODE(first_hop);
 
     dc->datalength = sizeof(struct meta_header) + doomcom.datalength;
-    msg = (struct meta_data_msg far *) &dc->data;
+    msg = (struct meta_data_msg far *) dc->data;
     msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
-    far_bzero(&msg->header.src, sizeof(node_addr_t));
-    far_memmove(&msg->header.dest, node->addr + 1,
-             sizeof(node_addr_t) - 1);
-    msg->header.dest[sizeof(node_addr_t) - 1] = 0;
-    far_memmove(&msg->data, doomcom.data, doomcom.datalength);
+    far_bzero(msg->header.src, sizeof(node_addr_t));
+    far_bzero(msg->header.dest, sizeof(node_addr_t));
+    far_memmove(msg->header.dest, node->addr + 1,
+                sizeof(node_addr_t) - 1);
+    far_memmove(msg->data, doomcom.data, doomcom.datalength);
 
     NetSendPacket(dc);
 }

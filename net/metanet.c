@@ -185,6 +185,7 @@ static int GetAndForward(int driver_index)
         hdr->dest[sizeof(hdr->dest) - 1] = 0;
 
         // Copy into destination driver's buffer and send.
+        drivers[ddriver]->datalength = dc->datalength;
         far_memmove(&drivers[ddriver]->data, dc->data, dc->datalength);
         NetSendPacket(drivers[ddriver]);
         ++stats_forwarded;
@@ -559,7 +560,7 @@ static void PrintStats(void)
     {
         if (*stats[i].ptr != 0)
         {
-            printf("%10s %6d\n", stats[i].name, *stats[i].ptr);
+            printf("%16s %6d\n", stats[i].name, *stats[i].ptr);
         }
     }
 }

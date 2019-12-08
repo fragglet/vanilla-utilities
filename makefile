@@ -8,6 +8,7 @@ IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj lib\flag.obj net\serport.obj
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj lib\flag.obj net\parport.obj \
                 net\plio.obj
+PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\flag.obj
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\flag.obj
 METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
@@ -28,6 +29,8 @@ parsetup.exe: $(PARSETUP_OBJS)
 	tcc -e$* -o$@ $(PARSETUP_OBJS) >nul
 metanet.exe: $(METANET_OBJS)
 	tcc -e$* -o$@ $(METANET_OBJS) >nul
+passthru.exe: $(PASSTHRU_OBJS)
+	tcc -e$* -o$@ $(PASSTHRU_OBJS) >nul
 statdump.exe: $(STATDUMP_OBJS)
 	tcc -e$* -o$@ $(STATDUMP_OBJS) >nul
 solo-net.exe: $(SOLO_NET_OBJS)

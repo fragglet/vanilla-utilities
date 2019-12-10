@@ -14,7 +14,7 @@ METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
                 lib\flag.obj
 
-EXES = replay.exe statdump.exe \
+EXES = replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe
 
 all: $(EXES)

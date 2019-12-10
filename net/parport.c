@@ -20,7 +20,6 @@
 // Protocol driver.
 
 #include <dos.h>
-#include <conio.h>
 #include <string.h>
 #include <stdio.h>
 #include "net/doomnet.h"

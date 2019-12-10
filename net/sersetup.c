@@ -25,8 +25,6 @@ void ModemCommand(char *str);
 
 void WriteBuffer(char *buffer, unsigned int count)
 {
-    int i;
-
     // if this would overrun the buffer, throw everything else out
     if (outque.head - outque.tail + count > QUESIZE)
         outque.tail = outque.head;
@@ -354,7 +352,6 @@ void ModemResponse(char *resp)
 static void ReadModemCfg(void)
 {
     char baudline[16];
-    int mcr;
     FILE *f;
 
     f = fopen("modem.cfg", "r");
@@ -389,7 +386,6 @@ static void ReadModemCfg(void)
 void Dial(char *dial_no)
 {
     char cmd[80];
-    int p;
 
     usemodem = true;
     ModemCommand(startup);

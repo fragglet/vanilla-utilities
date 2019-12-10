@@ -67,7 +67,6 @@ void GetUart(void)
     static int ISA_IRQs[] = { 4, 3, 4, 3 };
     static int MCA_uarts[] = { 0x03f8, 0x02f8, 0x3220, 0x3228 };
     static int MCA_IRQs[] = { 4, 3, 3, 3 };
-    int p;
 
     if (com2)
         comport = 2;
@@ -147,7 +146,6 @@ static long OverrideBaudRate(long baudrate)
 void InitPort(long baudrate)
 {
     int baudbits;
-    int mcr;
     int temp;
     int u;
 
@@ -315,7 +313,6 @@ void WriteByte(int c)
 static void interrupt ISR8250(void)
 {
     int c;
-    int count;
 
     while (1)
     {

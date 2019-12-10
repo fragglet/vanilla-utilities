@@ -26,10 +26,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dos.h>
 #include <process.h>
 
 #include "ctrl/control.h"
+#include "lib/flag.h"
 
 typedef struct {
     long intnum;

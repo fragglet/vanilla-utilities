@@ -22,6 +22,8 @@
 #include <dos.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "lib/flag.h"
 #include "net/doomnet.h"
 #include "net/parsetup.h"
 

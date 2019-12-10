@@ -1,7 +1,7 @@
 
 # makefile for Borland make
 
-CFLAGS = -O -d
+CFLAGS = -O -d -w
 
 REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\flag.obj
 IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj
@@ -20,26 +20,26 @@ EXES = replay.exe statdump.exe \
 all: $(EXES)
 
 replay.exe: $(REPLAY_OBJS)
-	tcc -e$* -o$@ $(REPLAY_OBJS) >nul
+	tcc -e$* -o$@ $(REPLAY_OBJS)
 ipxsetup.exe: $(IPXSETUP_OBJS)
-	tcc -e$* -o$@ $(IPXSETUP_OBJS) >nul
+	tcc -e$* -o$@ $(IPXSETUP_OBJS)
 sersetup.exe: $(SERSETUP_OBJS)
-	tcc -e$* -o$@ $(SERSETUP_OBJS) >nul
+	tcc -e$* -o$@ $(SERSETUP_OBJS)
 parsetup.exe: $(PARSETUP_OBJS)
-	tcc -e$* -o$@ $(PARSETUP_OBJS) >nul
+	tcc -e$* -o$@ $(PARSETUP_OBJS)
 metanet.exe: $(METANET_OBJS)
-	tcc -e$* -o$@ $(METANET_OBJS) >nul
+	tcc -e$* -o$@ $(METANET_OBJS)
 passthru.exe: $(PASSTHRU_OBJS)
-	tcc -e$* -o$@ $(PASSTHRU_OBJS) >nul
+	tcc -e$* -o$@ $(PASSTHRU_OBJS)
 statdump.exe: $(STATDUMP_OBJS)
-	tcc -e$* -o$@ $(STATDUMP_OBJS) >nul
+	tcc -e$* -o$@ $(STATDUMP_OBJS)
 solo-net.exe: $(SOLO_NET_OBJS)
-	tcc -e$* -o$@ $(SOLO_NET_OBJS) >nul
+	tcc -e$* -o$@ $(SOLO_NET_OBJS)
 
 .c.obj:
-	tcc $(CFLAGS) -c -o$@ $< >nul
+	tcc $(CFLAGS) -c -o$@ $<
 .asm.obj:
-	tasm /ml $< $@ >nul
+	tasm /ml $< $@
 
 clean:
 	del $(EXES)

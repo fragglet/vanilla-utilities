@@ -78,13 +78,10 @@ void interrupt NetISR(void)
 
 void LookForNodes(void)
 {
-    int i, j, k;
-    int netids[MAXNETNODES];
-    int netplayer[MAXNETNODES];
+    int i;
     struct time time;
     int oldsec;
     setupdata_t *setup, *dest;
-    char str[80];
     int total, console;
 
     //
@@ -229,7 +226,6 @@ void LookForNodes(void)
 void main(int argc, char *argv[])
 {
     char **args;
-    int i;
 
     //
     // determine game parameters

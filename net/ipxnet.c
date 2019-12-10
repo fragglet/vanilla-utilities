@@ -250,7 +250,7 @@ unsigned short ShortSwap(unsigned short i)
 int GetPacket(void)
 {
     int packetnum;
-    int i, j;
+    int i;
     long besttic;
     packet_t *packet;
 

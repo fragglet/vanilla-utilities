@@ -52,16 +52,12 @@ void interrupt NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        //I_ColorBlack (63,0,0);
         localtime++;
         SendPacket(doomcom.remotenode);
-        //I_ColorBlack (0,0,0);
     }
     else if (doomcom.command == CMD_GET)
     {
-        //I_ColorBlack (0,63,0);
         GetPacket();
-        //I_ColorBlack (0,0,0);
     }
 }
 

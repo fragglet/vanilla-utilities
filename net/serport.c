@@ -339,7 +339,6 @@ static void interrupt ISR8250(void)
             // transmit
             //
         case IIR_TX_HOLDING_REGISTER_INTERRUPT:
-            //I_ColorBlack (63,0,0);
             if (outque.tail < outque.head)
             {
                 c = outque.data[outque.tail & (QUESIZE - 1)];
@@ -352,7 +351,6 @@ static void interrupt ISR8250(void)
             // receive
             //
         case IIR_RX_DATA_READY_INTERRUPT:
-            //I_ColorBlack (0,63,0);
             c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
             inque.data[inque.head & (QUESIZE - 1)] = c;
             inque.head++;
@@ -362,7 +360,6 @@ static void interrupt ISR8250(void)
             // done
             //
         default:
-            //I_ColorBlack (0,0,0);
             OUTPUT(0x20, 0x20);
             return;
         }
@@ -392,7 +389,6 @@ static void interrupt ISR16550(void)
             // transmit
             //
         case IIR_TX_HOLDING_REGISTER_INTERRUPT:
-            //I_ColorBlack (63,0,0);
             count = 16;
             while (outque.tail < outque.head && count--)
             {
@@ -406,7 +402,6 @@ static void interrupt ISR16550(void)
             // receive
             //
         case IIR_RX_DATA_READY_INTERRUPT:
-            //I_ColorBlack (0,63,0);
             do
             {
                 c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
@@ -420,7 +415,6 @@ static void interrupt ISR16550(void)
             // done
             //
         default:
-            //I_ColorBlack (0,0,0);
             OUTPUT(0x20, 0x20);
             return;
         }

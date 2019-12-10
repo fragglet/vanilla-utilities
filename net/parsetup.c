@@ -130,13 +130,10 @@ void interrupt NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        // I_ColorBlack (0,0,63);
         WritePacket((char *)&doomcom.data, doomcom.datalength);
     }
     else if (doomcom.command == CMD_GET)
     {
-        //I_ColorBlack (63,63,0);
-
         if (ReadPacket() && recv_count <= sizeof(doomcom.data))
         {
             doomcom.remotenode = 1;
@@ -145,9 +142,7 @@ void interrupt NetISR(void)
         }
         else
             doomcom.remotenode = -1;
-
     }
-    //I_ColorBlack (0,0,0);
 }
 
 /*

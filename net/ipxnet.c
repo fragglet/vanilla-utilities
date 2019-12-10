@@ -2,10 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <dos.h>
 #include <string.h>
 #include <process.h>
-#include <values.h>
 
 #include "lib/flag.h"
 #include "net/ipxnet.h"
@@ -256,7 +256,7 @@ int GetPacket(void)
 
     // if multiple packets are waiting, return them in order by time
 
-    besttic = MAXLONG;
+    besttic = LONG_MAX;
     packetnum = -1;
     doomcom.remotenode = -1;
 
@@ -274,7 +274,7 @@ int GetPacket(void)
         }
     }
 
-    if (besttic == MAXLONG)
+    if (besttic == LONG_MAX)
         return 0;               // no packets
 
     packet = &packets[packetnum];

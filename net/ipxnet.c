@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "lib/flag.h"
+#include "net/doomnet.h"
 #include "net/ipxnet.h"
 
 #define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */

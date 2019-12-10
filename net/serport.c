@@ -1,5 +1,12 @@
 // serport.c
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dos.h>
+#include <stdarg.h>
+#include <bios.h>
+
 #include "lib/flag.h"
 #include "net/doomnet.h"
 #include "net/sersetup.h"

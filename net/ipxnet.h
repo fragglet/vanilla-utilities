@@ -4,8 +4,6 @@ typedef struct {
     char private[512];
 } doomdata_t;
 
-#include "net/doomnet.h"
-
 //===========================================================================
 
 #define NUMPACKETS      10      // max outstanding packets before loss

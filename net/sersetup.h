@@ -1,13 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <conio.h>
-#include <ctype.h>
-#include <dos.h>
-#include <stdarg.h>
-#include <bios.h>
-#include <ctype.h>
-
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
 #define CLI()                disable()

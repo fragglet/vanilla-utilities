@@ -8,6 +8,7 @@
 #include <bios.h>
 
 #include "lib/flag.h"
+#include "net/doomnet.h"
 #include "net/ipxnet.h"
 
 static int numnetnodes;

@@ -4,7 +4,6 @@
 #include <conio.h>
 #include <ctype.h>
 #include <dos.h>
-#include <process.h>
 #include <stdarg.h>
 #include <bios.h>
 #include <ctype.h>

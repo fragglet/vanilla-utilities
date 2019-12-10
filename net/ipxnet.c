@@ -5,7 +5,6 @@
 #include <limits.h>
 #include <dos.h>
 #include <string.h>
-#include <process.h>
 
 #include "lib/flag.h"
 #include "net/ipxnet.h"

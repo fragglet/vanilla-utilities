@@ -1,9 +1,5 @@
 // ipxnet.h
 
-typedef struct {
-    char private[512];
-} doomdata_t;
-
 //===========================================================================
 
 #define NUMPACKETS      10      // max outstanding packets before loss
@@ -69,7 +65,7 @@ typedef struct {
     IPXPacket ipx;
 
     long time;
-    doomdata_t data;
+    unsigned char payload[512];
 } packet_t;
 
 extern doomcom_t doomcom;

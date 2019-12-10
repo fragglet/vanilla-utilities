@@ -312,7 +312,7 @@ int GetPacket(void)
 
     // copy out the data
     doomcom.datalength = ShortSwap(packet->ipx.PacketLength) - 38;
-    memcpy(&doomcom.data, &packet->data, doomcom.datalength);
+    memcpy(&doomcom.data, packet->payload, doomcom.datalength);
 
     // repost the ECB
     ListenForPacket(&packet->ecb);

@@ -186,6 +186,7 @@ static int GetAndForward(int driver_index)
 
         // Copy into destination driver's buffer and send.
         drivers[ddriver]->datalength = dc->datalength;
+        drivers[ddriver]->remotenode = dnode;
         far_memmove(&drivers[ddriver]->data, dc->data, dc->datalength);
         NetSendPacket(drivers[ddriver]);
         ++stats_forwarded;

@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <assert.h>
 
@@ -526,7 +527,7 @@ static int CheckReady(void)
 
 static void DiscoverNodes(void)
 {
-    clock_t now, last_send, ready_start = 0;
+    clock_t now, last_send = 0, ready_start = 0;
     int i;
 
     InitNodes();

@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 
 static int force_vector = 0;
@@ -75,13 +76,14 @@ void LaunchDOOM(char **args)
         }
         if (doomcom.intnum == 0x67)
         {
-            printf("Warning: no NULL or iret interrupt vectors were found in the 0x60 to 0x66\n"
-                 "range.  You can specify a vector with the -vector 0x<num> parameter.\n");
+            LogMessage("Warning: no NULL or iret interrupt vectors were "
+                       "found in the 0x60 to 0x66 range. You can specify a "
+                       "vector with the -vector 0x<num> parameter.");
             doomcom.intnum = 0x66;
         }
     }
 
-    printf("Communicating with interupt vector 0x%x\n", doomcom.intnum);
+    LogMessage("Communicating with interupt vector 0x%x", doomcom.intnum);
 
     olddoomvect = getvect(doomcom.intnum);
     setvect(doomcom.intnum, NetISR);

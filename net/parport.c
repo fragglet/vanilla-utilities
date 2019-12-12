@@ -25,6 +25,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/parsetup.h"
 
@@ -109,14 +110,20 @@ void GetPort(void)
     else if (lpt2)
     {
         portbase = 0x278;
+        SetLogDistinguisher("LPT2");
     }
     else if (lpt3)
     {
         portbase = 0x3bc;
+        SetLogDistinguisher("LPT3");
+    }
+    else
+    {
+        SetLogDistinguisher("LPT1");
     }
 
-    printf("Using parallel printer port with base address 0x%x and IRQ %u\n",
-           portbase, irq);
+    LogMessage("Using parallel port with base address 0x%x and IRQ %u.",
+               portbase, irq);
 }
 
 /*

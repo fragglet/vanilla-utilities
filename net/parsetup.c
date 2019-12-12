@@ -30,6 +30,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/parsetup.h"
 #include "net/doomnet.h"
 
@@ -66,7 +67,6 @@ void Error(char *error, ...)
         exit(1);
     }
 
-    printf("Clean exit from PARSETUP\n");
     exit(0);
 }
 
@@ -162,8 +162,7 @@ void Connect(void)
     int localstage, remotestage;
     char str[20];
 
-    printf
-        ("Attempting to connect across parallel link, press escape to abort.\n");
+    LogMessage("Attempting to connect across parallel link.");
 
     //
     // wait for a good packet
@@ -183,7 +182,7 @@ void Connect(void)
         while (ReadPacket())
         {
             pktbuf[recv_count] = 0;
-            printf("read: %s\n", pktbuf);
+            // LogMessage("Read: %s", pktbuf);
             if (recv_count != 7)
                 goto badpacket;
             if (strncmp(pktbuf, "PLAY", 4))
@@ -205,7 +204,7 @@ void Connect(void)
             oldsec = time.ti_sec;
             sprintf(str, "PLAY%i_%i", doomcom.consoleplayer, localstage);
             WritePacket(str, strlen(str));
-            printf("wrote: %s\n", str);
+            // LogMessage("Wrote: %s", str);
         }
 
     } while (remotestage < 1);

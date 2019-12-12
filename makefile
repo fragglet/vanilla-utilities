@@ -9,7 +9,7 @@ IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj \
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj lib\flag.obj \
                 net\serport.obj lib\log.obj
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj lib\flag.obj net\parport.obj \
-                net\plio.obj
+                net\plio.obj lib\log.obj
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\flag.obj
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\flag.obj
 METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj

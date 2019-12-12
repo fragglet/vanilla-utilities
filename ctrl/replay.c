@@ -31,8 +31,8 @@
 #include "ctrl/control.h"
 #include "lib/flag.h"
 
-static byte *demo_buf, *demo_end;
-static byte *demo_p;
+static uint8_t *demo_buf, *demo_end;
+static uint8_t *demo_p;
 static char *demo_filename = NULL;
 static int is_strife = 0;
 

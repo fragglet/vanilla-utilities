@@ -27,17 +27,17 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-typedef unsigned char byte;
+#include "lib/inttypes.h"
 
 typedef struct {
     signed char forwardmove;    // *2048 for move
     signed char sidemove;       // *2048 for move
-    short angleturn;            // <<16 for angle delta
-    short consistancy;          // netgame check
-    byte chatchar;
-    byte buttons;
-    byte buttons2;
-    long inventoryitem;
+    int16_t angleturn;            // <<16 for angle delta
+    int16_t consistancy;          // netgame check
+    uint8_t chatchar;
+    uint8_t buttons;
+    uint8_t buttons2;
+    int32_t inventoryitem;
 } ticcmd_t;
 
 typedef void (*control_callback_t)(ticcmd_t *ticcmd, void *user_data);

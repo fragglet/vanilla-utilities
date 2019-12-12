@@ -29,16 +29,19 @@
 #include <string.h>
 #include <dos.h>
 #include <process.h>
+#include <assert.h>
 
 #include "ctrl/control.h"
 #include "lib/flag.h"
 
-typedef struct {
+struct control_handle_s
+{
     long intnum;
     ticcmd_t ticcmd;
-} control_buf_t;
+};
 
-static control_buf_t control_buf;
+static control_handle_t control_buf;
+static control_handle_t far *next_handle;
 
 static control_callback_t int_callback;
 static void *int_user_data;
@@ -50,7 +53,17 @@ static void interrupt(*old_isr) ();
 
 static void interrupt ControlISR()
 {
-    memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
+    // If we have a next_handle, invoke the next -control driver in the
+    // chain to populate the ticcmd before we invoke our callback
+    // function. Otherwise, we just start by zeroing out the ticcmd.
+    if (next_handle != NULL)
+    {
+        ControlInvoke(next_handle, &control_buf.ticcmd);
+    }
+    else
+    {
+        memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
+    }
     int_callback(&control_buf.ticcmd, int_user_data);
 }
 
@@ -69,7 +82,6 @@ static int InterruptVectorAvailable(int intnum)
 
 static int FindInterruptNum(void)
 {
-    int intnum;
     int i;
 
     // -cvector specified in parameters?
@@ -137,6 +149,11 @@ void ControlLaunchDoom(char **args, control_callback_t callback,
     long flataddr;
     int intnum;
 
+    // To ensure composability, we look for an existing -control argument
+    // on the command line and remove it if we find it. We will then chain
+    // to invoke it as well when the upper layer invokes our interrupt.
+    next_handle = ControlGetHandle(args);
+
     intnum = FindInterruptNum();
     printf("Control API: Using interrupt vector 0x%x\n", intnum);
 
@@ -160,3 +177,63 @@ void ControlLaunchDoom(char **args, control_callback_t callback,
 
     RestoreInterruptHandler(intnum);
 }
+
+// ControlGetHandle reads from the given args list and returns a handle based
+// on the first -control argument that is found. The list is modified to
+// remove the argument. If no -control argument is found, NULL is returned.
+control_handle_t far *ControlGetHandle(char **args)
+{
+    control_handle_t far *result = NULL;
+    int i, j;
+
+    for (i = 0, j = 0; args[i] != NULL; ++i, ++j)
+    {
+        if (!strcmp(args[i], "-control"))
+        {
+            unsigned long l;
+            unsigned int seg;
+
+            assert(args[i + 1] != NULL);
+            l = strtol(args[i + 1], NULL, 10);
+            assert(l != 0);
+            seg = (int) ((l >> 4) & 0xf000L);
+            result = MK_FP(seg, l & 0xffffL);
+
+            i += 2;
+            break;
+        }
+    }
+
+    // Shift back arguments back to overwrite -control.
+    do
+    {
+        args[j] = args[i];
+        ++i; ++j;
+    } while(args[i] != NULL);
+
+    args[j] = NULL;
+
+    return result;
+}
+
+static void far_memcpy(void far *dest, void far *src, size_t nbytes)
+{
+    uint8_t far *dest_p = (uint8_t far *) dest;
+    uint8_t far *src_p = (uint8_t far *) src;
+    int i;
+
+    for (i = 0; i < nbytes; ++i)
+    {
+        *dest_p = *src_p;
+        ++dest_p; ++src_p;
+    }
+}
+
+void ControlInvoke(control_handle_t far *handle, ticcmd_t *ticcmd)
+{
+    union REGS regs;
+    far_memcpy(&handle->ticcmd, ticcmd, sizeof(ticcmd_t));
+    int86((int) handle->intnum, &regs, &regs);
+    far_memcpy(ticcmd, &handle->ticcmd, sizeof(ticcmd_t));
+}
+

@@ -29,6 +29,8 @@
 
 #include "lib/inttypes.h"
 
+typedef struct control_handle_s control_handle_t;
+
 typedef struct {
     signed char forwardmove;    // *2048 for move
     signed char sidemove;       // *2048 for move
@@ -45,5 +47,7 @@ typedef void (*control_callback_t)(ticcmd_t *ticcmd, void *user_data);
 void ControlRegisterFlags(void);
 void ControlLaunchDoom(char **args, control_callback_t callback,
                        void *user_data);
+control_handle_t far *ControlGetHandle(char **args);
+void ControlInvoke(control_handle_t far *handle, ticcmd_t *ticcmd);
 
 #endif                          /* CONTROL_H */

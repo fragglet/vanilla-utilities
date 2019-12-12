@@ -1,5 +1,7 @@
 // doomnet.h
 
+#include "lib/inttypes.h"
+
 #define	MAXNETNODES		8       // max computers in a game
 #define	MAXPLAYERS		8       // up to 8 with Hexen/Strife
 
@@ -34,7 +36,7 @@ typedef struct {
     short drone;                // 1 = drone
 
     // packet data to be sent
-    char data[512];
+    uint8_t data[512];
 } doomcom_t;
 
 #define BACKUPTICS 12

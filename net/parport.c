@@ -22,23 +22,22 @@
 #include <dos.h>
 #include <string.h>
 #include <stdio.h>
+#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "net/doomnet.h"
 #include "net/parsetup.h"
-
-typedef unsigned char byte;
 
 unsigned int portbase = 0x378;
 unsigned irq = 7;
 
 #define BUFSIZE 512
 static void interrupt(*oldisr) ();
-static byte oldmask;
+static uint8_t oldmask;
 unsigned int errcnt = 0;
 static unsigned icnt = 0;
 
-byte pktbuf[BUFSIZE];
+uint8_t pktbuf[BUFSIZE];
 
 unsigned int bufseg = 0;
 unsigned int bufofs = 0;
@@ -68,7 +67,7 @@ void interrupt ReceiveISR(void)
 
 void InitISR(void)
 {
-    byte mask;
+    uint8_t mask;
 
     // install new interrupt hander for the printer port
     oldisr = getvect(irq + 8);

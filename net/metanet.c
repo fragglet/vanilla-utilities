@@ -4,8 +4,8 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
-
 #include <bios.h>
+#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "net/doomnet.h"
@@ -29,7 +29,7 @@
 // A node_addr_t is a routing path to take through the network
 // to reach the destination node. Each byte specifies the driver#
 // and node# for next hop. There can be up to four hops.
-typedef unsigned char node_addr_t[4];
+typedef uint8_t node_addr_t[4];
 
 enum meta_packet_type
 {
@@ -48,7 +48,7 @@ struct meta_header
 struct meta_data_msg
 {
     struct meta_header header;
-    unsigned char data[1];  // [...]
+    uint8_t data[1];  // [...]
 };
 
 struct meta_discover_msg
@@ -58,13 +58,13 @@ struct meta_discover_msg
     int num_neighbors;
     int station_id;
     // Next hop address byte for all immediate neighbors:
-    unsigned char neighbors[MAXNETNODES];
+    uint8_t neighbors[MAXNETNODES];
 };
 
 struct node_data
 {
     node_addr_t addr;
-    unsigned char flags;
+    uint8_t flags;
     int station_id;
 };
 
@@ -99,8 +99,8 @@ static const struct
 
 static void far_memmove(void far *dest, void far *src, size_t nbytes)
 {
-    unsigned char far *dest_p = (unsigned char far *) dest;
-    unsigned char far *src_p = (unsigned char far *) src;
+    uint8_t far *dest_p = (uint8_t far *) dest;
+    uint8_t far *src_p = (uint8_t far *) src;
     int i;
 
     if (dest < src)
@@ -125,7 +125,7 @@ static void far_memmove(void far *dest, void far *src, size_t nbytes)
 
 static void far_bzero(void far *dest, size_t nbytes)
 {
-    unsigned char far *dest_p = dest;
+    uint8_t far *dest_p = dest;
     int i;
 
     for (i = 0; i < nbytes; ++i)
@@ -211,7 +211,7 @@ static int NodeForAddr(node_addr_t addr)
     return -1;
 }
 
-static int AppendNextHop(node_addr_t addr, unsigned char next_hop)
+static int AppendNextHop(node_addr_t addr, uint8_t next_hop)
 {
     unsigned int i;
 

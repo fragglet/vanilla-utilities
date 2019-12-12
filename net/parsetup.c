@@ -27,6 +27,7 @@
 #include <dos.h>
 #include <time.h>
 #include <string.h>
+#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "net/parsetup.h"
@@ -36,7 +37,7 @@ unsigned newpkt = 0;
 
 extern void recv(void);
 extern void send_pkt(void);
-extern byte pktbuf[];
+extern uint8_t pktbuf[];
 extern unsigned recv_count;
 extern unsigned errcnt;
 
@@ -100,7 +101,7 @@ boolean ReadPacket(void)
 =============
 */
 
-int WritePacket(byte *data, unsigned len)
+int WritePacket(uint8_t *data, unsigned len)
 {
 
     _CX = len;

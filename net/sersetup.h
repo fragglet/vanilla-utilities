@@ -4,7 +4,6 @@
 #define STI()                enable()
 
 typedef enum { false, true } boolean;
-typedef unsigned char byte;
 
 #define TRANSMIT_HOLDING_REGISTER            0x00
 #define RECEIVE_BUFFER_REGISTER              0x00
@@ -68,7 +67,7 @@ typedef unsigned char byte;
 
 typedef struct {
     long head, tail;            // bytes are put on head and pulled from tail
-    unsigned char data[QUESIZE];
+    uint8_t data[QUESIZE];
 } que_t;
 
 void SerialRegisterFlags(void);

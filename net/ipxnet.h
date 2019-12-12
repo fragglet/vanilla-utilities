@@ -6,55 +6,51 @@
 
 // setupdata_t is used as doomdata_t during setup
 typedef struct {
-    short gameid;               // so multiple games can setup at once
-    short drone;
-    short nodesfound;
-    short nodeswanted;
+    int16_t gameid;               // so multiple games can setup at once
+    int16_t drone;
+    int16_t nodesfound;
+    int16_t nodeswanted;
 } setupdata_t;
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned long LONG;
-
 typedef struct IPXPacketStructure {
-    WORD PacketCheckSum;        /* high-low */
-    WORD PacketLength;          /* high-low */
-    BYTE PacketTransportControl;
-    BYTE PacketType;
+    uint16_t PacketCheckSum;       /* high-low */
+    uint16_t PacketLength;         /* high-low */
+    uint8_t PacketTransportControl;
+    uint8_t PacketType;
 
-    BYTE dNetwork[4];           /* high-low */
-    BYTE dNode[6];              /* high-low */
-    BYTE dSocket[2];            /* high-low */
+    uint8_t dNetwork[4];           /* high-low */
+    uint8_t dNode[6];              /* high-low */
+    uint8_t dSocket[2];            /* high-low */
 
-    BYTE sNetwork[4];           /* high-low */
-    BYTE sNode[6];              /* high-low */
-    BYTE sSocket[2];            /* high-low */
+    uint8_t sNetwork[4];           /* high-low */
+    uint8_t sNode[6];              /* high-low */
+    uint8_t sSocket[2];            /* high-low */
 } IPXPacket;
 
 typedef struct {
-    BYTE network[4];            /* high-low */
-    BYTE node[6];               /* high-low */
+    uint8_t network[4];            /* high-low */
+    uint8_t node[6];               /* high-low */
 } localadr_t;
 
 typedef struct {
-    BYTE node[6];               /* high-low */
+    uint8_t node[6];               /* high-low */
 } nodeadr_t;
 
 typedef struct ECBStructure {
-    WORD Link[2];               /* offset-segment */
-    WORD ESRAddress[2];         /* offset-segment */
-    BYTE InUseFlag;
-    BYTE CompletionCode;
-    WORD ECBSocket;             /* high-low */
-    BYTE IPXWorkspace[4];       /* N/A */
-    BYTE DriverWorkspace[12];   /* N/A */
-    BYTE ImmediateAddress[6];   /* high-low */
-    WORD FragmentCount;         /* low-high */
+    uint16_t Link[2];              /* offset-segment */
+    uint16_t ESRAddress[2];        /* offset-segment */
+    uint8_t InUseFlag;
+    uint8_t CompletionCode;
+    uint16_t ECBSocket;            /* high-low */
+    uint8_t IPXWorkspace[4];       /* N/A */
+    uint8_t DriverWorkspace[12];   /* N/A */
+    uint8_t ImmediateAddress[6];   /* high-low */
+    uint16_t FragmentCount;        /* low-high */
 
-    WORD fAddress[2];           /* offset-segment */
-    WORD fSize;                 /* low-high */
-    WORD f2Address[2];          /* offset-segment */
-    WORD f2Size;                /* low-high */
+    uint16_t fAddress[2];          /* offset-segment */
+    uint16_t fSize;                /* low-high */
+    uint16_t f2Address[2];         /* offset-segment */
+    uint16_t f2Size;               /* low-high */
 } ECB;
 
 // time is used by the communication driver to sequence packets returned
@@ -64,8 +60,8 @@ typedef struct {
     ECB ecb;
     IPXPacket ipx;
 
-    long time;
-    unsigned char payload[512];
+    int32_t time;
+    uint8_t payload[512];
 } packet_t;
 
 extern doomcom_t doomcom;

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <bios.h>
+#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "net/doomnet.h"

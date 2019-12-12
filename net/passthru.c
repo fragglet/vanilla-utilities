@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
-
 #include <bios.h>
+#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "net/doomnet.h"
@@ -14,8 +14,8 @@ static doomcom_t far *inner_driver;
 
 static void far_memcpy(void far *dest, void far *src, size_t nbytes)
 {
-    unsigned char far *dest_p = (unsigned char far *) dest;
-    unsigned char far *src_p = (unsigned char far *) src;
+    uint8_t far *dest_p = (uint8_t far *) dest;
+    uint8_t far *src_p = (uint8_t far *) src;
     int i;
 
     for (i = 0; i < nbytes; ++i)

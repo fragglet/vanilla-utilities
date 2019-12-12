@@ -20,6 +20,7 @@
 
 #define NODE_STATUS_GOT_DISCOVER  0x01
 #define NODE_STATUS_READY         0x02
+#define NODE_STATUS_LAUNCHED      0x04
 
 #define ADDR_DRIVER(x)  (((x) >> 5) & 0x1f)
 #define ADDR_NODE(x)    ((x) & 0x1f)
@@ -249,6 +250,53 @@ static struct node_data *NodeOrAddNode(node_addr_t addr)
     return result;
 }
 
+static void SendDiscover(struct node_data *node)
+{
+    doomcom_t far *dc;
+    struct meta_discover_msg far *dsc;
+    unsigned int first_hop;
+    int d, n;
+
+    first_hop = node->addr[0];
+    dc = drivers[ADDR_DRIVER(first_hop)];
+    dsc = (struct meta_discover_msg far *) &dc->data;
+    dsc->header.magic = META_MAGIC | (unsigned long) META_PACKET_DISCOVER;
+    far_bzero(dsc->header.src, sizeof(node_addr_t));
+    far_memmove(dsc->header.dest, node->addr + 1, sizeof(node_addr_t) - 1);
+    dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
+
+    dsc->status = nodes[0].flags;
+    dsc->num_neighbors = 0;
+    dsc->station_id = nodes[0].station_id;
+
+    for (d = 0; d < num_drivers; ++d)
+    {
+        // Don't include neighbors on the same interface as the node we're
+        // sending to, because they're already accessible on the same
+        // interface and including them could cause a routing loop.
+        // The destination only cares about what can be accessed *through*
+        // this node.
+        if (d == ADDR_DRIVER(first_hop))
+        {
+            continue;
+        }
+
+        for (n = 1; n < drivers[d]->numnodes; ++n)
+        {
+            if (dsc->num_neighbors < MAXNETNODES)
+            {
+                dsc->neighbors[dsc->num_neighbors] = MAKE_ADDRESS(d, n);
+                ++dsc->num_neighbors;
+            }
+        }
+    }
+
+    // Send packet.
+    dc->datalength = sizeof(struct meta_discover_msg);
+    dc->remotenode = ADDR_NODE(first_hop);
+    NetSendPacket(dc);
+}
+
 static void HandleDiscover(struct meta_discover_msg far *dsc)
 {
     struct node_data *node;
@@ -256,11 +304,24 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
     int i;
 
     far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
+
     node = NodeOrAddNode(addr);
     if (node == NULL)
     {
         return;
     }
+
+    if ((nodes[0].flags & NODE_STATUS_LAUNCHED) != 0
+     && (dsc->status & NODE_STATUS_LAUNCHED) == 0)
+    {
+	// We've launched but this other node hasn't, and is still sending us
+	// discover messages and has fallen behind. Since we're no longer in
+	// discovery phase, just send it a tit-for-tat response and return;
+	// if it's waiting on us, this will allow it to proceed.
+        SendDiscover(node);
+        return;
+    }
+
     node->flags = dsc->status | NODE_STATUS_GOT_DISCOVER;
     node->station_id = dsc->station_id;
 
@@ -338,53 +399,6 @@ static void GetPacket(void)
             return;
         }
     }
-}
-
-static void SendDiscover(struct node_data *node)
-{
-    doomcom_t far *dc;
-    struct meta_discover_msg far *dsc;
-    unsigned int first_hop;
-    int d, n;
-
-    first_hop = node->addr[0];
-    dc = drivers[ADDR_DRIVER(first_hop)];
-    dsc = (struct meta_discover_msg far *) &dc->data;
-    dsc->header.magic = META_MAGIC | (unsigned long) META_PACKET_DISCOVER;
-    far_bzero(dsc->header.src, sizeof(node_addr_t));
-    far_memmove(dsc->header.dest, node->addr + 1, sizeof(node_addr_t) - 1);
-    dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
-
-    dsc->status = nodes[0].flags;
-    dsc->num_neighbors = 0;
-    dsc->station_id = nodes[0].station_id;
-
-    for (d = 0; d < num_drivers; ++d)
-    {
-        // Don't include neighbors on the same interface as the node we're
-        // sending to, because they're already accessible on the same
-        // interface and including them could cause a routing loop.
-        // The destination only cares about what can be accessed *through*
-        // this node.
-        if (d == ADDR_DRIVER(first_hop))
-        {
-            continue;
-        }
-
-        for (n = 1; n < drivers[d]->numnodes; ++n)
-        {
-            if (dsc->num_neighbors < MAXNETNODES)
-            {
-                dsc->neighbors[dsc->num_neighbors] = MAKE_ADDRESS(d, n);
-                ++dsc->num_neighbors;
-            }
-        }
-    }
-
-    // Send packet.
-    dc->datalength = sizeof(struct meta_discover_msg);
-    dc->remotenode = ADDR_NODE(first_hop);
-    NetSendPacket(dc);
 }
 
 static void SendPacket(void)
@@ -551,6 +565,11 @@ static void DiscoverNodes(void)
             ready_start = now + CLOCKS_PER_SEC;
         }
     } while (ready_start == 0 || now < ready_start);
+
+    // Discover phase has finished but we may still receive discover
+    // messages from other nodes if they haven't (Byzantine Generals
+    // problem). We use the LAUNCHED flag to resolve this.
+    nodes[0].flags |= NODE_STATUS_LAUNCHED;
 }
 
 static void PrintStats(void)

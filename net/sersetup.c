@@ -60,8 +60,7 @@ void Error(char *error, ...)
 
     if (usemodem)
     {
-        printf("\n");
-        printf("\nDropping DTR\n");
+        LogMessage("Dropping DTR");
         OUTPUT(uart + MODEM_CONTROL_REGISTER,
                INPUT(uart + MODEM_CONTROL_REGISTER) & ~MCR_DTR);
         delay(1250);
@@ -88,7 +87,6 @@ void Error(char *error, ...)
         exit(1);
     }
 
-    printf("Clean exit from SERSETUP\n");
     exit(0);
 }
 
@@ -232,8 +230,7 @@ void Connect(void)
     //
     // wait for a good packet
     //
-    printf
-        ("Attempting to connect across serial link, press escape to abort.\n");
+    LogMessage("Attempting to connect across serial link");
 
     oldsec = -1;
     localstage = remotestage = 0;
@@ -293,7 +290,7 @@ void Connect(void)
 
 void ModemCommand(char *str)
 {
-    printf("Modem command : %s\n", str);
+    LogMessage("Modem command: %s", str);
     WriteBuffer(str, strlen(str));
     WriteBuffer("\r", 1);
 }
@@ -316,7 +313,6 @@ void ModemResponse(char *resp)
 
     do
     {
-        printf("Modem response: ");
         respptr = 0;
         do
         {
@@ -331,7 +327,7 @@ void ModemResponse(char *resp)
             if (c == '\n' || respptr == 79)
             {
                 response[respptr] = 0;
-                printf("%s\n", response);
+                LogMessage("Modem response: %s", response);
                 break;
             }
             if (c >= ' ')
@@ -394,7 +390,7 @@ void Dial(char *dial_no)
     ModemCommand(startup);
     ModemResponse("OK");
 
-    printf("\nDialing...\n\n");
+    LogMessage("Dialing...");
     sprintf(cmd, "ATDT%s", dial_no);
 
     ModemCommand(cmd);
@@ -415,7 +411,7 @@ void Answer(void)
     usemodem = true;
     ModemCommand(startup);
     ModemResponse("OK");
-    printf("\nWaiting for ring...\n\n");
+    LogMessage("Waiting for ring...");
 
     ModemResponse("RING");
     ModemCommand("ATA");

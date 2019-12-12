@@ -9,6 +9,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/sersetup.h"
 
@@ -71,6 +72,7 @@ void SerialRegisterFlags(void)
 void GetUart(void)
 {
     char far *system_data;
+    char portname[5];
     static int ISA_uarts[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
     static int ISA_IRQs[] = { 4, 3, 4, 3 };
     static int MCA_uarts[] = { 0x03f8, 0x02f8, 0x3220, 0x3228 };
@@ -114,7 +116,9 @@ void GetUart(void)
         irq = irq_flag;
     }
 
-    printf("Looking for UART at port 0x%x, irq %i\n", uart, irq);
+    sprintf(portname, "COM%d", comport);
+    SetLogDistinguisher(portname);
+    LogMessage("Looking for UART at port 0x%x, irq %i", uart, irq);
 }
 
 static long OverrideBaudRate(long baudrate)
@@ -174,7 +178,7 @@ void InitPort(long baudrate)
     // init com port settings
     //
 
-    printf("Setting port to %lu baud\n", baudrate);
+    LogMessage("Setting port to %lu baud", baudrate);
 
     // set baud rate
     baudbits = 115200L / baudrate;
@@ -247,12 +251,12 @@ void InitPort(long baudrate)
     if (uart_type == UART_16550)
     {
         setvect(irqintnum, ISR16550);
-        printf("UART = 16550\n\n");
+        LogMessage("UART = 16550");
     }
     else
     {
         setvect(irqintnum, ISR8250);
-        printf("UART = 8250\n\n");
+        LogMessage("UART = 8250");
     }
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));

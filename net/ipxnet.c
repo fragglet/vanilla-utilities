@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
 
@@ -129,7 +130,10 @@ void InitNetwork(void)
     socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
     if (port_flag != (int) DOOM_DEFAULT_PORT)
     {
-        printf("Using alternate port %i for network\n", port_flag);
+        char portnum[10];
+        sprintf(portnum, "0x%x", port_flag);
+        SetLogDistinguisher(portnum);
+        LogMessage("Using alternate port %i for network", port_flag);
     }
 
     GetLocalAddress();

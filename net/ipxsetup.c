@@ -9,6 +9,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
 
@@ -85,10 +86,10 @@ void LookForNodes(void)
     // wait until we get [numnetnodes] packets, then start playing
     // the playernumbers are assigned by netid
     //
-    printf("Attempting to find all players for %i player net play. "
-           "Press ESC to exit.\n", numnetnodes);
-
-    printf("Looking for a node");
+    LogMessage("Attempting to find %d players on IPX network", numnetnodes);
+    LogMessage("Local address is %02x:%02x:%02x:%02x:%02x:%02x",
+               nodeadr[0].node[0], nodeadr[0].node[1], nodeadr[0].node[2],
+               nodeadr[0].node[3], nodeadr[0].node[4], nodeadr[0].node[5]);
 
     oldsec = -1;
     setup = (setupdata_t *) & doomcom.data;
@@ -152,10 +153,10 @@ void LookForNodes(void)
 
             doomcom.numnodes++;
 
-            printf("\nFound a node!\n");
-
-            if (doomcom.numnodes < numnetnodes)
-                printf("Looking for node");
+            LogMessage(
+                "Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
+                remoteadr.node[0], remoteadr.node[1], remoteadr.node[2],
+                remoteadr.node[3], remoteadr.node[4], remoteadr.node[5]);
         }
         //
         // we are done if all nodes have found all other nodes
@@ -175,7 +176,6 @@ void LookForNodes(void)
             continue;
         oldsec = time.ti_sec;
 
-        printf(".");
         doomcom.datalength = sizeof(*setup);
 
         nodesetup[0].nodesfound = doomcom.numnodes;
@@ -209,7 +209,7 @@ void LookForNodes(void)
     doomcom.consoleplayer = console;
     doomcom.numplayers = total;
 
-    printf("Console is player %i of %i\n", console + 1, total);
+    LogMessage("Console is player %i of %i\n", console + 1, total);
 }
 
 /*

@@ -4,7 +4,8 @@
 CFLAGS = -O -d -w
 
 REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\flag.obj
-IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj
+IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj \
+                lib\log.obj
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj lib\flag.obj \
                 net\serport.obj lib\log.obj
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj lib\flag.obj net\parport.obj \

@@ -209,7 +209,7 @@ void LookForNodes(void)
     doomcom.consoleplayer = console;
     doomcom.numplayers = total;
 
-    LogMessage("Console is player %i of %i\n", console + 1, total);
+    LogMessage("Console is player %i of %i", console + 1, total);
 }
 
 /*

@@ -12,7 +12,7 @@ PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\flag.obj
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\flag.obj
 METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
-                lib\flag.obj
+                lib\flag.obj stat\stats.obj
 
 EXES = replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe

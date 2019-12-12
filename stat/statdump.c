@@ -30,8 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ctrl/control.h"
 #include "lib/flag.h"
+
+#include "ctrl/control.h"
 #include "stat/stats.h"
 #include "stat/statprnt.h"
 
@@ -40,35 +41,16 @@
 static wbstartstruct_t captured_stats[MAX_CAPTURES];
 static int num_captured_stats = 0;
 
-// Statistics buffer that Doom writes into.
-static wbstartstruct_t stats_buffer;
-
 // Output file to write statistics to.  If NULL, print to stdout.
 static char *output_filename = NULL;
 
-//
-// This callback function is invoked in interrupt context by the
-// control API interrupt.
-//
-// We check the "maxfrags" variable, to see if the stats 
-// buffer has been written to.  If it has, save the contents of the
-// stats buffer into the captured_stats array for later processing.
-///
-static void ControlCallback(ticcmd_t *ticcmd, void *unused)
+static void StatsCallback(wbstartstruct_t *stats, void *unused)
 {
-    if (stats_buffer.maxfrags == 0)
+    if (num_captured_stats < MAX_CAPTURES)
     {
-        // New data has been written to the statistics buffer.
-        // Save it for later processing.
-
-        if (num_captured_stats < MAX_CAPTURES)
-        {
-            memcpy(&captured_stats[num_captured_stats], &stats_buffer,
-                   sizeof(wbstartstruct_t));
-            ++num_captured_stats;
-        }
-
-        stats_buffer.maxfrags = 1;
+        memcpy(&captured_stats[num_captured_stats], stats,
+               sizeof(wbstartstruct_t));
+        ++num_captured_stats;
     }
 }
 
@@ -119,8 +101,6 @@ static void WriteStats(void)
 int main(int argc, char *argv[])
 {
     char **args;
-    char bufaddr[20];
-    long flataddr;
 
     SetHelpText("Doom statistics driver",
                 "%s -o stats.txt doom2.exe -skill 4");
@@ -130,13 +110,7 @@ int main(int argc, char *argv[])
     args = ParseCommandLine(argc, argv);
 
     // Launch Doom
-    flataddr = (long)_DS *16 + (unsigned)(&stats_buffer);
-    sprintf(bufaddr, "%li", flataddr);
-    args = AppendArgs(args, "-statcopy", bufaddr, NULL);
-
-    stats_buffer.maxfrags = 1;
-
-    ControlLaunchDoom(args, ControlCallback, NULL);
+    StatsLaunchDoom(args, StatsCallback, NULL);
 
     printf("Statistics captured for %i level(s)\n", num_captured_stats);
 

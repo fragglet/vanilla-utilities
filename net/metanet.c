@@ -77,14 +77,14 @@ static int num_drivers = 0;
 static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
 
-static unsigned int stats_rx_packets, stats_tx_packets;
-static unsigned int stats_wrong_magic, stats_too_many_hops, stats_invalid_dest;
-static unsigned int stats_node_limit, stats_bad_send, stats_unknown_type;
-static unsigned int stats_forwarded, stats_unknown_src, stats_setup_packets;
+static unsigned long stats_rx_packets, stats_tx_packets;
+static unsigned long stats_wrong_magic, stats_too_many_hops, stats_invalid_dest;
+static unsigned long stats_node_limit, stats_bad_send, stats_unknown_type;
+static unsigned long stats_forwarded, stats_unknown_src, stats_setup_packets;
 
 static const struct
 {
-    unsigned int *ptr;
+    unsigned long *ptr;
     const char *name;
 } stats[] = {
     { &stats_rx_packets,    "rx_packets" },
@@ -631,7 +631,7 @@ static void PrintStats(void)
     {
         if (*stats[i].ptr != 0)
         {
-            LogMessage("%16s %6d", stats[i].name, *stats[i].ptr);
+            LogMessage("%16s %6ld", stats[i].name, *stats[i].ptr);
         }
     }
 }

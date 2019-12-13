@@ -56,8 +56,6 @@ void Error(char *error, ...)
 {
     va_list argptr;
 
-    ShutdownPort();
-
     if (error)
     {
         va_start(argptr, error);
@@ -262,6 +260,7 @@ void main(int argc, char *argv[])
     // establish communications
     //
     InitPort();
+    atexit(ShutdownPort);
 
     Connect();
 
@@ -271,5 +270,4 @@ void main(int argc, char *argv[])
     LaunchDOOM(args);
 
     Error(NULL);
-
 }

@@ -74,8 +74,6 @@ void Error(char *error, ...)
 
     }
 
-    ShutdownPort();
-
     if (vectorishooked)
         setvect(doomcom.intnum, olddoomvect);
 
@@ -475,6 +473,7 @@ void main(int argc, char *argv[])
     // establish communications
     //
     InitPort(baudrate);
+    atexit(ShutdownPort);
 
     if (dial_no != NULL)
     {

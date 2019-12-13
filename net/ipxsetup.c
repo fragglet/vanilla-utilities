@@ -38,7 +38,6 @@ void Error(char *error, ...)
     vprintf(error, argptr);
     va_end(argptr);
     printf("\n");
-    ShutdownNetwork();
     exit(1);
 }
 
@@ -245,6 +244,7 @@ void main(int argc, char *argv[])
 
     // make sure the network exists and create a bunch of buffers
     InitNetwork();
+    atexit(ShutdownNetwork);
 
     // get addresses of all nodes
     LookForNodes();
@@ -255,9 +255,6 @@ void main(int argc, char *argv[])
     // launch DOOM
     //
     LaunchDOOM(args);
-
-    // cleanup
-    ShutdownNetwork();
 
     Error(NULL);
 }

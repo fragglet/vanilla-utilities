@@ -33,6 +33,7 @@
 
 #include "ctrl/control.h"
 #include "lib/flag.h"
+#include "lib/log.h"
 
 struct control_handle_s
 {
@@ -85,7 +86,6 @@ static int FindInterruptNum(void)
     int i;
 
     // -cvector specified in parameters?
-
     if (force_vector)
     {
         if (InterruptVectorAvailable(force_vector))
@@ -94,14 +94,11 @@ static int FindInterruptNum(void)
         }
         else
         {
-            fprintf(stderr, "Interrupt vector 0x%x not available!\n",
-                    force_vector);
-            exit(-1);
+            Error("Interrupt vector 0x%x not available!", force_vector);
         }
     }
 
     // Figure out a vector to use automatically.
-
     for (i = 0x60; i <= 0x66; ++i)
     {
         if (InterruptVectorAvailable(i))
@@ -110,9 +107,7 @@ static int FindInterruptNum(void)
         }
     }
 
-    fprintf(stderr, "Failed to find an available interrupt vector!\n");
-    exit(-1);
-
+    Error("Failed to find an available interrupt vector!");
     return -1;
 }
 
@@ -155,7 +150,7 @@ void ControlLaunchDoom(char **args, control_callback_t callback,
     next_handle = ControlGetHandle(args);
 
     intnum = FindInterruptNum();
-    printf("Control API: Using interrupt vector 0x%x\n", intnum);
+    LogMessage("Using interrupt vector 0x%x for control API", intnum);
 
     // Initialize the interrupt handler.
 

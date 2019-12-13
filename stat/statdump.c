@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "lib/flag.h"
+#include "lib/log.h"
 
 #include "ctrl/control.h"
 #include "stat/stats.h"
@@ -69,8 +70,7 @@ static void WriteStats(void)
 
         if (outfile == NULL)
         {
-            fprintf(stderr, "Failed to open '%s' for write.\n",
-                    output_filename);
+            Error("Failed to open '%s' for write.", output_filename);
             return;
         }
     }
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     // Launch Doom
     StatsLaunchDoom(args, StatsCallback, NULL);
 
-    printf("Statistics captured for %i level(s)\n", num_captured_stats);
+    LogMessage("Statistics captured for %i level(s)", num_captured_stats);
 
     // Write statistics to the output file.
     WriteStats();

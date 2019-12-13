@@ -3,18 +3,18 @@
 
 CFLAGS = -O -d -w
 
-REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\flag.obj
-IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\flag.obj net\ipxnet.obj \
-                lib\log.obj
-SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj lib\flag.obj \
-                net\serport.obj lib\log.obj
-PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj lib\flag.obj net\parport.obj \
-                net\plio.obj lib\log.obj
-PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\flag.obj lib\log.obj
-SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\flag.obj lib\log.obj
-METANET_OBJS = net\metanet.obj net\doomnet.obj lib\flag.obj lib\log.obj
-STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
-                lib\flag.obj stat\stats.obj
+LIB = lib\flag.obj lib\log.obj
+
+REPLAY_OBJS = $(LIB) ctrl\replay.obj ctrl\control.obj
+IPXSETUP_OBJS = $(LIB) net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj
+SERSETUP_OBJS = $(LIB) net\sersetup.obj net\doomnet.obj net\serport.obj
+PARSETUP_OBJS = $(LIB) net\parsetup.obj net\doomnet.obj net\parport.obj \
+                net\plio.obj
+PASSTHRU_OBJS = $(LIB) net\passthru.obj net\doomnet.obj
+SOLO_NET_OBJS = $(LIB) net\solo-net.obj net\doomnet.obj
+METANET_OBJS = $(LIB) net\metanet.obj net\doomnet.obj
+STATDUMP_OBJS = $(LIB) stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
+                stat\stats.obj
 
 EXES = replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe

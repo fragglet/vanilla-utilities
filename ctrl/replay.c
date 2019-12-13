@@ -30,6 +30,7 @@
 
 #include "ctrl/control.h"
 #include "lib/flag.h"
+#include "lib/log.h"
 
 static uint8_t *demo_buf, *demo_end;
 static uint8_t *demo_p;
@@ -87,8 +88,7 @@ static void LoadDemo(char *filename)
 
     if (fs == NULL)
     {
-        fprintf(stderr, "Failed to open %s\n", filename);
-        exit(-1);
+        Error("Failed to open %s", filename);
     }
 
     fseek(fs, 0, SEEK_END);
@@ -98,15 +98,13 @@ static void LoadDemo(char *filename)
 
     if (demo_buf == NULL)
     {
-        fprintf(stderr, "Failed to allocate demo buffer\n");
-        exit(-1);
+        Error("Failed to allocate demo buffer (%d bytes)", len);
     }
 
     fseek(fs, header_size, SEEK_SET);
     if (fread(demo_buf, len, 1, fs) < 1)
     {
-        fprintf(stderr, "Failed to read entire demo\n");
-        exit(-1);
+        Error("Failed to read entire demo from %s", filename);
     }
 
     demo_p = demo_buf;
@@ -127,8 +125,7 @@ int main(int argc, char *argv[])
 
     if (demo_filename == NULL)
     {
-        printf("Demo file not specified.\n");
-        exit(1);
+        Error("Demo file not specified.");
     }
 
     LoadDemo(demo_filename);

@@ -573,10 +573,9 @@ static int CheckReady(void)
             }
             if (nodes[i].station_id == nodes[j].station_id)
             {
-                fprintf(stderr, "Two nodes have the same station ID!\n"
-                                "Node %d and %d both have station ID %d\n",
-                                i, j, nodes[i].station_id);
-                exit(1);
+		Error("Two nodes have the same station ID!\n"
+                      "Node %d and %d both have station ID %d\n",
+                      i, j, nodes[i].station_id);
             }
         }
     }

@@ -45,32 +45,6 @@ void WriteBuffer(char *buffer, unsigned int count)
 }
 
 /*
-=================
-=
-= Error
-=
-= For abnormal program terminations
-=
-=================
-*/
-
-void Error(char *error, ...)
-{
-    va_list argptr;
-
-    if (error)
-    {
-        va_start(argptr, error);
-        vprintf(error, argptr);
-        va_end(argptr);
-        printf("\n");
-        exit(1);
-    }
-
-    exit(0);
-}
-
-/*
 ================
 =
 = ReadPacket
@@ -220,7 +194,7 @@ void Connect(void)
         while (bioskey(1))
         {
             if ((bioskey(0) & 0xff) == 27)
-                Error("\n\nNetwork game synchronization aborted.");
+                Error("Serial port synchronization aborted.");
         }
 
         while (ReadPacket())
@@ -299,7 +273,7 @@ void ModemResponse(char *resp)
             while (bioskey(1))
             {
                 if ((bioskey(0) & 0xff) == 27)
-                    Error("\nModem response aborted.");
+                    Error("Modem response aborted.");
             }
             c = ReadByte();
             if (c == -1)
@@ -487,6 +461,4 @@ void main(int argc, char *argv[])
     // launch DOOM
     //
     LaunchDOOM(args);
-
-    Error(NULL);
 }

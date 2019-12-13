@@ -45,10 +45,8 @@ void SetLogDistinguisher(char *name)
     distinguisher[sizeof(distinguisher) - 1] = '\0';
 }
 
-void LogMessage(char *fmt, ...)
+static void LogVarargs(char *fmt, va_list args)
 {
-    va_list args;
-
     if (strlen(progname) == 0)
     {
         SetLogName();
@@ -61,10 +59,29 @@ void LogMessage(char *fmt, ...)
     }
     fprintf(log, ": ");
 
-    va_start(args, fmt);
     vfprintf(log, fmt, args);
-    va_end(args);
 
     fprintf(log, "\n");
+}
+
+void LogMessage(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    LogVarargs(fmt, args);
+    va_end(args);
+}
+
+// Aborts the program with an abnormal program termination.
+void Error(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    LogVarargs(fmt, args);
+    va_end(args);
+
+    exit(1);
 }
 

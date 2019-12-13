@@ -18,27 +18,6 @@ static int numnetnodes;
 static setupdata_t nodesetup[MAXNETNODES];
 
 /*
-=================
-=
-= Error
-=
-= For abnormal program terminations
-=
-=================
-*/
-
-void Error(char *error, ...)
-{
-    va_list argptr;
-
-    va_start(argptr, error);
-    vprintf(error, argptr);
-    va_end(argptr);
-    printf("\n");
-    exit(1);
-}
-
-/*
 =============
 =
 = NetISR
@@ -106,7 +85,7 @@ void LookForNodes(void)
         while (bioskey(1))
         {
             if ((bioskey(0) & 0xff) == 27)
-                Error("\n\nNetwork game synchronization aborted.");
+                Error("Network game synchronization aborted.");
         }
 
         //
@@ -252,6 +231,5 @@ void main(int argc, char *argv[])
     // launch DOOM
     //
     LaunchDOOM(args);
-
-    Error(NULL);
 }
+

@@ -8,6 +8,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 
 #define MAXDRIVERS 16
@@ -66,6 +67,8 @@ struct node_data
     node_addr_t addr;
     uint8_t flags;
     int station_id;
+    // Assigned by AssignPlayerNumbers:
+    int player_num;
 };
 
 static doomcom_t far *drivers[MAXDRIVERS];
@@ -475,9 +478,9 @@ static int CompareStationIDs(const void *_a, const void *_b)
     }
 }
 
-static void AssignPlayerNumber(void)
+static void SortPlayers(struct node_data **players,
+                        int (*func)(const void *a, const void *b))
 {
-    struct node_data *players[MAXNETNODES];
     int i;
 
     for (i = 0; i < num_nodes; ++i)
@@ -485,22 +488,69 @@ static void AssignPlayerNumber(void)
         players[i] = &nodes[i];
     }
 
-    qsort(players, num_nodes, sizeof(struct node_data *),
-          CompareStationIDs);
+    qsort(players, num_nodes, sizeof(struct node_data *), func);
+}
+
+static void AssignPlayerNumbers(void)
+{
+    struct node_data *players[MAXNETNODES];
+    int i;
+
+    SortPlayers(players, CompareStationIDs);
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (players[i] == &nodes[0])
-        {
-            doomcom.consoleplayer = i;
-            break;
-        }
+        players[i]->player_num = i;
     }
 
+    doomcom.consoleplayer = nodes[0].player_num;
     doomcom.numnodes = num_nodes;
     doomcom.numplayers = num_nodes;
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
+}
+
+static int CompareAddrs(const void *_a, const void *_b)
+{
+    const struct node_data *a = *((struct node_data **) _a),
+                           *b = *((struct node_data **) _b);
+    return memcmp(a->addr, b->addr, sizeof(node_addr_t));
+}
+
+static void PrintTopology(void)
+{
+    struct node_data *players[MAXNETNODES];
+    char indent_buf[32];
+    int driver;
+    int last_first_hop;
+    int il;
+    int i;
+
+    SortPlayers(players, CompareAddrs);
+    LogMessage("Discovered network topology:");
+    LogMessage("  This machine (player %d)", nodes[0].player_num + 1);
+
+    last_first_hop = -1;
+    for (i = 1; i < num_nodes; ++i)
+    {
+        driver = ADDR_DRIVER(players[i]->addr[0]);
+        if (driver != ADDR_DRIVER(last_first_hop))
+        {
+            LogMessage("    \\ Driver %d:", driver);
+        }
+        for (il = 0; il < sizeof(node_addr_t); ++il)
+        {
+            if (players[i]->addr[il] == 0)
+            {
+                break;
+            }
+        }
+        strncpy(indent_buf, "                             ",
+                sizeof(indent_buf));
+        indent_buf[il * 4 + 4] = '\0';
+        LogMessage("%s\\ Player %d", indent_buf, players[i]->player_num + 1);
+        last_first_hop = players[i]->addr[0];
+    }
 }
 
 static int CheckReady(void)
@@ -576,12 +626,12 @@ static void PrintStats(void)
 {
     int i;
 
-    printf("\n\n");
+    LogMessage("Statistics:");
     for (i = 0; i < sizeof(stats) / sizeof(*stats); ++i)
     {
         if (*stats[i].ptr != 0)
         {
-            printf("%16s %6d\n", stats[i].name, *stats[i].ptr);
+            LogMessage("%16s %6d", stats[i].name, *stats[i].ptr);
         }
     }
 }
@@ -631,7 +681,8 @@ int main(int argc, char *argv[])
     srand(entropy);
 
     DiscoverNodes();
-    AssignPlayerNumber();
+    AssignPlayerNumbers();
+    PrintTopology();
     LaunchDOOM(args);
 
     PrintStats();

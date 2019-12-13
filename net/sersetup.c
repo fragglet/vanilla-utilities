@@ -18,7 +18,6 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
-static int usemodem;
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
 
@@ -58,21 +57,6 @@ void WriteBuffer(char *buffer, unsigned int count)
 void Error(char *error, ...)
 {
     va_list argptr;
-
-    if (usemodem)
-    {
-        LogMessage("Dropping DTR");
-        OUTPUT(uart + MODEM_CONTROL_REGISTER,
-               INPUT(uart + MODEM_CONTROL_REGISTER) & ~MCR_DTR);
-        delay(1250);
-        OUTPUT(uart + MODEM_CONTROL_REGISTER,
-               INPUT(uart + MODEM_CONTROL_REGISTER) | MCR_DTR);
-        ModemCommand("+++");
-        delay(1250);
-        ModemCommand(shutdown);
-        delay(1250);
-
-    }
 
     if (vectorishooked)
         setvect(doomcom.intnum, olddoomvect);
@@ -339,6 +323,20 @@ void ModemResponse(char *resp)
     } while (strncmp(response, resp, strlen(resp)));
 }
 
+static void HangupModem(void)
+{
+    LogMessage("Dropping DTR");
+    OUTPUT(uart + MODEM_CONTROL_REGISTER,
+           INPUT(uart + MODEM_CONTROL_REGISTER) & ~MCR_DTR);
+    delay(1250);
+    OUTPUT(uart + MODEM_CONTROL_REGISTER,
+           INPUT(uart + MODEM_CONTROL_REGISTER) | MCR_DTR);
+    ModemCommand("+++");
+    delay(1250);
+    ModemCommand(shutdown);
+    delay(1250);
+}
+
 /*
 =============
 =
@@ -385,7 +383,8 @@ void Dial(char *dial_no)
 {
     char cmd[80];
 
-    usemodem = true;
+    atexit(HangupModem);
+
     ModemCommand(startup);
     ModemResponse("OK");
 
@@ -407,7 +406,8 @@ void Dial(char *dial_no)
 
 void Answer(void)
 {
-    usemodem = true;
+    atexit(HangupModem);
+
     ModemCommand(startup);
     ModemResponse("OK");
     LogMessage("Waiting for ring...");

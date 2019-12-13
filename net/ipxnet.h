@@ -75,8 +75,6 @@ extern long remotetime;         // timestamp of last packet gotten
 
 extern nodeadr_t remoteadr;
 
-void Error(char *error, ...);
-
 void IPXRegisterFlags(void);
 void InitNetwork(void);
 void ShutdownNetwork(void);

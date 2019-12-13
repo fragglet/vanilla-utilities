@@ -77,4 +77,3 @@ void ShutdownPort(void);
 int ReadByte(void);
 void WriteByte(int c);
 
-void Error(char *error, ...);

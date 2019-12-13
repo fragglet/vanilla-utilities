@@ -11,4 +11,3 @@ void ParallelRegisterFlags(void);
 void InitPort(void);
 void ShutdownPort(void);
 
-void Error(char *error, ...);

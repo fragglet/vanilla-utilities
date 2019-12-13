@@ -9,6 +9,7 @@
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/sersetup.h"
 #include "net/doomnet.h"
 

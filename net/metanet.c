@@ -317,10 +317,10 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
     if ((nodes[0].flags & NODE_STATUS_LAUNCHED) != 0
      && (dsc->status & NODE_STATUS_LAUNCHED) == 0)
     {
-	// We've launched but this other node hasn't, and is still sending us
-	// discover messages and has fallen behind. Since we're no longer in
-	// discovery phase, just send it a tit-for-tat response and return;
-	// if it's waiting on us, this will allow it to proceed.
+        // We've launched but this other node hasn't, and is still sending us
+        // discover messages and has fallen behind. Since we're no longer in
+        // discovery phase, just send it a tit-for-tat response and return;
+        // if it's waiting on us, this will allow it to proceed.
         SendDiscover(node);
         return;
     }
@@ -573,7 +573,7 @@ static int CheckReady(void)
             }
             if (nodes[i].station_id == nodes[j].station_id)
             {
-		Error("Two nodes have the same station ID!\n"
+                Error("Two nodes have the same station ID!\n"
                       "Node %d and %d both have station ID %d\n",
                       i, j, nodes[i].station_id);
             }
@@ -655,6 +655,8 @@ int main(int argc, char *argv[])
     char **args;
     unsigned int entropy;
 
+    SetHelpText("Forwarding network-of-networks driver.",
+                "sersetup -com1 sersetup -com2 %s doom.exe");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
 
@@ -675,6 +677,11 @@ int main(int argc, char *argv[])
         // So that different drivers started at the same time
         // do not generate the same random seed.
         entropy ^= (entropy << 8) | (d->numnodes << 4)  | d->consoleplayer;
+    }
+
+    if (num_drivers == 0)
+    {
+        Error("No drivers specified on command line.");
     }
 
     srand(entropy);

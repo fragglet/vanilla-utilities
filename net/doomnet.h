@@ -77,8 +77,6 @@ typedef struct
 } doompacket_t;
 
 extern doomcom_t doomcom;
-extern void interrupt(*olddoomvect) (void);
-extern int vectorishooked;
 
 void NetRegisterFlags(void);
 void LaunchDOOM(char **args);

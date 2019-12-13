@@ -58,9 +58,6 @@ void Error(char *error, ...)
 {
     va_list argptr;
 
-    if (vectorishooked)
-        setvect(doomcom.intnum, olddoomvect);
-
     if (error)
     {
         va_start(argptr, error);

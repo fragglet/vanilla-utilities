@@ -12,8 +12,8 @@
 static int force_vector = 0;
 static int dup = 0, extratics = 0;
 doomcom_t doomcom;
-int vectorishooked;
-void interrupt(*olddoomvect) (void);
+static int vectorishooked;
+static void interrupt(*olddoomvect) (void);
 
 void NetRegisterFlags(void)
 {
@@ -24,6 +24,15 @@ void NetRegisterFlags(void)
     BoolFlag("-extratic", &extratics, NULL);
     IntFlag("-vector", &force_vector, "v",
             "use interrupt vector v for network API");
+}
+
+static void UnhookDoomVector(void)
+{
+    if (vectorishooked)
+    {
+        setvect(doomcom.intnum, olddoomvect);
+        vectorishooked = 0;
+    }
 }
 
 /*
@@ -89,12 +98,18 @@ void LaunchDOOM(char **args)
     setvect(doomcom.intnum, NetISR);
     vectorishooked = 1;
 
+    // We unhook the vector anyway after the game exits, but just in case, set
+    // an atexit handler as well - it will gracefully handle multiple calls.
+    atexit(UnhookDoomVector);
+
     // Add -net &doomcom
     flatadr = (long)_DS *16 + (unsigned)&doomcom;
     sprintf(addrstring, "%lu", flatadr);
     args = AppendArgs(args, "-net", addrstring, NULL);
 
     spawnv(P_WAIT, args[0], args);
+
+    UnhookDoomVector();
 }
 
 // NetLocateDoomcom reads from the given args list and returns a pointer to a

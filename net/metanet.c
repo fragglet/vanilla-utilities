@@ -182,7 +182,7 @@ static void ForwardBroadcast(doomcom_t far *src)
         dest->datalength = src->datalength;
         far_memmove(dest->data, src->data, src->datalength);
 
-        for (dnode = 1; dnode < dest->numnodes; ++dest)
+        for (dnode = 1; dnode < dest->numnodes; ++dnode)
         {
             dest->remotenode = dnode;
             NetSendPacket(dest);

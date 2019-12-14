@@ -71,6 +71,8 @@ struct node_data
     int player_num;
 };
 
+static const node_addr_t broadcast = {0xff, 0xff, 0xff, 0xff};
+
 static doomcom_t far *drivers[MAXDRIVERS];
 static int num_drivers = 0;
 
@@ -99,6 +101,30 @@ static const struct
     { &stats_unknown_src,   "unknown_src" },
     { &stats_setup_packets, "setup_packets" },
 };
+
+static int far_memcmp(void far *a, void far *b, size_t nbytes)
+{
+    uint8_t far *a_p = (uint8_t far *) a;
+    uint8_t far *b_p = (uint8_t far *) b;
+    int i;
+
+    for (i = 0; i < nbytes; ++i)
+    {
+        if (*a_p != *b_p)
+        {
+            if (*a_p < *b_p)
+            {
+                return -1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+        ++a_p; ++b_p;
+    }
+    return 0;
+}
 
 static void far_memmove(void far *dest, void far *src, size_t nbytes)
 {
@@ -138,6 +164,60 @@ static void far_bzero(void far *dest, size_t nbytes)
     }
 }
 
+static void ForwardBroadcast(doomcom_t far *src)
+{
+    doomcom_t far *dest;
+    int ddriver, dnode;
+
+    for (ddriver = 0; ddriver < num_drivers; ++ddriver)
+    {
+        // We never broadcast back on the source address as it may
+        // cause a routing loop.
+        dest = drivers[ddriver];
+        if (dest == src)
+        {
+            continue;
+        }
+
+        dest->datalength = src->datalength;
+        far_memmove(dest->data, src->data, src->datalength);
+
+        for (dnode = 1; dnode < dest->numnodes; ++dest)
+        {
+            dest->remotenode = dnode;
+            NetSendPacket(dest);
+        }
+    }
+}
+
+static void ForwardPacket(doomcom_t far *src)
+{
+    unsigned int ddriver, dnode;
+    struct meta_header far *hdr;
+
+    hdr = (struct meta_header far *) &src->data;
+
+    // Decode next hop from first byte of routing dest:
+    ddriver = ADDR_DRIVER(hdr->dest[0]);
+    dnode = ADDR_NODE(hdr->dest[0]);
+    if (ddriver >= num_drivers || dnode >= num_nodes
+     || drivers[ddriver] == src || dnode == 0)
+    {
+        ++stats_invalid_dest;
+        return;
+    }
+    // Update destination.
+    far_memmove(hdr->dest, hdr->dest + 1, sizeof(hdr->dest) - 1);
+    hdr->dest[sizeof(hdr->dest) - 1] = 0;
+
+    // Copy into destination driver's buffer and send.
+    drivers[ddriver]->datalength = src->datalength;
+    drivers[ddriver]->remotenode = dnode;
+    far_memmove(&drivers[ddriver]->data, src->data, src->datalength);
+    NetSendPacket(drivers[ddriver]);
+    ++stats_forwarded;
+}
+
 // Read packets from the given interface, forwarding them to other
 // interfaces if destined for another machine, and returning true
 // if a packet is received for this machine.
@@ -145,7 +225,6 @@ static int GetAndForward(int driver_index)
 {
     doomcom_t far *dc = drivers[driver_index];
     struct meta_header far *hdr;
-    unsigned int ddriver, dnode;
 
     while (NetGetPacket(dc))
     {
@@ -175,26 +254,14 @@ static int GetAndForward(int driver_index)
         {
             return 1;
         }
-        // This is a forwarding packet.
-        // Decode next hop from first byte of routing dest:
-        ddriver = ADDR_DRIVER(hdr->dest[0]);
-        dnode = ADDR_NODE(hdr->dest[0]);
-        if (ddriver >= num_drivers || dnode >= num_nodes
-         || ddriver == driver_index || dnode == 0)
-        {
-            ++stats_invalid_dest;
-            continue;
-        }
-        // Update destination.
-        far_memmove(hdr->dest, hdr->dest + 1, sizeof(hdr->dest) - 1);
-        hdr->dest[sizeof(hdr->dest) - 1] = 0;
 
-        // Copy into destination driver's buffer and send.
-        drivers[ddriver]->datalength = dc->datalength;
-        drivers[ddriver]->remotenode = dnode;
-        far_memmove(&drivers[ddriver]->data, dc->data, dc->datalength);
-        NetSendPacket(drivers[ddriver]);
-        ++stats_forwarded;
+        // This is a forwarding packet.
+        if (far_memcmp(hdr->dest, broadcast, sizeof(node_addr_t)) == 0)
+        {
+            ForwardBroadcast(dc);
+            return 1;
+        }
+        ForwardPacket(dc);
     }
 
     return 0;

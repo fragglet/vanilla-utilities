@@ -13,6 +13,8 @@
 
 #define MAXDRIVERS 16
 
+static void FlushBroadcastPending(void);
+
 // Magic number field overlaps with the normal Doom checksum field.
 // We ignore the top nybble so we can ignore NCMD_SETUP packets from
 // the underlying driver, and use the bottom nybble for packet type.
@@ -73,6 +75,12 @@ struct node_data
 
 static const node_addr_t broadcast = {0xff, 0xff, 0xff, 0xff};
 
+// When we send packets, they sometimes get placed into the broadcast
+// pending buffer to determine if they should be sent as broadcast packets
+// to save bandwidth:
+static doomcom_t bc_pending;
+static int bc_pending_count;
+
 static doomcom_t far *drivers[MAXDRIVERS];
 static int num_drivers = 0;
 
@@ -80,6 +88,7 @@ static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
 
 static unsigned long stats_rx_packets, stats_tx_packets;
+static unsigned long stats_rx_broadcasts, stats_tx_broadcasts;
 static unsigned long stats_wrong_magic, stats_too_many_hops, stats_invalid_dest;
 static unsigned long stats_node_limit, stats_bad_send, stats_unknown_type;
 static unsigned long stats_forwarded, stats_unknown_src, stats_setup_packets;
@@ -91,6 +100,8 @@ static const struct
 } stats[] = {
     { &stats_rx_packets,    "rx_packets" },
     { &stats_tx_packets,    "tx_packets" },
+    { &stats_rx_broadcasts, "rx_broadcasts" },
+    { &stats_tx_broadcasts, "tx_broadcasts" },
     { &stats_wrong_magic,   "wrong_magic" },
     { &stats_too_many_hops, "too_many_hops" },
     { &stats_invalid_dest,  "invalid_dest" },
@@ -259,6 +270,7 @@ static int GetAndForward(int driver_index)
         if (far_memcmp(hdr->dest, broadcast, sizeof(node_addr_t)) == 0)
         {
             ForwardBroadcast(dc);
+            ++stats_rx_broadcasts;
             return 1;
         }
         ForwardPacket(dc);
@@ -447,6 +459,12 @@ static void GetPacket(void)
 {
     int i;
 
+    // We want to ensure packets are never held up in the broadcast buffer
+    // otherwise it may affect latency. Doom's NetUpdate() calls SendPacket
+    // multiple times without calling GetPacket, so on call to GetPacket,
+    // always flush any packets being held up.
+    FlushBroadcastPending();
+
     for (;;)
     {
         for (i = 0; i < num_drivers; ++i)
@@ -471,36 +489,116 @@ static void GetPacket(void)
     }
 }
 
-static void SendPacket(void)
+// SendFromBuffer reads a packet for sending from the given doomcom_t and
+// sends it to the destination via the appropriate backend driver.
+static void SendFromBuffer(doomcom_t *src)
 {
     doomcom_t far *dc;
     struct meta_data_msg far *msg;
     struct node_data *node;
     int first_hop;
 
-    if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
-    {
-        ++stats_bad_send;
-        return;
-    }
-
     // First entry in node_addr is the first hop
-    node = &nodes[doomcom.remotenode];
+    node = &nodes[src->remotenode];
     first_hop = node->addr[0];
     dc = drivers[ADDR_DRIVER(first_hop)];
     dc->remotenode = ADDR_NODE(first_hop);
 
-    dc->datalength = sizeof(struct meta_header) + doomcom.datalength;
+    dc->datalength = sizeof(struct meta_header) + src->datalength;
     msg = (struct meta_data_msg far *) dc->data;
     msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
     far_bzero(msg->header.src, sizeof(node_addr_t));
     far_bzero(msg->header.dest, sizeof(node_addr_t));
     far_memmove(msg->header.dest, node->addr + 1,
                 sizeof(node_addr_t) - 1);
-    far_memmove(msg->data, doomcom.data, doomcom.datalength);
+    far_memmove(msg->data, src->data, src->datalength);
 
     NetSendPacket(dc);
     ++stats_tx_packets;
+}
+
+// FlushBroadcastPending sends the packet waiting in bc_pending to all
+// nodes for which it was held back - if any.
+static void FlushBroadcastPending(void)
+{
+    int i;
+
+    for (i = 0; i < bc_pending_count; ++i)
+    {
+        bc_pending.remotenode = i + 1;
+        SendFromBuffer(&bc_pending);
+    }
+
+    bc_pending_count = 0;
+}
+
+// TryBroadcastStore tries to stage the packet in doomcom in bc_pending and
+// returns 1 if the packet should not be sent yet.
+static int TryBroadcastStore(void)
+{
+    // The objective here is to try to detect the specific sequence of calls
+    // from Doom's NetUpdate() function - when a new tic is generated, it
+    // does a transmit to each node of (usually) the exact same data.
+    // We count up the number of such identical packets we have received and
+    // when bc_pending_count == num_nodes - 1, we have successfully detected
+    // something that can be sent as a broadcast packet.
+
+    // If this looks like the first packet in a sequence, we store the packet
+    // into the pending buffer.
+    if (doomcom.remotenode == 1)
+    {
+        FlushBroadcastPending();
+        bc_pending.datalength = doomcom.datalength;
+        far_memmove(bc_pending.data, doomcom.data, doomcom.datalength);
+        bc_pending_count = 0;
+    }
+    // The packet must exactly match the previous ones, and be in sequence.
+    else if (doomcom.remotenode != bc_pending_count + 1
+          || doomcom.datalength != bc_pending.datalength
+          || memcmp(doomcom.data, bc_pending.data, bc_pending.datalength) != 0)
+    {
+        FlushBroadcastPending();
+        return 0;
+    }
+
+    // We got the next in sequence successfully.
+    ++bc_pending_count;
+    if (bc_pending_count == num_nodes - 1)
+    {
+        // We have a complete broadcast packet. Prepend meta-header for send.
+        struct meta_data_msg *msg;
+
+        msg = (struct meta_data_msg *) bc_pending.data;
+        memmove(msg->data, bc_pending.data, bc_pending.datalength);
+
+        msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
+        memset(msg->header.src, 0, sizeof(node_addr_t));
+        memcpy(msg->header.dest, broadcast, sizeof(node_addr_t));
+        bc_pending.datalength += sizeof(struct meta_header);
+
+        // We reuse the ForwardBroadcast to send to all neighbors.
+        ForwardBroadcast(&bc_pending);
+        ++stats_tx_broadcasts;
+
+        bc_pending_count = 0;
+    }
+    return 1;
+}
+
+static void SendPacket(void)
+{
+    if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
+    {
+        ++stats_bad_send;
+        return;
+    }
+
+    if (TryBroadcastStore())
+    {
+        return;
+    }
+
+    SendFromBuffer(&doomcom);
 }
 
 static void InitNodes(void)

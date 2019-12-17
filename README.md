@@ -26,6 +26,8 @@ an IPX network to be joined by a fourth on a serial cable.
 * **solo-net** - null/standalone network driver that starts a network game
 without any real connection. Replicates the `-solo-net` parameter found in
 many Doom source ports.
+* **analogjs** - PC joystick driver with analog control that is more precise
+than Doom's built in joystick support.
 * **replay** - demo replay tool that uses the external control API, so that
 demos can be "continued" by recording a new demo from an old one.
 * **statdump** - external statistics driver that can write a text summary.

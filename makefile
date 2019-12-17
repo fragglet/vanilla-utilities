@@ -6,6 +6,7 @@ CFLAGS = -O -d -w
 LIB = lib\flag.obj lib\log.obj
 
 REPLAY_OBJS = $(LIB) ctrl\replay.obj ctrl\control.obj
+ANALOGJS_OBJS = $(LIB) ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj
 IPXSETUP_OBJS = $(LIB) net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj
 SERSETUP_OBJS = $(LIB) net\sersetup.obj net\doomnet.obj net\serport.obj
 PARSETUP_OBJS = $(LIB) net\parsetup.obj net\doomnet.obj net\parport.obj \
@@ -23,6 +24,8 @@ all: $(EXES)
 
 replay.exe: $(REPLAY_OBJS)
 	tcc -e$* -o$@ $(REPLAY_OBJS)
+analogjs.exe: $(ANALOGJS_OBJS)
+	tcc -e$* -o$@ $(ANALOGJS_OBJS)
 ipxsetup.exe: $(IPXSETUP_OBJS)
 	tcc -e$* -o$@ $(IPXSETUP_OBJS)
 sersetup.exe: $(SERSETUP_OBJS)

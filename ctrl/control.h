@@ -31,6 +31,32 @@
 
 typedef struct control_handle_s control_handle_t;
 
+// Press "Fire".
+#define BT_ATTACK       1
+// Use button, to open doors, activate switches.
+#define BT_USE          2
+
+// Flag: game events, not really buttons.
+#define BT_SPECIAL      128
+#define BT_SPECIALMASK  3
+
+// Flag, weapon change pending.
+// If true, the next 3 bits hold weapon num.
+#define BT_CHANGE       4
+// The 3bit weapon mask and shift, convenience.
+#define BT_WEAPONMASK   (8+16+32)
+#define BT_WEAPONSHIFT  3
+
+// Pause the game.
+#define BTS_PAUSE     1
+// Save the game at each console.
+#define BTS_SAVEGAME  2
+
+// Savegame slot numbers
+//  occupy the second byte of buttons.
+#define BTS_SAVEMASK  (4+8+16)
+#define BTS_SAVESHIFT 2
+
 typedef struct {
     signed char forwardmove;    // *2048 for move
     signed char sidemove;       // *2048 for move

@@ -6,8 +6,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
+#include <dos.h>
 
 #include "lib/flag.h"
+#include "lib/log.h"
 
 #define MAX_FLAGS 20
 
@@ -74,8 +76,9 @@ void StringFlag(const char *name, char **ptr,
     f->value.s = ptr;
 }
 
-static void Usage(FILE *output, const char *program)
+void PrintProgramUsage(FILE *output)
 {
+    const char *program = _argv[0];
     struct flag *f;
     int columns;
     int i, cnt;
@@ -129,7 +132,7 @@ static void Usage(FILE *output, const char *program)
     }
 }
 
-static struct flag *MustFindFlagForName(const char *program, const char *name)
+static struct flag *MustFindFlagForName(const char *name)
 {
     int i;
 
@@ -140,9 +143,7 @@ static struct flag *MustFindFlagForName(const char *program, const char *name)
             return &flags[i];
         }
     }
-    fprintf(stderr, "Unknown flag '%s'", name);
-    Usage(stderr, program);
-    exit(1);
+    ErrorPrintUsage("Unknown flag '%s'", name);
     return NULL;
 }
 
@@ -155,9 +156,7 @@ static int MustParseInt(const char *flag_name, char *val)
     result = strtol(val, NULL, 0);
     if (result == 0 && (errno != 0 || result < INT_MIN || result > INT_MAX))
     {
-        fprintf(stderr, "Invalid value for flag '%s': '%s'.\n",
-                flag_name, val);
-        exit(1);
+	ErrorPrintUsage("Invalid value for flag '%s': '%s'.", flag_name, val);
     }
 
     return (int) result;
@@ -185,13 +184,11 @@ char **ParseCommandLine(int argc, char **argv)
             goto help;
         }
 
-        f = MustFindFlagForName(argv[0], argv[i]);
+        f = MustFindFlagForName(argv[i]);
         if (f->type != FLAG_BOOL &&
             (i + 1 >= argc || argv[i + 1][0] == '-'))
         {
-            fprintf(stderr, "No value given for '%s'.\n", f->name);
-            Usage(stderr, argv[0]);
-            exit(1);
+            ErrorPrintUsage("No value given for '%s'.", f->name);
         }
 
         switch (f->type)
@@ -215,12 +212,10 @@ char **ParseCommandLine(int argc, char **argv)
         }
     }
 
-    fprintf(stderr, "No command given.\n");
-    Usage(stderr, argv[0]);
-    exit(1);
+    ErrorPrintUsage("No command given.");
 
 help:
-    Usage(stdout, argv[0]);
+    PrintProgramUsage(stdout);
     exit(0);
     return NULL;  // unreachable
 }

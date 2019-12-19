@@ -1,10 +1,12 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <dos.h>
 
+#include "lib/flag.h"
 #include "lib/log.h"
 
 static FILE *log = stdout;
@@ -81,6 +83,20 @@ void Error(char *fmt, ...)
     va_start(args, fmt);
     LogVarargs(fmt, args);
     va_end(args);
+
+    exit(1);
+}
+
+// Aborts the program with an error due to wrong command line arguments.
+void ErrorPrintUsage(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    LogVarargs(fmt, args);
+    va_end(args);
+
+    PrintProgramUsage(stderr);
 
     exit(1);
 }

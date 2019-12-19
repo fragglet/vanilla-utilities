@@ -125,7 +125,11 @@ int main(int argc, char *argv[])
 
     if (demo_filename == NULL)
     {
-        Error("Demo file not specified.");
+        ErrorPrintUsage("Demo file not specified.");
+    }
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
     }
 
     LoadDemo(demo_filename);

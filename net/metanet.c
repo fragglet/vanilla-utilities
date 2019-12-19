@@ -824,6 +824,10 @@ int main(int argc, char *argv[])
                 "sersetup -com1 sersetup -com2 %s doom.exe");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
 
     entropy = biostime(0, 0);
 
@@ -846,7 +850,7 @@ int main(int argc, char *argv[])
 
     if (num_drivers == 0)
     {
-        Error("No drivers specified on command line.");
+        ErrorPrintUsage("No drivers specified on command line.");
     }
 
     srand(entropy);

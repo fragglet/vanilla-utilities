@@ -58,6 +58,10 @@ int main(int argc, char *argv[])
 
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
 
     inner_driver = NetLocateDoomcom(args);
     assert(inner_driver != NULL);

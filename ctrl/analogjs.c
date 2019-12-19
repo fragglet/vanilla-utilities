@@ -249,6 +249,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
+
     if (!ParseConfigFile(config_file))
     {
         Error("Failed to read config file %s", config_file);

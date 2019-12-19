@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 
 #define RECV_QUEUE_LEN 8
@@ -192,6 +193,11 @@ int main(int argc, char *argv[])
     IntFlag("-nodes", &nodes, "n", "number of players in game");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
+
     InitDoomcom();
     doomcom.numplayers = nodes;
     doomcom.numnodes = nodes;

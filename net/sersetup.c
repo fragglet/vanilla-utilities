@@ -415,6 +415,10 @@ void main(int argc, char *argv[])
     NetRegisterFlags();
 
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
 
     //
     // set network characteristics

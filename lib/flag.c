@@ -156,7 +156,7 @@ static int MustParseInt(const char *flag_name, char *val)
     result = strtol(val, NULL, 0);
     if (result == 0 && (errno != 0 || result < INT_MIN || result > INT_MAX))
     {
-	ErrorPrintUsage("Invalid value for flag '%s': '%s'.", flag_name, val);
+        ErrorPrintUsage("Invalid value for flag '%s': '%s'.", flag_name, val);
     }
 
     return (int) result;
@@ -212,7 +212,9 @@ char **ParseCommandLine(int argc, char **argv)
         }
     }
 
-    ErrorPrintUsage("No command given.");
+    // No follow-on command was given. This may be an error but it's up to
+    // the caller to decide.
+    return NULL;
 
 help:
     PrintProgramUsage(stdout);

@@ -217,6 +217,10 @@ void main(int argc, char *argv[])
     IPXRegisterFlags();
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
 
     // make sure the network exists and create a bunch of buffers
     InitNetwork();

@@ -108,6 +108,10 @@ int main(int argc, char *argv[])
                "file to write captured statistics");
     ControlRegisterFlags();
     args = ParseCommandLine(argc, argv);
+    if (args == NULL)
+    {
+        ErrorPrintUsage("No command given to run.");
+    }
 
     // Launch Doom
     StatsLaunchDoom(args, StatsCallback, NULL);

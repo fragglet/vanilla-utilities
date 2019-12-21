@@ -18,6 +18,7 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
+static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
 
@@ -321,16 +322,16 @@ static void ReadModemCfg(void)
     char baudline[16];
     FILE *f;
 
-    f = fopen("modem.cfg", "r");
+    f = fopen(modem_config_file, "r");
     if (!f)
     {
-        Error("Couldn't read MODEM.CFG");
+        Error("Couldn't read '%s'", modem_config_file);
     }
     if (fgets(startup, sizeof(startup), f) == NULL
      || fgets(shutdown, sizeof(shutdown), f) == NULL
      || fgets(baudline, sizeof(baudline), f) == NULL)
     {
-        Error("Unexpected error reading from MODEM.CFG");
+        Error("Unexpected error reading from '%s'", modem_config_file);
     }
     fclose(f);
 
@@ -410,6 +411,8 @@ void main(int argc, char *argv[])
     BoolFlag("-answer", &answer, "listen for incoming call");
     StringFlag("-dial", &dial_no, "phone#",
                "dial the given phone number");
+    StringFlag("-modemcfg", &modem_config_file, "filename",
+               "specify config file for modem");
     BoolFlag("-player1", &force_player1, "force this side to be player 1");
     SerialRegisterFlags();
     NetRegisterFlags();
@@ -441,7 +444,7 @@ void main(int argc, char *argv[])
 
     if (dial_no != NULL || answer)
     {
-	ReadModemCfg();
+        ReadModemCfg();
     }
 
     //

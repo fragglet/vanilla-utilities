@@ -653,40 +653,60 @@ static int CompareStationIDs(const void *_a, const void *_b)
     }
 }
 
-static void SortPlayers(struct node_data **players,
-                        int (*func)(const void *a, const void *b))
+static void SortNodes(struct node_data **result,
+                      int (*func)(const void *a, const void *b))
 {
     int i;
 
     for (i = 0; i < num_nodes; ++i)
     {
-        players[i] = &nodes[i];
+        result[i] = &nodes[i];
     }
 
-    qsort(players, num_nodes, sizeof(struct node_data *), func);
+    qsort(result, num_nodes, sizeof(struct node_data *), func);
+}
+
+static void RearrangeNodes(void)
+{
+    struct node_data tmp;
+    int i, p;
+
+    // Rearrange the nodes[] array so that forwarders are at the end.
+    // We do this so that the next layer up does not know that there
+    // are any forwarding nodes at all.
+    p = num_nodes - 1;
+    for (i = 1; i < p; ++i)
+    {
+        if ((nodes[i].flags & NODE_STATUS_FORWARDER) != 0)
+        {
+            memcpy(&tmp, &nodes[p], sizeof(struct node_data));
+            memcpy(&nodes[p], &nodes[i], sizeof(struct node_data));
+            memcpy(&nodes[i], &tmp, sizeof(struct node_data));
+            --p;
+        }
+    }
 }
 
 static void AssignPlayerNumbers(void)
 {
     struct node_data *players[MAXNETNODES];
-    int i, p;
+    int i, num_players;
 
-    SortPlayers(players, CompareStationIDs);
+    SortNodes(players, CompareStationIDs);
 
-    p = 0;
+    num_players = 0;
     for (i = 0; i < num_nodes; ++i)
     {
         if ((players[i]->flags & NODE_STATUS_FORWARDER) == 0)
         {
-            players[i]->player_num = p;
-            ++p;
+            players[i]->player_num = num_players;
+            ++num_players;
         }
     }
 
-    // TODO: Hide forwarding nodes entirely (numplayers==numnodes)
     doomcom.consoleplayer = nodes[0].player_num;
-    doomcom.numnodes = num_nodes;
-    doomcom.numplayers = p;
+    doomcom.numnodes = num_players;
+    doomcom.numplayers = num_players;
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
 }
@@ -721,7 +741,7 @@ static void PrintTopology(void)
     int il;
     int i;
 
-    SortPlayers(players, CompareAddrs);
+    SortNodes(players, CompareAddrs);
     LogMessage("Discovered network topology:");
     LogMessage("  This machine (%s)", NodeDescription(&nodes[0]));
 
@@ -904,6 +924,7 @@ int main(int argc, char *argv[])
     srand(entropy);
 
     DiscoverNodes();
+    RearrangeNodes();
     AssignPlayerNumbers();
     PrintTopology();
 

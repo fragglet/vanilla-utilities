@@ -24,6 +24,7 @@ static void FlushBroadcastPending(void);
 #define NODE_STATUS_GOT_DISCOVER  0x01
 #define NODE_STATUS_READY         0x02
 #define NODE_STATUS_LAUNCHED      0x04
+#define NODE_STATUS_FORWARDER     0x08
 
 #define ADDR_DRIVER(x)  (((x) >> 5) & 0x1f)
 #define ADDR_NODE(x)    ((x) & 0x1f)
@@ -86,6 +87,10 @@ static int num_drivers = 0;
 
 static struct node_data nodes[MAXNETNODES];
 static int num_nodes = 1;
+
+// In forwarder mode, we don't launch or participate in the game, we just
+// forward packets between interfaces.
+static int forwarder = 0;
 
 static unsigned long stats_rx_packets, stats_tx_packets;
 static unsigned long stats_rx_broadcasts, stats_tx_broadcasts;
@@ -610,6 +615,11 @@ static void InitNodes(void)
     nodes[0].station_id = rand();
     nodes[0].flags = NODE_STATUS_GOT_DISCOVER;
 
+    if (forwarder)
+    {
+        nodes[0].flags |= NODE_STATUS_FORWARDER;
+    }
+
     // Initially we're only aware of those nodes which are our
     // immediate neighbors.
     for (d = 0; d < num_drivers; ++d)
@@ -659,18 +669,24 @@ static void SortPlayers(struct node_data **players,
 static void AssignPlayerNumbers(void)
 {
     struct node_data *players[MAXNETNODES];
-    int i;
+    int i, p;
 
     SortPlayers(players, CompareStationIDs);
 
+    p = 0;
     for (i = 0; i < num_nodes; ++i)
     {
-        players[i]->player_num = i;
+        if ((players[i]->flags & NODE_STATUS_FORWARDER) == 0)
+        {
+            players[i]->player_num = p;
+            ++p;
+        }
     }
 
+    // TODO: Hide forwarding nodes entirely (numplayers==numnodes)
     doomcom.consoleplayer = nodes[0].player_num;
     doomcom.numnodes = num_nodes;
-    doomcom.numplayers = num_nodes;
+    doomcom.numplayers = p;
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
 }
@@ -680,6 +696,20 @@ static int CompareAddrs(const void *_a, const void *_b)
     const struct node_data *a = *((struct node_data **) _a),
                            *b = *((struct node_data **) _b);
     return memcmp(a->addr, b->addr, sizeof(node_addr_t));
+}
+
+static char *NodeDescription(struct node_data *n)
+{
+    static char buf[20];
+    if ((n->flags & NODE_STATUS_FORWARDER) != 0)
+    {
+        sprintf(buf, "Forwarder");
+    }
+    else
+    {
+        sprintf(buf, "Player %d", n->player_num + 1);
+    }
+    return buf;
 }
 
 static void PrintTopology(void)
@@ -693,7 +723,7 @@ static void PrintTopology(void)
 
     SortPlayers(players, CompareAddrs);
     LogMessage("Discovered network topology:");
-    LogMessage("  This machine (player %d)", nodes[0].player_num + 1);
+    LogMessage("  This machine (%s)", NodeDescription(&nodes[0]));
 
     last_first_hop = -1;
     for (i = 1; i < num_nodes; ++i)
@@ -713,7 +743,7 @@ static void PrintTopology(void)
         strncpy(indent_buf, "                             ",
                 sizeof(indent_buf));
         indent_buf[il * 4 + 4] = '\0';
-        LogMessage("%s\\ Player %d", indent_buf, players[i]->player_num + 1);
+        LogMessage("%s\\ %s", indent_buf, NodeDescription(&nodes[i]));
         last_first_hop = players[i]->addr[0];
     }
 }
@@ -814,6 +844,18 @@ void interrupt NetISR(void)
     }
 }
 
+static void RunForwarder(void)
+{
+    LogMessage("Entering packet forwarding mode.");
+
+    // TODO: escape to abort
+    for (;;)
+    {
+        GetPacket();
+        // TODO: Print some statistics occasionally?
+    }
+}
+
 int main(int argc, char *argv[])
 {
     doomcom_t far *d;
@@ -822,6 +864,8 @@ int main(int argc, char *argv[])
 
     SetHelpText("Forwarding network-of-networks driver.",
                 "sersetup -com1 sersetup -com2 %s doom.exe");
+    BoolFlag("-forward", &forwarder,
+             "Don't launch game, just forward packets.");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
@@ -852,13 +896,25 @@ int main(int argc, char *argv[])
     {
         ErrorPrintUsage("No drivers specified on command line.");
     }
+    if (forwarder && num_drivers < 2)
+    {
+        ErrorPrintUsage("At least two drivers needed for forwarder mode.");
+    }
 
     srand(entropy);
 
     DiscoverNodes();
     AssignPlayerNumbers();
     PrintTopology();
-    LaunchDOOM(args);
+
+    if (forwarder)
+    {
+        RunForwarder();
+    }
+    else
+    {
+        LaunchDOOM(args);
+    }
 
     PrintStats();
 

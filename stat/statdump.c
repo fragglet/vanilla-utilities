@@ -45,7 +45,7 @@ static int num_captured_stats = 0;
 // Output file to write statistics to.  If NULL, print to stdout.
 static char *output_filename = NULL;
 
-static void StatsCallback(wbstartstruct_t *stats, void *unused)
+static void StatsCallback(wbstartstruct_t *stats)
 {
     if (num_captured_stats < MAX_CAPTURES)
     {
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     }
 
     // Launch Doom
-    StatsLaunchDoom(args, StatsCallback, NULL);
+    StatsLaunchDoom(args, StatsCallback);
 
     LogMessage("Statistics captured for %i level(s)", num_captured_stats);
 

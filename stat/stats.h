@@ -69,8 +69,8 @@ typedef struct {
 
 } wbstartstruct_t;
 
-typedef void (*stats_callback_t)(wbstartstruct_t *stats, void *user_data);
+typedef void (*stats_callback_t)(wbstartstruct_t *);
 
-void StatsLaunchDoom(char **args, stats_callback_t callback, void *user_data);
+void StatsLaunchDoom(char **args, stats_callback_t callback);
 
 #endif

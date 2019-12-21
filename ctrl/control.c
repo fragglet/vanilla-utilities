@@ -45,7 +45,6 @@ static control_handle_t control_buf;
 static control_handle_t far *next_handle;
 
 static control_callback_t int_callback;
-static void *int_user_data;
 
 static int force_vector = 0;
 static void interrupt(*old_isr) ();
@@ -65,7 +64,7 @@ static void interrupt ControlISR()
     {
         memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
     }
-    int_callback(&control_buf.ticcmd, int_user_data);
+    int_callback(&control_buf.ticcmd);
 }
 
 // Check if an interrupt vector is available.
@@ -137,8 +136,7 @@ void ControlRegisterFlags(void)
 }
 
 // Launch the game. args[0] is the program to invoke.
-void ControlLaunchDoom(char **args, control_callback_t callback,
-                       void *user_data)
+void ControlLaunchDoom(char **args, control_callback_t callback)
 {
     char addr_string[32];
     long flataddr;
@@ -155,7 +153,6 @@ void ControlLaunchDoom(char **args, control_callback_t callback,
     // Initialize the interrupt handler.
 
     int_callback = callback;
-    int_user_data = user_data;
     control_buf.intnum = intnum;
     HookInterruptHandler(intnum);
 

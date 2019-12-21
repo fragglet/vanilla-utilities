@@ -188,12 +188,11 @@ static int16_t AdjustAxisValue(struct axis *a, int v, int speed)
     (b < 0 ? 0 : \
      b > 20 ? 1 : (buttons & (1 << b)) == 0)
 
-void ControlCallback(ticcmd_t *ticcmd, void *_unused)
+void ControlCallback(ticcmd_t *ticcmd)
 {
     int buttons;
     int run;
 
-    _unused = _unused;
     ReadJoystick();
     buttons = ReadButtons();
 
@@ -262,7 +261,7 @@ int main(int argc, char *argv[])
     // We take over joystick control.
     args = AppendArgs(args, "-nojoy", NULL);
 
-    ControlLaunchDoom(args, ControlCallback, NULL);
+    ControlLaunchDoom(args, ControlCallback);
 
     return 0;
 }

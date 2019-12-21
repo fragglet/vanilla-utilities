@@ -37,7 +37,7 @@ static uint8_t *demo_p;
 static char *demo_filename = NULL;
 static int is_strife = 0;
 
-static void ReplayCallback(ticcmd_t *ticcmd, void *unused)
+static void ReplayCallback(ticcmd_t *ticcmd)
 {
     int space_needed;
 
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 
     LoadDemo(demo_filename);
 
-    ControlLaunchDoom(args, ReplayCallback, NULL);
+    ControlLaunchDoom(args, ReplayCallback);
 
     return 0;
 }

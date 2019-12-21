@@ -808,6 +808,7 @@ static void DiscoverNodes(void)
     clock_t now, last_send = 0, ready_start = 0;
     int i;
 
+    LogMessage("Discovering network topology.");
     InitNodes();
 
     do
@@ -934,6 +935,8 @@ int main(int argc, char *argv[])
     }
     else
     {
+        LogMessage("Console is player %d of %d (%d nodes)",
+                   doomcom.consoleplayer, doomcom.numplayers, num_nodes);
         LaunchDOOM(args);
     }
 

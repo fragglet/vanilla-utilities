@@ -813,6 +813,7 @@ static void DiscoverNodes(void)
 
     do
     {
+        CheckAbort("Network topology discovery");
         GetPacket();
 
         now = clock();
@@ -869,9 +870,9 @@ static void RunForwarder(void)
 {
     LogMessage("Entering packet forwarding mode.");
 
-    // TODO: escape to abort
     for (;;)
     {
+        CheckAbort("Packet forwarder");
         GetPacket();
         // TODO: Print some statistics occasionally?
     }

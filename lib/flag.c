@@ -17,6 +17,7 @@ enum flag_type {
     FLAG_BOOL,
     FLAG_STRING,
     FLAG_INT,
+    FLAG_API_POINTER,
 };
 
 struct flag {
@@ -27,6 +28,7 @@ struct flag {
     union {
         char **s;
         int *i;
+        api_pointer_callback_t callback;
     } value;
 };
 
@@ -74,6 +76,14 @@ void StringFlag(const char *name, char **ptr,
     f->type = FLAG_STRING;
     f->param_name = param_name;
     f->value.s = ptr;
+}
+
+void APIPointerFlag(const char *name, api_pointer_callback_t callback)
+{
+    struct flag *f = NewFlag(name, NULL);
+    f->type = FLAG_API_POINTER;
+    f->param_name = "flataddr";
+    f->value.callback = callback;
 }
 
 void PrintProgramUsage(FILE *output)
@@ -132,7 +142,7 @@ void PrintProgramUsage(FILE *output)
     }
 }
 
-static struct flag *MustFindFlagForName(const char *name)
+static struct flag *FindFlagForName(const char *name)
 {
     int i;
 
@@ -143,8 +153,17 @@ static struct flag *MustFindFlagForName(const char *name)
             return &flags[i];
         }
     }
-    ErrorPrintUsage("Unknown flag '%s'", name);
     return NULL;
+}
+
+static struct flag *MustFindFlagForName(const char *name)
+{
+    struct flag *result = FindFlagForName(name);
+    if (result == NULL)
+    {
+        ErrorPrintUsage("Unknown flag '%s'", name);
+    }
+    return result;
 }
 
 static int MustParseInt(const char *flag_name, char *val)
@@ -162,6 +181,42 @@ static int MustParseInt(const char *flag_name, char *val)
     return (int) result;
 }
 
+static void StripAPIPointers(int *argc, char **argv)
+{
+    struct flag *f;
+    long l;
+    int i, j;
+
+    // API pointer flags are handled separately, because they are expected
+    // to appear at a different position on the command line since they
+    // have not been typed by a human. For example:
+    //   foo.exe -bar doom2.exe -warp 1 -control 123456
+    // In this example, ParseCommandLine stops at 'doom2.exe', but the
+    // -control argument appears after it. So we handle these specially and
+    // strip them out before ParseCommandLine() even does its thing.
+
+    for (i = 1, j = 1; i < *argc; ++i)
+    {
+        if (argv[i][0] == '-')
+        {
+            f = FindFlagForName(argv[i]);
+            if (f != NULL && f->type == FLAG_API_POINTER)
+            {
+                l = strtol(argv[i + 1], NULL, 10);
+                assert(l != 0);
+                f->value.callback(l);
+                ++i;
+                continue;
+            }
+        }
+
+        argv[j] = argv[i];
+        ++j;
+    }
+
+    *argc = j;
+}
+
 char **ParseCommandLine(int argc, char **argv)
 {
     struct flag *f;
@@ -171,6 +226,8 @@ char **ParseCommandLine(int argc, char **argv)
     {
         goto help;
     }
+
+    StripAPIPointers(&argc, argv);
 
     for (i = 1; i < argc; ++i)
     {
@@ -203,6 +260,10 @@ char **ParseCommandLine(int argc, char **argv)
 
             case FLAG_STRING:
                 *f->value.s = argv[i + 1];
+                break;
+
+            case FLAG_API_POINTER:
+                // Handled in StripAPIPointers().
                 break;
         }
         // Skip over parameter:

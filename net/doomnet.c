@@ -112,42 +112,17 @@ void LaunchDOOM(char **args)
     UnhookDoomVector();
 }
 
-// NetLocateDoomcom reads from the given args list and returns a pointer to a
-// doomcom_t struct based on the first -net argument that is found. The list
-// is modified to remove the argument. If no -net argument is found, NULL
-// is returned.
-doomcom_t far *NetLocateDoomcom(char **args)
+// NetGetHandle takes the given long value read from the command line
+// and returns a doomcom_t pointer, performing appropriate checks.
+doomcom_t far *NetGetHandle(long l)
 {
     doomcom_t far *result = NULL;
-    int i, j;
+    unsigned int seg;
 
-    for (i = 0, j = 0; args[i] != NULL; ++i, ++j)
-    {
-        if (!strcmp(args[i], "-net"))
-        {
-            unsigned long l;
-            unsigned int seg;
-
-            assert(args[i + 1] != NULL);
-            l = strtol(args[i + 1], NULL, 10);
-            assert(l != 0);
-            seg = (l >> 4) & 0xf000L;
-            result = MK_FP(seg, l & 0xffffL);
-            assert(result->id == DOOMCOM_ID);
-
-            i += 2;
-            break;
-        }
-    }
-
-    // Continue until end of list, shifting arguments back to overwrite -net.
-    do
-    {
-        args[j] = args[i];
-        ++i; ++j;
-    } while(args[i] != NULL);
-
-    args[j] = NULL;
+    assert(l != 0);
+    seg = (int) ((l >> 4) & 0xf000L);
+    result = MK_FP(seg, l & 0xffffL);
+    assert(result->id == DOOMCOM_ID);
 
     return result;
 }

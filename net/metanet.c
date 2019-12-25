@@ -877,53 +877,70 @@ static void RunForwarder(void)
     }
 }
 
+static void AddDriver(long l)
+{
+    doomcom_t far *d = NetGetHandle(l);
+
+    assert(num_drivers < MAXDRIVERS);
+    drivers[num_drivers] = d;
+    ++num_drivers;
+}
+
+static void SeedRandom(void)
+{
+    unsigned int entropy;
+    int i;
+
+    entropy = biostime(0, 0);
+
+    for (i = 0; i < num_drivers; ++i)
+    {
+        // So that different drivers started at the same time
+        // do not generate the same random seed.
+        entropy ^= (entropy << 8)
+                 | (drivers[i]->numnodes << 4)
+                 | drivers[i]->consoleplayer;
+    }
+
+    srand(entropy);
+}
+
 int main(int argc, char *argv[])
 {
-    doomcom_t far *d;
     char **args;
-    unsigned int entropy;
 
     SetHelpText("Forwarding network-of-networks driver.",
                 "sersetup -com1 sersetup -com2 %s doom.exe");
+    APIPointerFlag("-net", AddDriver);
     BoolFlag("-forward", &forwarder,
              "Don't launch game, just forward packets.");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
-    if (args == NULL)
-    {
-        ErrorPrintUsage("No command given to run.");
-    }
 
-    entropy = biostime(0, 0);
-
-    for (;;)
+    if (forwarder)
     {
-        d = NetLocateDoomcom(args);
-        if (d == NULL)
+        if (args != NULL)
         {
-            break;
+            ErrorPrintUsage("Expecting no command in forwarder mode.");
         }
-
-        assert(num_drivers < MAXDRIVERS);
-        drivers[num_drivers] = d;
-        ++num_drivers;
-
-        // So that different drivers started at the same time
-        // do not generate the same random seed.
-        entropy ^= (entropy << 8) | (d->numnodes << 4)  | d->consoleplayer;
+        if (num_drivers < 2)
+        {
+            ErrorPrintUsage("At least two drivers needed for forwarder mode.");
+        }
     }
-
-    if (num_drivers == 0)
+    else
     {
-        ErrorPrintUsage("No drivers specified on command line.");
-    }
-    if (forwarder && num_drivers < 2)
-    {
-        ErrorPrintUsage("At least two drivers needed for forwarder mode.");
+        if (args == NULL)
+        {
+            ErrorPrintUsage("No command given to run.");
+        }
+        if (num_drivers == 0)
+        {
+            ErrorPrintUsage("No drivers specified on command line.");
+        }
     }
 
-    srand(entropy);
-
+    SeedRandom();
     DiscoverNodes();
     RearrangeNodes();
     AssignPlayerNumbers();

@@ -81,7 +81,7 @@ extern doomcom_t doomcom;
 void NetRegisterFlags(void);
 void LaunchDOOM(char **args);
 void interrupt NetISR(void);
-doomcom_t far *NetLocateDoomcom(char **args);
+doomcom_t far *NetGetHandle(long l);
 void NetSendPacket(doomcom_t far *doomcom);
 int NetGetPacket(doomcom_t far *doomcom);
 

@@ -5,7 +5,6 @@
 #include <dos.h>
 #include <string.h>
 #include <stdarg.h>
-#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
@@ -79,14 +78,7 @@ void LookForNodes(void)
 
     do
     {
-        //
-        // check for aborting
-        //
-        while (bioskey(1))
-        {
-            if ((bioskey(0) & 0xff) == 27)
-                Error("Network game synchronization aborted.");
-        }
+        CheckAbort("Network game synchronization");
 
         //
         // listen to the network

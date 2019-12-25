@@ -19,7 +19,6 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
-#include <bios.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,11 +144,7 @@ void Connect(void)
 
     do
     {
-        while (bioskey(1))
-        {
-            if ((bioskey(0) & 0xff) == 27)
-                Error("Parallel port synchronization aborted.");
-        }
+        CheckAbort("Parallel port synchronization");
 
         while (ReadPacket())
         {

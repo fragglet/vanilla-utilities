@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <bios.h>
 #include <dos.h>
 
 #include "lib/flag.h"
@@ -99,5 +100,16 @@ void ErrorPrintUsage(char *fmt, ...)
     PrintProgramUsage(stderr);
 
     exit(1);
+}
+
+void CheckAbort(char *operation)
+{
+    while (bioskey(1))
+    {
+        if ((bioskey(0) & 0xff) == 27)
+        {
+            Error("%s aborted.", operation);
+        }
+    }
 }
 

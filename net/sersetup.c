@@ -5,7 +5,6 @@
 #include <string.h>
 #include <dos.h>
 #include <stdarg.h>
-#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
@@ -192,11 +191,7 @@ void Connect(void)
 
     do
     {
-        while (bioskey(1))
-        {
-            if ((bioskey(0) & 0xff) == 27)
-                Error("Serial port synchronization aborted.");
-        }
+        CheckAbort("Serial port synchronization");
 
         while (ReadPacket())
         {
@@ -271,11 +266,7 @@ void ModemResponse(char *resp)
         respptr = 0;
         do
         {
-            while (bioskey(1))
-            {
-                if ((bioskey(0) & 0xff) == 27)
-                    Error("Modem response aborted.");
-            }
+            CheckAbort("Modem response");
             c = ReadByte();
             if (c == -1)
                 continue;

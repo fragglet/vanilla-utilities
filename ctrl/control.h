@@ -72,7 +72,7 @@ typedef void (*control_callback_t)(ticcmd_t *ticcmd);
 
 void ControlRegisterFlags(void);
 void ControlLaunchDoom(char **args, control_callback_t callback);
-control_handle_t far *ControlGetHandle(char **args);
+control_handle_t far *ControlGetHandle(long l);
 void ControlInvoke(control_handle_t far *handle, ticcmd_t *ticcmd);
 
 #endif                          /* CONTROL_H */

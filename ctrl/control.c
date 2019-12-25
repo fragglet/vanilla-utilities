@@ -129,8 +129,15 @@ static void RestoreInterruptHandler(int intnum)
     setvect(intnum, old_isr);
 }
 
+static void ControlPointerCallback(long l)
+{
+    assert(next_handle == NULL);
+    next_handle = ControlGetHandle(l);
+}
+
 void ControlRegisterFlags(void)
 {
+    APIPointerFlag("-control", ControlPointerCallback);
     IntFlag("-cvector", &force_vector, "vector",
             "use the specified interrupt vector");
 }
@@ -141,11 +148,6 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
     char addr_string[32];
     long flataddr;
     int intnum;
-
-    // To ensure composability, we look for an existing -control argument
-    // on the command line and remove it if we find it. We will then chain
-    // to invoke it as well when the upper layer invokes our interrupt.
-    next_handle = ControlGetHandle(args);
 
     intnum = FindInterruptNum();
     LogMessage("Using interrupt vector 0x%x for control API", intnum);
@@ -170,40 +172,16 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
     RestoreInterruptHandler(intnum);
 }
 
-// ControlGetHandle reads from the given args list and returns a handle based
-// on the first -control argument that is found. The list is modified to
-// remove the argument. If no -control argument is found, NULL is returned.
-control_handle_t far *ControlGetHandle(char **args)
+// ControlGetHandle takes the given long value read from the command line
+// and returns a control_handle_t pointer.
+control_handle_t far *ControlGetHandle(long l)
 {
     control_handle_t far *result = NULL;
-    int i, j;
+    unsigned int seg;
 
-    for (i = 0, j = 0; args[i] != NULL; ++i, ++j)
-    {
-        if (!strcmp(args[i], "-control"))
-        {
-            unsigned long l;
-            unsigned int seg;
-
-            assert(args[i + 1] != NULL);
-            l = strtol(args[i + 1], NULL, 10);
-            assert(l != 0);
-            seg = (int) ((l >> 4) & 0xf000L);
-            result = MK_FP(seg, l & 0xffffL);
-
-            i += 2;
-            break;
-        }
-    }
-
-    // Shift back arguments back to overwrite -control.
-    do
-    {
-        args[j] = args[i];
-        ++i; ++j;
-    } while(args[i] != NULL);
-
-    args[j] = NULL;
+    assert(l != 0);
+    seg = (int) ((l >> 4) & 0xf000L);
+    result = MK_FP(seg, l & 0xffffL);
 
     return result;
 }

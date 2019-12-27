@@ -123,9 +123,11 @@ static void WaitButtonPress(void)
 {
     while ((ReadButtons() & 0x01) != 0)
     {
+        CheckAbort("Joystick calibration");
     }
     while ((ReadButtons() & 0x01) == 0)
     {
+        CheckAbort("Joystick calibration");
     }
 }
 

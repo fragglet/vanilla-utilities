@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
-#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"

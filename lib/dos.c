@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <bios.h>
 #include <dos.h>
 
 #include "lib/dos.h"
@@ -50,6 +51,11 @@ int FindAndHookInterrupt(struct interrupt_hook *state,
     state->old_isr = getvect(state->interrupt_num);
     setvect(state->interrupt_num, isr);
     return 1;
+}
+
+long GetEntropy(void)
+{
+    return biostime(0, 0);
 }
 
 void RestoreInterrupt(struct interrupt_hook *state)
@@ -136,3 +142,4 @@ void far_bzero(void far *dest, size_t nbytes)
         ++dest_p;
     }
 }
+

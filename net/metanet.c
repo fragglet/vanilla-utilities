@@ -4,7 +4,6 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
-#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/dos.h"
@@ -831,7 +830,7 @@ static void SeedRandom(void)
     unsigned int entropy;
     int i;
 
-    entropy = biostime(0, 0);
+    entropy = GetEntropy();
 
     for (i = 0; i < num_drivers; ++i)
     {

@@ -11,6 +11,7 @@ struct interrupt_hook
 int FindAndHookInterrupt(struct interrupt_hook *state,
                          interrupt_handler_t isr);
 void RestoreInterrupt(struct interrupt_hook *state);
+long GetEntropy(void);
 
 void far_memcpy(void far *dest, void far *src, size_t nbytes);
 int far_memcmp(void far *a, void far *b, size_t nbytes);

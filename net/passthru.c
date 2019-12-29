@@ -12,19 +12,6 @@
 
 static doomcom_t far *inner_driver;
 
-static void far_memcpy(void far *dest, void far *src, size_t nbytes)
-{
-    uint8_t far *dest_p = (uint8_t far *) dest;
-    uint8_t far *src_p = (uint8_t far *) src;
-    int i;
-
-    for (i = 0; i < nbytes; ++i)
-    {
-        *dest_p = *src_p;
-        ++dest_p; ++src_p;
-    }
-}
-
 void interrupt NetISR(void)
 {
     switch (doomcom.command)

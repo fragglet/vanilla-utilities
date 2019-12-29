@@ -57,7 +57,6 @@ void LaunchDOOM(char **args)
 {
     char addrstring[10];
     long flatadr;
-    unsigned char far *vector;
 
     if (dup != 0)
     {
@@ -79,9 +78,10 @@ void LaunchDOOM(char **args)
     {
         for (doomcom.intnum = 0x60; doomcom.intnum <= 0x66; doomcom.intnum++)
         {
-            vector = *(char far * far *)(doomcom.intnum * 4);
-            if (!vector || *vector == 0xcf)
+            if (getvect(doomcom.intnum) == NULL)
+            {
                 break;
+            }
         }
         if (doomcom.intnum == 0x67)
         {

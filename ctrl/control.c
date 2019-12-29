@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include "ctrl/control.h"
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 
@@ -41,13 +42,11 @@ struct control_handle_s
     ticcmd_t ticcmd;
 };
 
+static struct interrupt_hook control_interrupt;
 static control_handle_t control_buf;
 static control_handle_t far *next_handle;
 
 static control_callback_t int_callback;
-
-static int force_vector = 0;
-static void interrupt(*old_isr) ();
 
 // Interrupt service routine.
 
@@ -67,68 +66,6 @@ static void interrupt ControlISR()
     int_callback(&control_buf.ticcmd);
 }
 
-// Check if an interrupt vector is available.
-
-static int InterruptVectorAvailable(int intnum)
-{
-    unsigned char far *vector;
-
-    vector = *((char far * far *)(intnum * 4));
-
-    return vector == NULL || *vector == 0xcf;
-}
-
-// Find what interrupt number to use.
-
-static int FindInterruptNum(void)
-{
-    int i;
-
-    // -cvector specified in parameters?
-    if (force_vector)
-    {
-        if (InterruptVectorAvailable(force_vector))
-        {
-            return force_vector;
-        }
-        else
-        {
-            Error("Interrupt vector 0x%x not available!", force_vector);
-        }
-    }
-
-    // Figure out a vector to use automatically.
-    for (i = 0x60; i <= 0x66; ++i)
-    {
-        if (InterruptVectorAvailable(i))
-        {
-            return i;
-        }
-    }
-
-    Error("Failed to find an available interrupt vector!");
-    return -1;
-}
-
-// Install the interrupt handler on the specified interrupt vector.
-
-static void HookInterruptHandler(int intnum)
-{
-    void interrupt(*isr) ();
-
-    old_isr = getvect(intnum);
-
-    isr = MK_FP(_CS, (int)ControlISR);
-    setvect(intnum, isr);
-}
-
-// Unload the interrupt handler.
-
-static void RestoreInterruptHandler(int intnum)
-{
-    setvect(intnum, old_isr);
-}
-
 static void ControlPointerCallback(long l)
 {
     assert(next_handle == NULL);
@@ -138,7 +75,7 @@ static void ControlPointerCallback(long l)
 void ControlRegisterFlags(void)
 {
     APIPointerFlag("-control", ControlPointerCallback);
-    IntFlag("-cvector", &force_vector, "vector",
+    IntFlag("-cvector", &control_interrupt.force_vector, "vector",
             "use the specified interrupt vector");
 }
 
@@ -149,14 +86,16 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
     long flataddr;
     int intnum;
 
-    intnum = FindInterruptNum();
-    LogMessage("Using interrupt vector 0x%x for control API", intnum);
+    if (!FindAndHookInterrupt(&control_interrupt, ControlISR))
+    {
+        Error("Failed to find a free DOS interrupt. Try using -cvector "
+              "to manually force an interrupt.");
+    }
 
     // Initialize the interrupt handler.
 
     int_callback = callback;
-    control_buf.intnum = intnum;
-    HookInterruptHandler(intnum);
+    control_buf.intnum = control_interrupt.interrupt_num;
 
     // Add the -control argument.
 
@@ -169,7 +108,7 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
 
     free(args);
 
-    RestoreInterruptHandler(intnum);
+    RestoreInterrupt(&control_interrupt);
 }
 
 // ControlGetHandle takes the given long value read from the command line

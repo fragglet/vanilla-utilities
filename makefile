@@ -21,8 +21,8 @@ EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
 
 all: $(EXES)
 
-lib\common.lib: lib\flag.obj lib\log.obj
-	tlib $@ +lib\flag.obj +lib\log.obj
+lib\common.lib: lib\flag.obj lib\log.obj lib\dos.obj
+	tlib $@ +lib\flag.obj +lib\log.obj +lib\dos.obj
 replay.exe: $(REPLAY_OBJS)
 	tcc -e$* -o$@ $(REPLAY_OBJS)
 analogjs.exe: $(ANALOGJS_OBJS)

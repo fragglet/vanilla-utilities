@@ -5,15 +5,14 @@
 #include <dos.h>
 #include <assert.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 
-static int force_vector = 0;
+static struct interrupt_hook net_interrupt;
 static int dup = 0, extratics = 0;
 doomcom_t doomcom;
-static int vectorishooked;
-static void interrupt(*olddoomvect) (void);
 
 void NetRegisterFlags(void)
 {
@@ -22,17 +21,13 @@ void NetRegisterFlags(void)
     IntFlag("-extratics", &extratics, "n",
             "send n extra tics per packet as insurance");
     BoolFlag("-extratic", &extratics, NULL);
-    IntFlag("-vector", &force_vector, "v",
+    IntFlag("-vector", &net_interrupt.force_vector, "v",
             "use interrupt vector v for network API");
 }
 
 static void UnhookDoomVector(void)
 {
-    if (vectorishooked)
-    {
-        setvect(doomcom.intnum, olddoomvect);
-        vectorishooked = 0;
-    }
+    RestoreInterrupt(&net_interrupt);
 }
 
 /*
@@ -70,33 +65,13 @@ void LaunchDOOM(char **args)
     // prepare for DOOM
     doomcom.id = DOOMCOM_ID;
 
-    if (force_vector)
+    if (!FindAndHookInterrupt(&net_interrupt, NetISR))
     {
-        doomcom.intnum = force_vector;
-    }
-    else
-    {
-        for (doomcom.intnum = 0x60; doomcom.intnum <= 0x66; doomcom.intnum++)
-        {
-            if (getvect(doomcom.intnum) == NULL)
-            {
-                break;
-            }
-        }
-        if (doomcom.intnum == 0x67)
-        {
-            LogMessage("Warning: no NULL or iret interrupt vectors were "
-                       "found in the 0x60 to 0x66 range. You can specify a "
-                       "vector with the -vector 0x<num> parameter.");
-            doomcom.intnum = 0x66;
-        }
+        Error("Warning: no free interrupt handlers found. You can specify"
+              "a vector with the -vector 0x<num> parameter.");
     }
 
-    LogMessage("Communicating with interupt vector 0x%x", doomcom.intnum);
-
-    olddoomvect = getvect(doomcom.intnum);
-    setvect(doomcom.intnum, NetISR);
-    vectorishooked = 1;
+    doomcom.intnum = net_interrupt.interrupt_num;
 
     // We unhook the vector anyway after the game exits, but just in case, set
     // an atexit handler as well - it will gracefully handle multiple calls.

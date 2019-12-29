@@ -46,8 +46,8 @@ int FindAndHookInterrupt(struct interrupt_hook *state,
         }
     }
 
-    state->old_isr = getvect(i);
-    setvect(i, isr);
+    state->old_isr = getvect(state->interrupt_num);
+    setvect(state->interrupt_num, isr);
     return 1;
 }
 

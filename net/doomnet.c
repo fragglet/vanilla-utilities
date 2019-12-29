@@ -103,7 +103,7 @@ void LaunchDOOM(char **args)
     atexit(UnhookDoomVector);
 
     // Add -net &doomcom
-    flatadr = (long)_DS *16 + (unsigned)&doomcom;
+    flatadr = (long) FP_SEG(&doomcom) * 16 + FP_OFF(&doomcom);
     sprintf(addrstring, "%lu", flatadr);
     args = AppendArgs(args, "-net", addrstring, NULL);
 

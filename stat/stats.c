@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dos.h>
 
 #include "lib/flag.h"
 #include "ctrl/control.h"
@@ -39,7 +40,7 @@ void StatsLaunchDoom(char **args, stats_callback_t callback)
     stats_callback = callback;
 
     // Launch Doom
-    flataddr = (long)_DS * 16 + (unsigned)(&stats_buffer);
+    flataddr = (long) FP_SEG(&stats_buffer) * 16 + FP_OFF(&stats_buffer);
     sprintf(bufaddr, "%li", flataddr);
     args = AppendArgs(args, "-statcopy", bufaddr, NULL);
 

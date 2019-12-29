@@ -160,7 +160,7 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
 
     // Add the -control argument.
 
-    flataddr = (long)_DS * 16 + (unsigned)(&control_buf);
+    flataddr = (long) FP_SEG(&control_buf) * 16 + FP_OFF(&control_buf);
     sprintf(addr_string, "%li", flataddr);
     args = AppendArgs(args, "-control", addr_string, NULL);
 

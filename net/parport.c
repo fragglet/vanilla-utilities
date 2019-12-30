@@ -19,11 +19,11 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
-#include <dos.h>
 #include <string.h>
 #include <stdio.h>
 #include "lib/inttypes.h"
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
@@ -50,7 +50,6 @@ static int port_flag;
 
 void CountInErr(void)
 {
-
     errcnt++;
 }
 
@@ -58,12 +57,10 @@ extern void recv(void);
 
 void interrupt ReceiveISR(void)
 {
-
     icnt++;
     recv();
 
-    outportb(0x20, 0x20);
-
+    OUTPUT(0x20, 0x20);
 }
 
 void InitISR(void)
@@ -75,12 +72,12 @@ void InitISR(void)
     setvect(irq + 8, ReceiveISR);
 
     // enable interrupts from the printer port
-    outportb(portbase + 2, inportb(portbase + 2) | 0x10);
-    oldmask = inportb(0x21);
+    OUTPUT(portbase + 2, INPUT(portbase + 2) | 0x10);
+    oldmask = INPUT(0x21);
     mask = oldmask & ~(1 << irq);       // enable IRQ in ICR
-    outportb(0x21, mask);
+    OUTPUT(0x21, mask);
 
-    outportb(0x20, 0x20);
+    OUTPUT(0x20, 0x20);
 
 }
 
@@ -160,7 +157,7 @@ void InitPort(void)
 void ShutdownPort(void)
 {
 
-    outportb(0x21, oldmask);    // disable IRQs
+    OUTPUT(0x21, oldmask);    // disable IRQs
     setvect(irq + 8, oldisr);   // restore vector
 
 }

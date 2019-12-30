@@ -6,8 +6,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
-#include <dos.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 

@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dos.h>
 #include <process.h>
 #include <assert.h>
 
@@ -84,7 +83,6 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
 {
     char addr_string[32];
     long flataddr;
-    int intnum;
 
     if (!FindAndHookInterrupt(&control_interrupt, ControlISR))
     {

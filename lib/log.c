@@ -5,8 +5,8 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <bios.h>
-#include <dos.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 

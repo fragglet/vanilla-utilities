@@ -1,5 +1,3 @@
-#define INPUT( port )        inp( port )
-#define OUTPUT( port, data ) (void) outp( port, data )
 
 #define TRANSMIT_HOLDING_REGISTER            0x00
 #define RECEIVE_BUFFER_REGISTER              0x00

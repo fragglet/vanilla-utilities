@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dos.h>
 #include <stdarg.h>
 #include "lib/inttypes.h"
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"

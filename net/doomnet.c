@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <process.h>
-#include <dos.h>
 #include <assert.h>
 
 #include "lib/dos.h"

@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <dos.h>
 #include "lib/inttypes.h"
 
 #include "ctrl/control.h"
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 
@@ -116,7 +116,7 @@ static void WriteConfigFile(char *filename)
 
 static int ReadButtons(void)
 {
-    return (inportb(JOYSTICK_PORT) >> 4) & 0xf;
+    return (INPUT(JOYSTICK_PORT) >> 4) & 0xf;
 }
 
 static void WaitButtonPress(void)

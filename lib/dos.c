@@ -1,7 +1,6 @@
 
 #include <stdlib.h>
 #include <bios.h>
-#include <dos.h>
 
 #include "lib/dos.h"
 #include "lib/inttypes.h"

@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <dos.h>
 #include <string.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"

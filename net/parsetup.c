@@ -23,11 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mem.h>
-#include <dos.h>
 #include <time.h>
 #include <string.h>
 #include "lib/inttypes.h"
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/parsetup.h"

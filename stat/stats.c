@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dos.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "ctrl/control.h"
 #include "stat/stats.h"

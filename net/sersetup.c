@@ -97,7 +97,7 @@ int ReadPacket(void)
         }
         else if (c == FRAMECHAR)
         {
-            inescape = 0;
+            inescape = 1;
             continue;           // don't know yet if it is a terminator
         }                       // or a literal FRAMECHAR
 

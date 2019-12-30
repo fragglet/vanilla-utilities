@@ -33,7 +33,7 @@ unsigned int portbase = 0x378;
 unsigned irq = 7;
 
 #define BUFSIZE 512
-static void interrupt(*oldisr) ();
+static void (interrupt far *oldisr) ();
 static uint8_t oldmask;
 unsigned int errcnt = 0;
 static unsigned icnt = 0;
@@ -55,7 +55,7 @@ void CountInErr(void)
 
 extern void recv(void);
 
-void interrupt ReceiveISR(void)
+void interrupt far ReceiveISR(void)
 {
     icnt++;
     recv();

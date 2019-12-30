@@ -14,8 +14,8 @@
 
 void JumpStart(void);
 
-static void interrupt ISR8250(void);
-static void interrupt ISR16550(void);
+static void interrupt far ISR8250(void);
+static void interrupt far ISR16550(void);
 
 static union REGS regs;
 static struct SREGS sregs;
@@ -29,7 +29,7 @@ int irq;
 static int modem_status = -1;
 static int line_status = -1;
 
-static void interrupt(*oldirqvect) (void);
+static void (interrupt far *oldirqvect) (void);
 static int irqintnum;
 
 static int comport;
@@ -321,7 +321,7 @@ void WriteByte(int c)
     outque.head++;
 }
 
-static void interrupt ISR8250(void)
+static void interrupt far ISR8250(void)
 {
     int c;
 
@@ -370,7 +370,7 @@ static void interrupt ISR8250(void)
     }
 }
 
-static void interrupt ISR16550(void)
+static void interrupt far ISR16550(void)
 {
     int c;
     int count;

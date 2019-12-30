@@ -4,7 +4,7 @@
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
 
-typedef void interrupt (*interrupt_handler_t)(void);
+typedef void (interrupt far *interrupt_handler_t)(void);
 
 struct interrupt_hook
 {

@@ -24,7 +24,7 @@ static setupdata_t nodesetup[MAXNETNODES];
 =============
 */
 
-void interrupt NetISR(void)
+void interrupt far NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
@@ -64,7 +64,7 @@ void LookForNodes(void)
                nodeadr[0].node[0], nodeadr[0].node[1], nodeadr[0].node[2],
                nodeadr[0].node[3], nodeadr[0].node[4], nodeadr[0].node[5]);
 
-    setup = (setupdata_t *) & doomcom.data;
+    setup = (setupdata_t *) doomcom.data;
     ipx_localtime = -1;             // in setup time, not game time
 
     //

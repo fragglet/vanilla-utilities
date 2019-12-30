@@ -95,7 +95,7 @@ doomcom_t far *NetGetHandle(long l)
 
     assert(l != 0);
     seg = (int) ((l >> 4) & 0xf000L);
-    result = MK_FP(seg, l & 0xffffL);
+    result = (void far *) MK_FP(seg, l & 0xffffL);
     assert(result->id == DOOMCOM_ID);
 
     return result;

@@ -149,7 +149,7 @@ static void ForwardPacket(doomcom_t far *src)
     unsigned int ddriver, dnode;
     struct meta_header far *hdr;
 
-    hdr = (struct meta_header far *) &src->data;
+    hdr = (struct meta_header far *) src->data;
 
     // Decode next hop from first byte of routing dest:
     ddriver = ADDR_DRIVER(hdr->dest[0]);
@@ -167,7 +167,7 @@ static void ForwardPacket(doomcom_t far *src)
     // Copy into destination driver's buffer and send.
     drivers[ddriver]->datalength = src->datalength;
     drivers[ddriver]->remotenode = dnode;
-    far_memmove(&drivers[ddriver]->data, src->data, src->datalength);
+    far_memmove(drivers[ddriver]->data, src->data, src->datalength);
     NetSendPacket(drivers[ddriver]);
     ++stats_forwarded;
 }
@@ -182,7 +182,7 @@ static int GetAndForward(int driver_index)
 
     while (NetGetPacket(dc))
     {
-        hdr = (struct meta_header far *) &dc->data;
+        hdr = (struct meta_header far *) dc->data;
         if ((hdr->magic & ~NCMD_CHECKSUM) == NCMD_SETUP)
         {
             ++stats_setup_packets;
@@ -228,7 +228,7 @@ static int NodeForAddr(node_addr_t addr)
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (!memcmp(&nodes[i].addr, addr, sizeof(node_addr_t)))
+        if (!memcmp(nodes[i].addr, addr, sizeof(node_addr_t)))
         {
             return i;
         }
@@ -270,7 +270,7 @@ static struct node_data *NodeOrAddNode(node_addr_t addr)
 
     result = &nodes[num_nodes];
     ++num_nodes;
-    memcpy(&result->addr, addr, sizeof(node_addr_t));
+    memcpy(result->addr, addr, sizeof(node_addr_t));
 
     return result;
 }
@@ -284,7 +284,7 @@ static void SendDiscover(struct node_data *node)
 
     first_hop = node->addr[0];
     dc = drivers[ADDR_DRIVER(first_hop)];
-    dsc = (struct meta_discover_msg far *) &dc->data;
+    dsc = (struct meta_discover_msg far *) dc->data;
     dsc->header.magic = META_MAGIC | (unsigned long) META_PACKET_DISCOVER;
     far_bzero(dsc->header.src, sizeof(node_addr_t));
     far_memmove(dsc->header.dest, node->addr + 1, sizeof(node_addr_t) - 1);
@@ -373,7 +373,7 @@ static int HandlePacket(doomcom_t far *dc)
     {
         case META_PACKET_DATA:
             msg = (struct meta_data_msg far *) dc->data;
-            far_memmove(&addr, &msg->header.src, sizeof(node_addr_t));
+            far_memmove(addr, msg->header.src, sizeof(node_addr_t));
             doomcom.remotenode = NodeForAddr(addr);
             if (doomcom.remotenode < 0)
             {
@@ -790,7 +790,7 @@ static void PrintStats(void)
     }
 }
 
-void interrupt NetISR(void)
+void interrupt far NetISR(void)
 {
     switch (doomcom.command)
     {

@@ -49,7 +49,7 @@ static control_callback_t int_callback;
 
 // Interrupt service routine.
 
-static void interrupt ControlISR()
+static void interrupt far ControlISR()
 {
     // If we have a next_handle, invoke the next -control driver in the
     // chain to populate the ticcmd before we invoke our callback
@@ -118,7 +118,7 @@ control_handle_t far *ControlGetHandle(long l)
 
     assert(l != 0);
     seg = (int) ((l >> 4) & 0xf000L);
-    result = MK_FP(seg, l & 0xffffL);
+    result = (void far *) MK_FP(seg, l & 0xffffL);
 
     return result;
 }

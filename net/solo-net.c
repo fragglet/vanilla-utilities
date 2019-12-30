@@ -150,7 +150,7 @@ static void ReceivePacket(void)
 // to send or receive a packet.
 // If numnodes=1 then this can just be an empty function. We only bother
 // doing anything so that we can simulate extra dummy players.
-void interrupt NetISR(void)
+void interrupt far NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
@@ -182,7 +182,7 @@ static void InitDoomcom(void)
     doomcom.map = 1;
     doomcom.skill = 3;
 
-    packet = (doompacket_t *) &doomcom.data;
+    packet = (doompacket_t *) doomcom.data;
 }
 
 int main(int argc, char *argv[])

@@ -2,9 +2,7 @@
 #ifndef DOS16_INTTYPES_H
 #define DOS16_INTTYPES_H
 
-// Currently we only check for Turbo C; in future if we want to compile with
-// more, the appropriate #define can be added to this expression:
-#if !defined(__TURBOC__)
+#if !defined(__TURBOC__) && !defined(MSDOS)
 #include <inttypes.h>
 #else
 

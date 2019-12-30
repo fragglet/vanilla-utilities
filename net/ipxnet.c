@@ -167,8 +167,8 @@ void InitNetwork(void)
         packets[0].ipx.dNetwork[j] = localadr.network[j];
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
-    packets[0].ecb.f2Address[0] = FP_OFF(&doomcom.data);
-    packets[0].ecb.f2Address[1] = FP_SEG(&doomcom.data);
+    packets[0].ecb.f2Address[0] = FP_OFF(doomcom.data);
+    packets[0].ecb.f2Address[1] = FP_SEG(doomcom.data);
 
     // known local node at 0
     for (i = 0; i < 6; i++)
@@ -316,7 +316,7 @@ int GetPacket(void)
 
     // copy out the data
     doomcom.datalength = ShortSwap(packet->ipx.PacketLength) - 38;
-    memcpy(&doomcom.data, packet->payload, doomcom.datalength);
+    memcpy(doomcom.data, packet->payload, doomcom.datalength);
 
     // repost the ECB
     ListenForPacket(&packet->ecb);

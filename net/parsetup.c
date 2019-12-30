@@ -96,11 +96,11 @@ int WritePacket(uint8_t *data, unsigned len)
 =============
 */
 
-void interrupt NetISR(void)
+void interrupt far NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        WritePacket((char *)&doomcom.data, doomcom.datalength);
+        WritePacket((char *)doomcom.data, doomcom.datalength);
     }
     else if (doomcom.command == CMD_GET)
     {
@@ -108,7 +108,7 @@ void interrupt NetISR(void)
         {
             doomcom.remotenode = 1;
             doomcom.datalength = recv_count;
-            memcpy(&doomcom.data, &pktbuf, recv_count);
+            memcpy(doomcom.data, pktbuf, recv_count);
         }
         else
             doomcom.remotenode = -1;

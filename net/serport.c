@@ -246,15 +246,15 @@ void InitPort(long baudrate)
     //
     irqintnum = irq + 8;
 
-    oldirqvect = getvect(irqintnum);
+    oldirqvect = _dos_getvect(irqintnum);
     if (uart_type == UART_16550)
     {
-        setvect(irqintnum, ISR16550);
+        _dos_setvect(irqintnum, ISR16550);
         LogMessage("UART = 16550");
     }
     else
     {
-        setvect(irqintnum, ISR8250);
+        _dos_setvect(irqintnum, ISR8250);
         LogMessage("UART = 8250");
     }
 
@@ -294,7 +294,7 @@ void ShutdownPort(void)
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) | (1 << irq));
 
-    setvect(irqintnum, oldirqvect);
+    _dos_setvect(irqintnum, oldirqvect);
 
     //
     // init com port settings to defaults

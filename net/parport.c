@@ -68,8 +68,8 @@ void InitISR(void)
     uint8_t mask;
 
     // install new interrupt hander for the printer port
-    oldisr = getvect(irq + 8);
-    setvect(irq + 8, ReceiveISR);
+    oldisr = _dos_getvect(irq + 8);
+    _dos_setvect(irq + 8, ReceiveISR);
 
     // enable interrupts from the printer port
     OUTPUT(portbase + 2, INPUT(portbase + 2) | 0x10);
@@ -156,10 +156,8 @@ void InitPort(void)
 
 void ShutdownPort(void)
 {
-
     OUTPUT(0x21, oldmask);    // disable IRQs
-    setvect(irq + 8, oldisr);   // restore vector
-
+    _dos_setvect(irq + 8, oldisr);   // restore vector
 }
 
 //==========================================================================

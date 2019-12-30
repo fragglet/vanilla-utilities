@@ -20,7 +20,7 @@ static int FindFreeInterrupt(void)
 
     for (i = MIN_USER_INTERRUPT; i <= MAX_USER_INTERRUPT; ++i)
     {
-        if (getvect(i) == NULL)
+        if (_dos_getvect(i) == NULL)
         {
             return i;
         }
@@ -47,8 +47,8 @@ int FindAndHookInterrupt(struct interrupt_hook *state,
         }
     }
 
-    state->old_isr = getvect(state->interrupt_num);
-    setvect(state->interrupt_num, isr);
+    state->old_isr = _dos_getvect(state->interrupt_num);
+    _dos_setvect(state->interrupt_num, isr);
     return 1;
 }
 
@@ -63,7 +63,7 @@ void RestoreInterrupt(struct interrupt_hook *state)
     {
         return;
     }
-    setvect(state->interrupt_num, state->old_isr);
+    _dos_setvect(state->interrupt_num, state->old_isr);
     state->interrupt_num = 0;
 }
 

@@ -61,7 +61,7 @@ static int packetlen;
 static int inescape;
 static int newpacket;
 
-boolean ReadPacket(void)
+int ReadPacket(void)
 {
     int c;
 
@@ -70,8 +70,8 @@ boolean ReadPacket(void)
     if (inque.head - inque.tail > QUESIZE - 4)  // check for buffer overflow
     {
         inque.tail = inque.head;
-        newpacket = true;
-        return false;
+        newpacket = 1;
+        return 0;
     }
 
     if (newpacket)
@@ -84,20 +84,20 @@ boolean ReadPacket(void)
     {
         c = ReadByte();
         if (c < 0)
-            return false;       // haven't read a complete packet
+            return 0;       // haven't read a complete packet
         //printf ("%c",c);
         if (inescape)
         {
-            inescape = false;
+            inescape = 0;
             if (c != FRAMECHAR)
             {
                 newpacket = 1;
-                return true;    // got a good packet
+                return 1;    // got a good packet
             }
         }
         else if (c == FRAMECHAR)
         {
-            inescape = true;
+            inescape = 0;
             continue;           // don't know yet if it is a terminator
         }                       // or a literal FRAMECHAR
 
@@ -106,7 +106,6 @@ boolean ReadPacket(void)
         packet[packetlen] = c;
         packetlen++;
     } while (1);
-
 }
 
 /*

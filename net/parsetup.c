@@ -51,17 +51,15 @@ extern unsigned errcnt;
 
 #define MAXPACKET	512
 
-boolean ReadPacket(void)
+int ReadPacket(void)
 {
-
     if (newpkt)
     {
         newpkt = 0;
-        return true;            // true - got a good packet
+        return 1;            // true - got a good packet
     }
 
-    return (false);             // false - no packet available
-
+    return 0;                // false - no packet available
 }
 
 /*

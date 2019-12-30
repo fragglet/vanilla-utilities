@@ -260,7 +260,7 @@ void InitPort(long baudrate)
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));
 
-    CLI();
+    _disable();
 
     // enable RX and TX interrupts at the uart
 
@@ -271,7 +271,7 @@ void InitPort(long baudrate)
 
     OUTPUT(0x20, 0xc2);
 
-    STI();
+    _enable();
 }
 
 /*

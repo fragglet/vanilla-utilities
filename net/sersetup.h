@@ -1,7 +1,5 @@
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
-#define CLI()                disable()
-#define STI()                enable()
 
 typedef enum { false, true } boolean;
 

@@ -104,9 +104,9 @@ void ErrorPrintUsage(char *fmt, ...)
 
 void CheckAbort(char *operation)
 {
-    while (bioskey(1))
+    while (_bios_keybrd(_KEYBRD_READY))
     {
-        if ((bioskey(0) & 0xff) == 27)
+        if ((_bios_keybrd(_KEYBRD_READ) & 0xff) == 27)
         {
             Error("%s aborted.", operation);
         }

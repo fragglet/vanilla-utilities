@@ -2,9 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <dos.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 #include "lib/inttypes.h"
 
 #include "lib/flag.h"
@@ -28,7 +28,7 @@ void interrupt NetISR(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        localtime++;
+        ipx_localtime++;
         SendPacket(doomcom.remotenode);
     }
     else if (doomcom.command == CMD_GET)
@@ -51,8 +51,7 @@ void interrupt NetISR(void)
 void LookForNodes(void)
 {
     int i;
-    struct time time;
-    int oldsec;
+    clock_t now, last_time = 0;
     setupdata_t *setup, *dest;
     int total, console;
 
@@ -65,9 +64,8 @@ void LookForNodes(void)
                nodeadr[0].node[0], nodeadr[0].node[1], nodeadr[0].node[2],
                nodeadr[0].node[3], nodeadr[0].node[4], nodeadr[0].node[5]);
 
-    oldsec = -1;
     setup = (setupdata_t *) & doomcom.data;
-    localtime = -1;             // in setup time, not game time
+    ipx_localtime = -1;             // in setup time, not game time
 
     //
     // build local setup info
@@ -90,7 +88,7 @@ void LookForNodes(void)
             else
                 dest = &nodesetup[doomcom.remotenode];
 
-            if (remotetime != -1)
+            if (ipx_remotetime != -1)
             {                   // an early game packet, not a setup packet
                 if (doomcom.remotenode == -1)
                     Error("Got an unknown game packet during setup");
@@ -138,10 +136,10 @@ void LookForNodes(void)
         //
         // send out a broadcast packet every second
         //
-        gettime(&time);
-        if (time.ti_sec == oldsec)
+        now = clock();
+        if (now - last_time < CLOCKS_PER_SEC)
             continue;
-        oldsec = time.ti_sec;
+        last_time = now;
 
         doomcom.datalength = sizeof(*setup);
 
@@ -221,7 +219,7 @@ void main(int argc, char *argv[])
     // get addresses of all nodes
     LookForNodes();
 
-    localtime = 0;              // no longer in setup
+    ipx_localtime = 0;              // no longer in setup
 
     //
     // launch DOOM

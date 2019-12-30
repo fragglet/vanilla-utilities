@@ -37,8 +37,8 @@ static struct SREGS sregs;
 
 static unsigned short enteripx[2];
 
-long localtime;                 // for time stamp in packets
-long remotetime;
+long ipx_localtime;                 // for time stamp in packets
+long ipx_remotetime;
 
 //===========================================================================
 
@@ -207,7 +207,7 @@ void SendPacket(int destination)
     int j;
 
     // set the time
-    packets[0].time = localtime;
+    packets[0].time = ipx_localtime;
 
     // set the address
     for (j = 0; j < 6; j++)
@@ -283,13 +283,13 @@ int GetPacket(void)
 
     packet = &packets[packetnum];
 
-    if (besttic == -1 && localtime != -1)
+    if (besttic == -1 && ipx_localtime != -1)
     {
         ListenForPacket(&packet->ecb);
         return 0;               // setup broadcast from other game
     }
 
-    remotetime = besttic;
+    ipx_remotetime = besttic;
 
     //
     // got a good packet
@@ -307,7 +307,7 @@ int GetPacket(void)
         doomcom.remotenode = i;
     else
     {
-        if (localtime != -1)
+        if (ipx_localtime != -1)
         {                       // this really shouldn't happen
             ListenForPacket(&packet->ecb);
             return 0;

@@ -70,8 +70,8 @@ extern int gameid;
 extern nodeadr_t nodeadr[MAXNETNODES + 1];
 extern int localnodenum;
 
-extern long localtime;          // for time stamp in packets
-extern long remotetime;         // timestamp of last packet gotten
+extern long ipx_localtime;          // for time stamp in packets
+extern long ipx_remotetime;         // timestamp of last packet gotten
 
 extern nodeadr_t remoteadr;
 

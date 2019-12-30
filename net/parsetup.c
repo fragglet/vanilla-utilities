@@ -128,8 +128,7 @@ void interrupt NetISR(void)
 
 void Connect(void)
 {
-    struct time time;
-    int oldsec;
+    clock_t last_time = 0, now;
     int localstage, remotestage;
     char str[20];
 
@@ -139,7 +138,6 @@ void Connect(void)
     // wait for a good packet
     //
 
-    oldsec = -1;
     localstage = remotestage = 0;
 
     do
@@ -161,14 +159,14 @@ void Connect(void)
                 doomcom.consoleplayer ^= 1;
                 localstage = remotestage = 0;
             }
-            oldsec = -1;
+            last_time = 0;
         }
  badpacket:
 
-        gettime(&time);
-        if (time.ti_sec != oldsec)
+        now = clock();
+        if (now - last_time >= CLOCKS_PER_SEC)
         {
-            oldsec = time.ti_sec;
+            last_time = now;
             sprintf(str, "PLAY%i_%i", doomcom.consoleplayer, localstage);
             WritePacket(str, strlen(str));
             // LogMessage("Wrote: %s", str);

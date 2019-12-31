@@ -54,7 +54,9 @@ int FindAndHookInterrupt(struct interrupt_hook *state,
 
 long GetEntropy(void)
 {
-    return _bios_timeofday(_TIME_GETCLOCK, NULL);
+    long result;
+    _bios_timeofday(_TIME_GETCLOCK, &result);
+    return result;
 }
 
 void RestoreInterrupt(struct interrupt_hook *state)

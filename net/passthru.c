@@ -6,7 +6,9 @@
 #include <assert.h>
 #include "lib/inttypes.h"
 
+#include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/log.h"
 #include "net/doomnet.h"
 
 static doomcom_t far *inner_driver;
@@ -37,11 +39,17 @@ void interrupt NetISR(void)
     }
 }
 
+static void SetDriver(long l)
+{
+    assert(inner_driver == NULL);
+    inner_driver = NetGetHandle(l);
+}
+
 int main(int argc, char *argv[])
 {
-    doomcom_t far *d;
     char **args;
 
+    APIPointerFlag("-net", SetDriver);
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
@@ -49,7 +57,6 @@ int main(int argc, char *argv[])
         ErrorPrintUsage("No command given to run.");
     }
 
-    inner_driver = NetLocateDoomcom(args);
     assert(inner_driver != NULL);
 
     doomcom.numnodes = inner_driver->numnodes;

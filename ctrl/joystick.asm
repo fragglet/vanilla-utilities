@@ -85,8 +85,5 @@ bad:
         xor    ax, ax              ; read was bad
         ret
 
-ENDP
-
-
 END
 

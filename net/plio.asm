@@ -22,21 +22,18 @@ include net/defs.asm
 
 .code
 
-comment \
-
-The following says how to transfer a sequence of bytes.  The bytes
-are structured as [ count-low, count-high, bytes, bytes, bytes, checksum ].
-
-Send		Recv
-8->
-[ repeat the following
-		<-1
-10h+low_nib->
-		<-0
-high_nib->
-until all bytes have been transferred ]
-		<-0
-\
+; The following says how to transfer a sequence of bytes.  The bytes
+; are structured as [ count-low, count-high, bytes, bytes, bytes, checksum ].
+; 
+; Send		Recv
+; 8->
+; [ repeat the following
+; 		<-1
+; 10h+low_nib->
+; 		<-0
+; high_nib->
+; until all bytes have been transferred ]
+; 		<-0
 
 DATA		equ	0
 REQUEST_IRQ	equ	08h

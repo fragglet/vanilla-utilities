@@ -88,7 +88,7 @@ void APIPointerFlag(const char *name, api_pointer_callback_t callback)
 
 void PrintProgramUsage(FILE *output)
 {
-    const char *program = _argv[0];
+    const char *program = cmdline_argv[0];
     struct flag *f;
     int columns;
     int i, cnt;

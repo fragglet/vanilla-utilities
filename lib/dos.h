@@ -1,5 +1,14 @@
 
+#include <conio.h>
 #include <dos.h>
+
+#if defined(__TURBOC__)
+#define cmdline_argc  _argc
+#define cmdline_argv  _argv
+#else
+#define cmdline_argc  __argc
+#define cmdline_argv  __argv
+#endif
 
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )

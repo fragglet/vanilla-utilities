@@ -17,14 +17,14 @@ static void SetLogName(void)
 {
     char *p;
 
-    p = strrchr(_argv[0], '\\');
+    p = strrchr(cmdline_argv[0], '\\');
     if (p != NULL)
     {
         ++p;
     }
     else
     {
-        p = _argv[0];
+        p = cmdline_argv[0];
     }
     strncpy(progname, p, sizeof(progname));
     progname[sizeof(progname) - 1] = '\0';

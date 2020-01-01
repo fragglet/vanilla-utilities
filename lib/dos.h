@@ -5,6 +5,7 @@
 #if defined(__TURBOC__)
 #define cmdline_argc  _argc
 #define cmdline_argv  _argv
+#define __stdcall
 #else
 #define cmdline_argc  __argc
 #define cmdline_argv  __argv

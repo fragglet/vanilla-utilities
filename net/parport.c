@@ -48,17 +48,17 @@ unsigned int recv_count = 0;
 static int lpt2, lpt3;
 static int port_flag;
 
-void CountInErr(void)
+void __stdcall CountInErr(void)
 {
     errcnt++;
 }
 
-extern void recv(void);
+extern void __stdcall PLIORecvPacket(void);
 
 void interrupt far ReceiveISR(void)
 {
     icnt++;
-    recv();
+    PLIORecvPacket();
 
     OUTPUT(0x20, 0x20);
 }

@@ -22,7 +22,7 @@ const int sidemove[2] = {0x18, 0x28};
 
 // From joystick.asm:
 extern int joystickx, joysticky;
-extern void ReadJoystick(void);
+extern void __stdcall ReadJoystick(void);
 
 static char *config_file = "analogjs.cfg";
 static int calibrate = 0;

@@ -20,6 +20,12 @@ include net/defs.asm
 
 .model small
 
+.data
+_plio_write_seg        dw        0
+_plio_write_off        dw        0
+_plio_write_len        dw        0
+PUBLIC        _plio_write_seg, _plio_write_off, _plio_write_len
+
 .code
 
 ; The following says how to transfer a sequence of bytes.  The bytes
@@ -95,8 +101,7 @@ do_timeout_1:
         ret
 
 
-        public  _send_pkt
-_send_pkt:
+send_pkt:
 ;enter with es:di->upcall routine, (0:0) if no upcall is desired.
 ;  (only if the high-performance bit is set in driver_function)
 ;enter with ds:si -> packet, cx = packet length.
@@ -224,8 +229,8 @@ send_nibble_2:
 
 recv_char	db	'0'
 
-        public  _recv
-_recv:
+        public  _PLIORecvPacket
+_PLIORecvPacket:
 ;called from the recv isr.  All registers have been saved, and ds=cs.
 ;Upon exit, the interrupt will be acknowledged.
 
@@ -401,5 +406,23 @@ end_resident	label	byte
 	db	GIANT dup(?)
 end_free_mem	label	byte
 
+
+public _PLIOWritePacket
+_PLIOWritePacket:
+	mov cx, _plio_write_len
+	mov ds, _plio_write_seg
+	mov si, _plio_write_off
+	xor di, di
+	mov es, di
+	call send_pkt
+
+	jnc sendok
+	xor ah, ah
+	mov al, dh
+	ret
+
+sendok:
+	xor ax, ax
+	ret
 
 	end

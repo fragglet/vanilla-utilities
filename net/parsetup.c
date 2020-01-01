@@ -35,8 +35,7 @@
 
 unsigned newpkt = 0;
 
-extern void recv(void);
-extern void send_pkt(void);
+extern int __stdcall PLIOWritePacket(void);
 extern uint8_t pktbuf[];
 extern unsigned recv_count;
 extern unsigned errcnt;
@@ -72,20 +71,13 @@ int ReadPacket(void)
 
 int WritePacket(uint8_t *data, unsigned len)
 {
+    extern int plio_write_seg, plio_write_off, plio_write_len;
 
-    _CX = len;
-    _DS = FP_SEG(data);
-    _SI = FP_OFF(data);
-    _ES = _DI = 0;
-    send_pkt();
+    plio_write_seg = FP_SEG(data);
+    plio_write_off = FP_OFF(data);
+    plio_write_len = len;
 
-    asm jnc sendok;
-
-    return (_DH);
-
- sendok:
-    return (0);
-
+    return PLIOWritePacket();
 }
 
 /*

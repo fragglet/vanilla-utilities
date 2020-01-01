@@ -1,5 +1,6 @@
 
-# makefile for Borland make
+# makefile for Borland Turbo C make
+# To invoke: make -f makefile.tc
 
 CFLAGS = -O -d -w
 

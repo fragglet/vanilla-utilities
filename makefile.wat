@@ -1,5 +1,6 @@
 
 # makefile for OpenWatcom wmake
+# To invoke: wmake -f makefile.wat
 
 SOURCE_DIRS = ctrl;lib;net;stat
 CFLAGS = -I.

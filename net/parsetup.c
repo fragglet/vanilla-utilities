@@ -81,15 +81,7 @@ int WritePacket(uint8_t *data, unsigned len)
     return PLIOWritePacket();
 }
 
-/*
-=============
-=
-= NetISR
-=
-=============
-*/
-
-void interrupt far NetISR(void)
+static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
@@ -229,6 +221,6 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(&doomcom, args);
+    LaunchDOOM(&doomcom, args, NetCallback);
 }
 

@@ -17,15 +17,7 @@ static int numnetnodes;
 
 static setupdata_t nodesetup[MAXNETNODES];
 
-/*
-=============
-=
-= NetISR
-=
-=============
-*/
-
-void interrupt far NetISR(void)
+static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
@@ -225,6 +217,6 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(&doomcom, args);
+    LaunchDOOM(&doomcom, args, NetCallback);
 }
 

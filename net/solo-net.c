@@ -151,7 +151,7 @@ static void ReceivePacket(void)
 // to send or receive a packet.
 // If numnodes=1 then this can just be an empty function. We only bother
 // doing anything so that we can simulate extra dummy players.
-void interrupt far NetISR(void)
+static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     doomcom.numplayers = nodes;
     doomcom.numnodes = nodes;
 
-    LaunchDOOM(&doomcom, args);
+    LaunchDOOM(&doomcom, args, NetCallback);
 
     return 0;
 }

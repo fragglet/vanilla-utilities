@@ -792,7 +792,7 @@ static void PrintStats(void)
     }
 }
 
-void interrupt far NetISR(void)
+static void NetCallback(void)
 {
     switch (doomcom.command)
     {
@@ -895,7 +895,7 @@ int main(int argc, char *argv[])
     {
         LogMessage("Console is player %d of %d (%d nodes)",
                    doomcom.consoleplayer, doomcom.numplayers, num_nodes);
-        LaunchDOOM(&doomcom, args);
+        LaunchDOOM(&doomcom, args, NetCallback);
     }
 
     PrintStats();

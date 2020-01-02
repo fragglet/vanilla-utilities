@@ -14,7 +14,7 @@
 static doomcom_t doomcom;
 static doomcom_t far *inner_driver;
 
-void interrupt NetISR(void)
+static void NetCallback(void)
 {
     switch (doomcom.command)
     {
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     doomcom.ticdup = inner_driver->ticdup;
     doomcom.extratics = inner_driver->extratics;
 
-    LaunchDOOM(&doomcom, args);
+    LaunchDOOM(&doomcom, args, NetCallback);
 
     return 0;
 }

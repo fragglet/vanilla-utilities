@@ -20,7 +20,7 @@ static doomcom_t far *inner_driver;
 static rottcom_t rottcom;
 static int overlength_packets = 0;
 
-void interrupt NetISR(void)
+static void interrupt far NetISR(void)
 {
     struct reassembled_packet *pkt;
 

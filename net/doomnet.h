@@ -77,8 +77,8 @@ typedef struct
 } doompacket_t;
 
 void NetRegisterFlags(void);
-void LaunchDOOM(doomcom_t far *doomcom, char **args,
-                void (*callback)(void));
+void NetLaunchDoom(doomcom_t far *doomcom, char **args,
+                   void (*callback)(void));
 doomcom_t far *NetGetHandle(long l);
 void NetSendPacket(doomcom_t far *doomcom);
 int NetGetPacket(doomcom_t far *doomcom);

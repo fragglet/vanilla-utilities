@@ -895,7 +895,7 @@ int main(int argc, char *argv[])
     {
         LogMessage("Console is player %d of %d (%d nodes)",
                    doomcom.consoleplayer, doomcom.numplayers, num_nodes);
-        LaunchDOOM(&doomcom, args, NetCallback);
+        NetLaunchDoom(&doomcom, args, NetCallback);
     }
 
     PrintStats();

@@ -37,11 +37,11 @@ static void interrupt far NetISR(void)
 /*
 =============
 =
-= LaunchDOOM
+= NetLaunchDoom
 =
 These fields in doomcom should be filled in before calling:
 
-	short	numnodes;		// console is allways node 0
+	short	numnodes;		// console is always node 0
 	short	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
 	short	extratics;		// 1 = send a backup tic in every packet
 
@@ -52,8 +52,8 @@ These fields in doomcom should be filled in before calling:
 =============
 */
 
-void LaunchDOOM(doomcom_t far *doomcom, char **args,
-                void (*callback)(void))
+void NetLaunchDoom(doomcom_t far *doomcom, char **args,
+                   void (*callback)(void))
 {
     char addrstring[10];
     long flatadr;

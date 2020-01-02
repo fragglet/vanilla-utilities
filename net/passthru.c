@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     doomcom.ticdup = inner_driver->ticdup;
     doomcom.extratics = inner_driver->extratics;
 
-    LaunchDOOM(&doomcom, args, NetCallback);
+    NetLaunchDoom(&doomcom, args, NetCallback);
 
     return 0;
 }

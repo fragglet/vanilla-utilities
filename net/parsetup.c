@@ -221,6 +221,6 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(&doomcom, args, NetCallback);
+    NetLaunchDoom(&doomcom, args, NetCallback);
 }
 

@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     doomcom.numplayers = nodes;
     doomcom.numnodes = nodes;
 
-    LaunchDOOM(&doomcom, args, NetCallback);
+    NetLaunchDoom(&doomcom, args, NetCallback);
 
     return 0;
 }

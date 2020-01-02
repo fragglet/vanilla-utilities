@@ -31,4 +31,6 @@ than Doom's built in joystick support.
 * **replay** - demo replay tool that uses the external control API, so that
 demos can be "continued" by recording a new demo from an old one.
 * **statdump** - external statistics driver that can write a text summary.
+* **vrottcom** - adapter that converts a Doom network driver into a *Rise
+of the Triad* ROTTCOM driver.
 

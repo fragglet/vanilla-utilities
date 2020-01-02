@@ -1,0 +1,55 @@
+/*
+Copyright (C) 1994-1995 Apogee Software, Ltd.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+
+
+#define ROTT_MAXPACKETSIZE    2048
+
+#if __WATCOMC__
+#pragma pack (1)
+#endif
+
+typedef struct
+{
+    short   intnum;            // ROTT executes an int to send commands
+
+// communication between ROTT and the driver
+    short   command;           // CMD_SEND or CMD_GET
+    short   remotenode;        // dest for send, set by get (-1 = no packet)
+    short   datalength;        // bytes in rottdata to be sent / bytes read
+
+// info specific to this node
+    short   consoleplayer;     // 0-3 = player number
+    short   numplayers;        // 1-4
+    short   client;            // 0 = server 1 = client
+    short   gametype;          // 0 = modem  1 = network
+    short   ticstep;           // 1 for every tic 2 for every other tic ...
+    short   remoteridicule;    // 0 = remote ridicule is off 1= rr is on
+
+// packet data to be sent
+    char    data[ROTT_MAXPACKETSIZE];
+} rottcom_t;
+
+#if __WATCOMC__
+#pragma pack (4)
+#endif
+
+#define ROTT_MODEM_GAME   0
+#define ROTT_NETWORK_GAME 1
+

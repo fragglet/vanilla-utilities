@@ -76,6 +76,8 @@ struct node_data
 
 static const node_addr_t broadcast = {0xff, 0xff, 0xff, 0xff};
 
+static doomcom_t doomcom;
+
 // When we send packets, they sometimes get placed into the broadcast
 // pending buffer to determine if they should be sent as broadcast packets
 // to save bandwidth:
@@ -893,7 +895,7 @@ int main(int argc, char *argv[])
     {
         LogMessage("Console is player %d of %d (%d nodes)",
                    doomcom.consoleplayer, doomcom.numplayers, num_nodes);
-        LaunchDOOM(args);
+        LaunchDOOM(&doomcom, args);
     }
 
     PrintStats();

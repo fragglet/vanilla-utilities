@@ -12,6 +12,7 @@
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
 
+doomcom_t doomcom;
 static int numnetnodes;
 
 static setupdata_t nodesetup[MAXNETNODES];
@@ -224,6 +225,6 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(args);
+    LaunchDOOM(&doomcom, args);
 }
 

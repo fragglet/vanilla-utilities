@@ -76,10 +76,8 @@ typedef struct
     ticcmd_t            cmds[BACKUPTICS];
 } doompacket_t;
 
-extern doomcom_t doomcom;
-
 void NetRegisterFlags(void);
-void LaunchDOOM(char **args);
+void LaunchDOOM(doomcom_t far *doomcom, char **args);
 void interrupt far NetISR(void);
 doomcom_t far *NetGetHandle(long l);
 void NetSendPacket(doomcom_t far *doomcom);

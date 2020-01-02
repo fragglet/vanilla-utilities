@@ -23,6 +23,7 @@
 
 #define RECV_QUEUE_LEN 8
 
+static doomcom_t doomcom;
 static doompacket_t *packet;
 
 // Receive queue. We place packets onto the queue for receiving and
@@ -202,7 +203,7 @@ int main(int argc, char *argv[])
     doomcom.numplayers = nodes;
     doomcom.numnodes = nodes;
 
-    LaunchDOOM(args);
+    LaunchDOOM(&doomcom, args);
 
     return 0;
 }

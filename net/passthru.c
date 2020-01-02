@@ -11,6 +11,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 
+static doomcom_t doomcom;
 static doomcom_t far *inner_driver;
 
 void interrupt NetISR(void)
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
     doomcom.ticdup = inner_driver->ticdup;
     doomcom.extratics = inner_driver->extratics;
 
-    LaunchDOOM(args);
+    LaunchDOOM(&doomcom, args);
 
     return 0;
 }

@@ -18,6 +18,7 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
+static doomcom_t doomcom;
 static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
@@ -456,5 +457,5 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(args);
+    LaunchDOOM(&doomcom, args);
 }

@@ -33,6 +33,7 @@
 #include "net/parsetup.h"
 #include "net/doomnet.h"
 
+static doomcom_t doomcom;
 unsigned newpkt = 0;
 
 extern int __stdcall PLIOWritePacket(void);
@@ -228,6 +229,6 @@ void main(int argc, char *argv[])
     //
     // launch DOOM
     //
-    LaunchDOOM(args);
+    LaunchDOOM(&doomcom, args);
 }
 

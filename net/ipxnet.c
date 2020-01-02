@@ -21,6 +21,7 @@
 =============================================================================
 */
 
+extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
 
 nodeadr_t nodeadr[MAXNETNODES + 1];     // first is local, last is broadcast

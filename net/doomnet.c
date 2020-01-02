@@ -11,7 +11,6 @@
 
 static struct interrupt_hook net_interrupt;
 static int dup = 0, extratics = 0;
-doomcom_t doomcom;
 
 void NetRegisterFlags(void)
 {
@@ -47,22 +46,22 @@ These fields in doomcom should be filled in before calling:
 =============
 */
 
-void LaunchDOOM(char **args)
+void LaunchDOOM(doomcom_t far *doomcom, char **args)
 {
     char addrstring[10];
     long flatadr;
 
     if (dup != 0)
     {
-        doomcom.ticdup = (short) dup;
+        doomcom->ticdup = (short) dup;
     }
     if (extratics != 0)
     {
-        doomcom.extratics = (short) extratics;
+        doomcom->extratics = (short) extratics;
     }
 
     // prepare for DOOM
-    doomcom.id = DOOMCOM_ID;
+    doomcom->id = DOOMCOM_ID;
 
     if (!FindAndHookInterrupt(&net_interrupt, NetISR))
     {
@@ -70,14 +69,14 @@ void LaunchDOOM(char **args)
               "a vector with the -vector 0x<num> parameter.");
     }
 
-    doomcom.intnum = net_interrupt.interrupt_num;
+    doomcom->intnum = net_interrupt.interrupt_num;
 
     // We unhook the vector anyway after the game exits, but just in case, set
     // an atexit handler as well - it will gracefully handle multiple calls.
     atexit(UnhookDoomVector);
 
     // Add -net &doomcom
-    flatadr = (long) FP_SEG(&doomcom) * 16 + FP_OFF(&doomcom);
+    flatadr = (long) FP_SEG(doomcom) * 16 + FP_OFF(doomcom);
     sprintf(addrstring, "%lu", flatadr);
     args = AppendArgs(args, "-net", addrstring, NULL);
 

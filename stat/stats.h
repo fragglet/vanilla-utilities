@@ -72,5 +72,6 @@ typedef struct {
 typedef void (*stats_callback_t)(wbstartstruct_t *);
 
 void StatsLaunchDoom(char **args, stats_callback_t callback);
+wbstartstruct_t far *StatsGetHandle(long l);
 
 #endif

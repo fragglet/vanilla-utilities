@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -47,5 +48,19 @@ void StatsLaunchDoom(char **args, stats_callback_t callback)
     stats_buffer.maxfrags = 1;
 
     ControlLaunchDoom(args, ControlCallback);
+}
+
+// StatsGetHandle takes the given long value read from the command line
+// and returns a wbstartstruct_t pointer.
+wbstartstruct_t far *StatsGetHandle(long l)
+{
+    wbstartstruct_t far *result = NULL;
+    unsigned int seg;
+
+    assert(l != 0);
+    seg = (int) ((l >> 4) & 0xf000L);
+    result = (void far *) MK_FP(seg, l & 0xffffL);
+
+    return result;
 }
 

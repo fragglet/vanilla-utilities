@@ -16,6 +16,7 @@ SOLO_NET_OBJS = net\solo-net.o net\doomnet.o lib\common.lib
 METANET_OBJS = net\metanet.o net\doomnet.o lib\common.lib
 STATDUMP_OBJS = stat\statdump.o ctrl\control.o stat\statprnt.o stat\stats.o &
                 lib\common.lib
+VCOMMIT_OBJS = net\vcommit.o net\fragment.o net\doomnet.o lib\common.lib
 VROTTCOM_OBJS = net\vrottcom.o net\fragment.o net\doomnet.o lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
@@ -45,6 +46,8 @@ statdump.exe: $(STATDUMP_OBJS)
 	wcl -fe=$@ $(STATDUMP_OBJS)
 solo-net.exe: $(SOLO_NET_OBJS)
 	wcl -fe=$@ $(SOLO_NET_OBJS)
+vcommit.exe: $(VCOMMIT_OBJS)
+	wcl -fe=$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
 	wcl -fe=$@ $(VROTTCOM_OBJS)
 

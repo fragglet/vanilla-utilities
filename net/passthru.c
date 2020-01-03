@@ -14,7 +14,7 @@
 static doomcom_t doomcom;
 static doomcom_t far *inner_driver;
 
-static void NetCallback(void)
+static void far NetCallback(void)
 {
     switch (doomcom.command)
     {

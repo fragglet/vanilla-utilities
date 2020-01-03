@@ -151,7 +151,7 @@ static void ReceivePacket(void)
 // to send or receive a packet.
 // If numnodes=1 then this can just be an empty function. We only bother
 // doing anything so that we can simulate extra dummy players.
-static void NetCallback(void)
+static void far NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {

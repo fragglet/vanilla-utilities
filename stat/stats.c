@@ -21,7 +21,7 @@ static wbstartstruct_t stats_buffer;
 // buffer has been written to.  If it has, save the contents of the
 // stats buffer into the captured_stats array for later processing.
 ///
-static void ControlCallback(ticcmd_t *unused)
+static void far ControlCallback(ticcmd_t *unused)
 {
     unused = unused;
 

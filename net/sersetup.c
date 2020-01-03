@@ -139,7 +139,7 @@ void WritePacket(char *buffer, int len)
     WriteBuffer(localbuffer, b);
 }
 
-static void NetCallback(void)
+static void far NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {

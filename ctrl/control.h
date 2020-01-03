@@ -68,7 +68,7 @@ typedef struct {
     int32_t inventoryitem;
 } ticcmd_t;
 
-typedef void (*control_callback_t)(ticcmd_t *ticcmd);
+typedef void (far *control_callback_t)(ticcmd_t *ticcmd);
 
 void ControlRegisterFlags(void);
 void ControlLaunchDoom(char **args, control_callback_t callback);

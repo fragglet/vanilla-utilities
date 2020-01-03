@@ -190,7 +190,7 @@ static int16_t AdjustAxisValue(struct axis *a, int v, int speed)
     (b < 0 ? 0 : \
      b > 20 ? 1 : (buttons & (1 << b)) == 0)
 
-void ControlCallback(ticcmd_t *ticcmd)
+static void far ControlCallback(ticcmd_t *ticcmd)
 {
     int buttons;
     int run;

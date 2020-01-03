@@ -37,7 +37,7 @@ static uint8_t *demo_p;
 static char *demo_filename = NULL;
 static int is_strife = 0;
 
-static void ReplayCallback(ticcmd_t *ticcmd)
+static void far ReplayCallback(ticcmd_t *ticcmd)
 {
     int space_needed;
 

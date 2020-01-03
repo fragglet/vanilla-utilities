@@ -17,7 +17,7 @@ static int numnetnodes;
 
 static setupdata_t nodesetup[MAXNETNODES];
 
-static void NetCallback(void)
+static void far NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {

@@ -39,7 +39,7 @@ static void interrupt far NetISR(void)
                 gamecom.remotenode = -1;
                 return;
             }
-            gamecom.remotenode = 1 + (!gamecom.consoleplayer);
+            gamecom.remotenode = 3 - gamecom.consoleplayer;
             gamecom.datalength = pkt->datalength;
             far_memcpy(gamecom.data, pkt->data, pkt->datalength);
             break;

@@ -17,9 +17,9 @@ METANET_OBJS = net\metanet.obj net\doomnet.obj lib\common.lib
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
                 stat\stats.obj lib\common.lib
 VROTTCOM_OBJS = net\vrottcom.obj net\fragment.obj net\doomnet.obj \
-                lib\common.lib
+                net\nodemap.obj lib\common.lib
 VCOMMIT_OBJS = net\vcommit.obj net\fragment.obj net\doomnet.obj \
-                lib\common.lib
+               net\nodemap.obj lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe

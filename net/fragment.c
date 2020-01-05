@@ -9,6 +9,7 @@
 #include "lib/dos.h"
 #include "net/doomnet.h"
 #include "net/fragment.h"
+#include "net/nodemap.h"
 
 #define FRAGMENT_SIZE 500
 #define REASSEMBLY_BUFFERS 8
@@ -72,6 +73,13 @@ struct reassembled_packet *FragmentGetPacket(void)
 
     while (NetGetPacket(driver))
     {
+        // FIXME: Fragment reassembler should not be coupled to node
+        // discovery code.
+        if (CheckLateDiscover(driver))
+        {
+            continue;
+        }
+
         fnum = f->fragment & 0x0f;
         num_fragments = (f->fragment >> 4) & 0x0f;
 

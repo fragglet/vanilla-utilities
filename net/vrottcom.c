@@ -13,24 +13,21 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/fragment.h"
+#include "net/nodemap.h"
 #include "net/rottcom.h"
 
 static struct interrupt_hook net_interrupt;
 static doomcom_t far *inner_driver;
 static rottcom_t rottcom;
-static int overlength_packets = 0;
 
 static void interrupt far NetISR(void)
 {
     struct reassembled_packet *pkt;
 
-    // TODO: This is currently hard-coded to always send/recv to node 1
-    // because ROTT tries to transmit to node 0. Need to figure this out
-    // and fix it.
     switch (rottcom.command)
     {
         case CMD_SEND:
-            FragmentSendPacket(1, //rottcom.remotenode,
+            FragmentSendPacket(playertonode[rottcom.remotenode - 1],
                                rottcom.data, rottcom.datalength);
             break;
 
@@ -41,7 +38,7 @@ static void interrupt far NetISR(void)
                 rottcom.remotenode = -1;
                 return;
             }
-            rottcom.remotenode = 1;//pkt->remotenode;
+            rottcom.remotenode = nodetoplayer[pkt->remotenode] + 1;
             rottcom.datalength = pkt->datalength;
             far_memcpy(rottcom.data, pkt->data, pkt->datalength);
             break;
@@ -58,14 +55,13 @@ int main(int argc, char *argv[])
 {
     char addrstring[16];
     long flataddr;
-    int server = 0, remoteridicule = 0;
+    int remoteridicule = 0;
     char **args;
 
     SetHelpText("Doom to ROTT network adapter",
                 "ipxsetup -nodes 3 %s rott.exe");
 
     APIPointerFlag("-net", SetDriver);
-    BoolFlag("-server", &server, "Run in dedicated server mode");
     BoolFlag("-remoteridicule", &remoteridicule, "Enable remote ridicule");
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
@@ -75,12 +71,13 @@ int main(int argc, char *argv[])
 
     assert(inner_driver != NULL);
     InitFragmentReassembly(inner_driver);
+    DiscoverPlayers(inner_driver);
 
-    rottcom.consoleplayer = inner_driver->consoleplayer;
+    rottcom.consoleplayer = inner_driver->consoleplayer + 1;
     rottcom.numplayers = inner_driver->numplayers;
     rottcom.ticstep = inner_driver->ticdup;
-    rottcom.client = !server;
-    rottcom.gametype = ROTT_MODEM_GAME;
+    rottcom.client = rottcom.consoleplayer > 1;
+    rottcom.gametype = ROTT_NETWORK_GAME;
     rottcom.remoteridicule = remoteridicule;
 
     // Prepare to launch game

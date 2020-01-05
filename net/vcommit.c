@@ -14,6 +14,7 @@
 #include "net/commit.h"
 #include "net/doomnet.h"
 #include "net/fragment.h"
+#include "net/nodemap.h"
 
 static struct interrupt_hook net_interrupt;
 static doomcom_t far *inner_driver;
@@ -24,11 +25,10 @@ static void interrupt far NetISR(void)
     struct reassembled_packet *pkt;
     int i;
 
-    // TODO: This is currently hard-coded to always send to node 1.
     switch (gamecom.command)
     {
         case COMMIT_CMD_SEND:
-            FragmentSendPacket(1, //gamecom.remotenode,
+            FragmentSendPacket(playertonode[gamecom.remotenode - 1],
                                gamecom.data, gamecom.datalength);
             break;
 
@@ -39,7 +39,7 @@ static void interrupt far NetISR(void)
                 gamecom.remotenode = -1;
                 return;
             }
-            gamecom.remotenode = 3 - gamecom.consoleplayer;
+            gamecom.remotenode = nodetoplayer[pkt->remotenode] + 1;
             gamecom.datalength = pkt->datalength;
             far_memcpy(gamecom.data, pkt->data, pkt->datalength);
             break;
@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
 
     assert(inner_driver != NULL);
     InitFragmentReassembly(inner_driver);
+    DiscoverPlayers(inner_driver);
 
     gamecom.consoleplayer = inner_driver->consoleplayer + 1;
     gamecom.numplayers = inner_driver->numplayers;

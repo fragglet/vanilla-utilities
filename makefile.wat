@@ -23,7 +23,7 @@ VROTTCOM_OBJS = net\vrottcom.o net\fragment.o net\doomnet.o &
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
-       vrottcom.exe
+       vcommit.exe vrottcom.exe
 
 all: $(EXES)
 

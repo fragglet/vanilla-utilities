@@ -22,7 +22,8 @@ VCOMMIT_OBJS = net\vcommit.obj net\fragment.obj net\doomnet.obj \
                net\nodemap.obj lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
-       ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe
+       ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe \
+       vcommit.exe vrottcom.exe
 
 all: $(EXES)
 

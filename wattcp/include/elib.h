@@ -11,11 +11,3 @@ int chk_timeout( unsigned long timeout );
 unsigned long intel( unsigned long );
 unsigned short intel16( unsigned short );
 
-/*
- * qmsg.c
- */
-void dputch( char x );
-void dmsg( char *s );
-void dhex1int( int x );
-void dhex2int( int x );
-void dhex4int( int x );

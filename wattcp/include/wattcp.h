@@ -742,11 +742,4 @@ extern longword _cookie[MAX_COOKIES];
 extern int _last_nameserver;
 extern char *_hostname;
 
-/*
- * Elib stuff
- */
-int isstring( char *string, unsigned stringlen );     /* isstring.c */
-
- 
-
 #endif /* ndef _wattcp_wattcp_h */

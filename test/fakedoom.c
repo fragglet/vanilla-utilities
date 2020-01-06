@@ -101,6 +101,7 @@ static void RunNetworkTest(void)
 
 int main(int argc, char *argv[])
 {
+    clock_t start;
     char *filename = NULL;
 
     //APIPointerFlag("-control", SetControlDriver);
@@ -121,6 +122,11 @@ int main(int argc, char *argv[])
     }
 
     fclose(log);
+
+    for (start = clock(); clock() < start + CLOCKS_PER_SEC / 2; )
+    {
+    }
+
     return 0;
 }
 

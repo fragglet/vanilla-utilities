@@ -5,8 +5,7 @@
 
 # This makes libraries of small, large, and huge model functions,
 #
-CFLAGS= -w -a -d -f- -G -O -Z -DMSDOS -I..\include -IC:\borlandc\include
-#CFLAGS= -w -a -d -f- -G -O -Z -DMSDOS -I..\include -IC:\bc4\include
+CFLAGS= -w -a -d -f- -G -O -Z -DMSDOS -I..\include
 MODELS=-ms
 MODELL=-ml
 MODELH=-mh
@@ -19,11 +18,11 @@ AMODELL=-dFUNC_L=1
 # Define PC-specific include file
 
 .c.obj:
-        bcc -c $(MODELS) $(CFLAGS) $*.c
+        tcc -c $(MODELS) $(CFLAGS) $*.c
         tlib ..\lib\wattcpsm -+$*
-        bcc -c $(MODELL) $(CFLAGS) $*.c
+        tcc -c $(MODELL) $(CFLAGS) $*.c
         tlib ..\lib\wattcplg -+$*
-        bcc -c $(MODELH) $(CFLAGS) $*.c
+        tcc -c $(MODELH) $(CFLAGS) $*.c
         tlib ..\lib\wattcphg -+$*
 
 .asm.obj:

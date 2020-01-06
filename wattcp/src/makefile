@@ -18,10 +18,7 @@ DEBUGS= -v
 #  no other warnings at the default warning level under bcc3.1 and 4.x;
 #  let's keep it that way :)
 
-#CFLAGS= $(DEBUGS) -DMSDOS -ID:\borlandc\include -I..\include
-#CFLAGS= $(DEBUGS) -DMSDOS -IC:\bc4\include -I..\include
-#CFLAGS= $(DEBUGS) -DMSDOS -DSKIPINI -DETH_MSS=576 -IC:\borlandc\include -I..\include
-CFLAGS= $(DEBUGS) -DMSDOS -DETH_MSS=576 -IC:\borlandc\include -I..\include
+CFLAGS= $(DEBUGS) -DMSDOS -DETH_MSS=576 -I..\include
 MODELS=-ms
 MODELL=-ml
 MODELH=-mh
@@ -37,11 +34,11 @@ AMODELL=-dFUNC_L=1
 #       bcc -c $(MODELS) $(CFLAGS) $*.c > errout
 
 .c.obj:
-        bcc -c $(MODELS) $(CFLAGS) $*.c
+        tcc -c $(MODELS) $(CFLAGS) $*.c
         tlib ..\lib\wattcpsm -+$*
-        bcc -c $(MODELL) $(CFLAGS) $*.c
+        tcc -c $(MODELL) $(CFLAGS) $*.c
         tlib ..\lib\wattcplg -+$*
-        bcc -c $(MODELH) $(CFLAGS) $*.c
+        tcc -c $(MODELH) $(CFLAGS) $*.c
         tlib ..\lib\wattcphg -+$*
 
 .asm.obj:

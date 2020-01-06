@@ -2,7 +2,6 @@
 #       Makefile for Waterloo TCP sample applications
 #
 
-TCCINCLUDE=C:\borlandc\include
 DEBUG= E        # set to D for disable, E for enable
 MODEL= L        # set to L for large, S for small
 
@@ -34,9 +33,8 @@ TEXTMODEL=small
 !error  MODEL must be set to either S or L
 !endif
 
-CFLAGS= $(CMODEL) -r- $(IDEBUG) -IC:\borlandc\include -I..\include
-#CFLAGS= $(CMODEL) -r- $(IDEBUG) -IC:\bc4\include -I..\include
-CC= bcc $(CFLAGS)
+CFLAGS= $(CMODEL) -r- $(IDEBUG) -I..\include
+CC= tcc $(CFLAGS)
 
 #
 #

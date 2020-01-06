@@ -20,6 +20,8 @@ VROTTCOM_OBJS = net\vrottcom.obj net\fragment.obj net\doomnet.obj \
                 net\nodemap.obj lib\common.lib
 VCOMMIT_OBJS = net\vcommit.obj net\fragment.obj net\doomnet.obj \
                net\nodemap.obj lib\common.lib
+FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
+                stat\stats.obj lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe \
@@ -52,6 +54,8 @@ vcommit.exe: $(VCOMMIT_OBJS)
 	tcc -e$* -o$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
 	tcc -e$* -o$@ $(VROTTCOM_OBJS)
+fakedoom.exe: $(FAKEDOOM_OBJS)
+	tcc -e$* -o$@ $(FAKEDOOM_OBJS)
 
 .c.obj:
 	tcc $(CFLAGS) -c -o$@ $<

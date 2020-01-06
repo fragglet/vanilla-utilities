@@ -1,0 +1,19 @@
+;       define big or small model for library assembly code
+
+FALSE   equ     0
+TRUE    equ     1
+
+; This is gross but works under TASM and MASM 4.0 up
+;
+if FUNC_L
+FUNC_S equ 0
+PTR_L equ 1
+PTR_S equ 0
+else
+FUNC_S equ 1
+PTR_L equ 0
+PTR_S equ 1
+endif
+
+INCLUDE macros.hsm
+

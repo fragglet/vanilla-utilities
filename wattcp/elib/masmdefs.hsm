@@ -1,0 +1,26 @@
+ARG0		EQU		4
+ARG1		EQU		6
+ARG2		EQU		8
+ARG3		EQU		10
+ARG4		EQU		12
+ARG5		EQU		14
+ARG6		EQU		16
+
+HI_LONG		EQU		BP + 8
+LO_LONG		EQU		BP + 6
+RET_HI		EQU		DX
+RET_LO		EQU		AX
+FD_ADJUST	EQU		0
+
+C_LF		EQU		0Ah
+
+push_i  macro
+    push    di
+    push    si
+    endm
+
+pop_i   macro
+    pop     si
+    pop     di
+    endm
+

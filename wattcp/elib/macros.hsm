@@ -1,0 +1,151 @@
+
+IF      FUNC_L
+@AB     EQU     6
+@ab     EQU     6
+ELSE
+@AB     EQU     4
+@ab     EQU     4
+ENDIF
+
+if      FUNC_L
+%OUT    <Far Functions>
+else
+%OUT    <Near Functions>
+endif
+if      PTR_L
+%OUT    <Far Pointers>
+else
+%OUT    <Near Pointers>
+endif
+
+cextrn  macro   WARG1
+if      FUNC_L
+EXTRN   _&WARG1&:FAR
+else
+EXTRN   _&WARG1&:NEAR
+endif
+        endm
+
+ccall   macro   WARG1
+if      FUNC_L
+        CALL    FAR PTR _&WARG1&
+else
+        CALL    _&WARG1&
+endif
+        endm
+
+cpublic macro   WARG1
+public  _&WARG1&
+if      FUNC_L
+_&WARG1&    PROC    FAR
+else
+_&WARG1&    PROC    NEAR
+endif
+        PUSH    BP
+        MOV     BP,SP
+        PUSH    SI
+        PUSH    DI
+        endm
+
+cproc   macro   WARG1
+public  _&WARG1&
+if      FUNC_L
+_&WARG1&    PROC    FAR
+else
+_&WARG1&    PROC    NEAR
+endif
+        endm
+
+cendp   macro   WARG1
+_&WARG1&    ENDP
+        endm
+
+creturn macro   WARG1
+        POP     DI
+        POP     SI
+        MOV     SP,BP
+        POP     BP
+if      FUNC_L
+        RET
+else
+        RET
+endif
+_&WARG1&    ENDP
+        endm
+
+cstart  macro   WARG1,WARG2
+if      FUNC_L
+&WARG1&_TEXT    SEGMENT WARG2
+else
+_TEXT       SEGMENT WARG2
+endif
+        endm
+
+cend     macro   WARG1
+if      FUNC_L
+&WARG1&_TEXT        ENDS
+else
+_TEXT   ENDS
+endif
+        endm
+
+codedef macro   WARG1,WARG2
+if      FUNC_L
+&WARG1&_TEXT    SEGMENT BYTE WARG2 PUBLIC 'CODE'
+&WARG1&_TEXT    ENDS
+        ASSUME  CS: &WARG1&_TEXT
+else
+_TEXT   SEGMENT BYTE WARG2 PUBLIC 'CODE'
+_TEXT   ENDS
+        ASSUME  CS: _TEXT
+endif
+        endm
+
+datadef macro WARG1
+_DATA   SEGMENT  WORD WARG1 PUBLIC 'DATA'
+_DATA   ENDS
+_BSS    SEGMENT  WORD WARG1 PUBLIC 'BSS'
+_BSS    ENDS
+
+DGROUP  GROUP   _BSS,   _DATA
+        ASSUME  DS: DGROUP, SS: DGROUP, ES: DGROUP
+        endm
+
+bssstart    macro WARG1
+_BSS    SEGMENT WARG1
+        endm
+
+bssend  macro
+_BSS    ENDS
+        endm
+farbssstart    macro
+FAR_BSS SEGMENT
+        endm
+
+farbssend  macro
+FAR_BSS ENDS
+        endm
+
+fardatastart    macro
+FAR_DATA SEGMENT
+        endm
+
+fardataend  macro
+FAR_DATA ENDS
+        endm
+
+datastart    macro WARG1
+_DATA SEGMENT WARG1
+        endm
+
+dataend  macro
+_DATA ENDS
+        endm
+
+conststart    macro WARG1
+        endm
+
+constend  macro
+        endm
+
+

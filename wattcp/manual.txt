@@ -1,0 +1,23 @@
+
+  WATTCP - TCP/IP library routines
+
+  See include\copyrigh.h
+
+
+
+OFFICIAL SITE
+-------------
+  www.wattcp.com directs you to the latest information and files.
+
+
+DOCUMENTATION
+-------------
+  See www.wattcp.com
+
+
+COMPLEX and EMBEDDED APPLICATIONS
+---------------------------------
+  I also recommend the open source eRTOS package which I wrote.
+  See www.ertos.com
+
+

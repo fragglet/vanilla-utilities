@@ -1,0 +1,455 @@
+If you are programming with the Waterloo TCP library, the following notes
+may prove helpful.
+
+General Changes                     (through 9/3/99)
+    The bootp code now supports dhcp.  A number of bug fixes by myself
+    and others were merged in.  Added sock_init_noexit().  Added a small
+    cache to resolve() and created resolve_fn() which allows passing an
+    idle/break function much like sock_wait...  Passing a zero local port
+    to tcp_open/udp_open now properly allocates ephemeral ports.  Now
+    handles a dropped segment better.  tcp_config_file() can set a
+    different config file, or not at all.  Now returns a Port Unreachable
+    ICMP for incoming UDP packets without a listener.  Added a few handy
+    options to the makefile in SRC.  Thanks to R. Whitby, M. Polak, and
+    everyone else who contributed to this release.
+
+                -- S. Lawson (stevel@sdl.continet.com)
+
+- - -
+General Changes                     (through 9/24/96)
+
+    Should compile with no warnings under BCC 3.1 at the default
+    warning level.  Made to compile under BCC 4.x, and there will
+    be a couple 'obsolete function' warnings that you can ignore;
+    more recent versions of BCC may work also but I don't have
+    them to try.
+    
+    A bootp bug fixed.  TCP send window's failure to open possibly
+    fixed (caused slow writes), but not positive it's correct.
+    
+    Quentin Smart's (smart@actrix.gen.nz) de-fragment code is in here
+    now.   Since the ethernet packet buffers and UDP data buffer (in
+    the socket structure) are only 2K, that's the max datagram size the
+    fragment code can defrag, but you can increase the size of
+    the socket data buffer in wattcp.h (see tcp_MaxBufSize, a misnomer
+    since it's used to size UDP buffers to) and you'll also need to
+    increase the size of the packet buffers (BUFSIZE) in pcpkt.c.
+    You might consider using a datahandler function then the
+    buffer in the UDP socket structure isn't used; you can
+    probably save a memory copy anyway that way.  Also I don't think
+    the defrag code checks to see if the total packet size will
+    overflow the packet receive buffers, but I don't recall for sure;
+    that's something that should be done if it's not.
+
+    Murf@perftech.com and I also contributed some fixes to Quentin's
+    code, though I think Erick may have taken credit for the bugs
+    when merging and altering the code Quentin provided ;-).
+
+    I've also added code to *send* fragmented UDP packets so
+    you're not limited to ~1460 bytes.  I used the _mss value to
+    decide splits though we should really use something independent
+    of the tcp constants (I'm lazy).  Also this does *not* work with
+    sock_fastwrite().  This code probably needs a little more work
+    to be ideal, but it basically works. (It has been in previous releases).
+
+    There might be some other bug fixes in here that I've forgotten.
+    If you're a forgotten contributor, please let us know so you
+    can get credit here.
+
+    And finally, I'm not taking over WatTCP; Erick is still the guy.
+    I just made him promise to put release versions or dates in the
+    WatTCP filenames; but note that the current naming convention
+    (WATyymm.zip) suffers from the year 2000 problem... oh dear.
+
+                -- Mike Durkin (mdurkin@tsoft.net)
+
+- - -
+General Changes                     (7/16/93)
+    I did a lot of cleaning up to make this compile more nicely and
+    more than a year's worth of bugs have been fixed.
+
+    Several areas underwent protocol optimization to significantly
+    improve performance under certain circumstances.  Noticable
+    enhancements include SLIP support and fragments reassembly, but
+    the latter is currently disabled as I introduced a bug.
+
+- - -
+General Changes                     (3/31/92)
+    This update has a lot of little bug fixes, optimizations and
+    general improvements thanks to a lot of people's input.  In
+    particular, Jason Dent and Graham Robinson (author of PKTMUX10).
+
+1. Push bit handling is improved.  This is mostly necessary for 3270
+   protocols, most others treat tcp as a simple binary stream.
+
+2. Zero window probing has been fixed.  This will keep things rolling
+   even when the remote machine is swamped and the network becomes lossy
+   around the same time.
+
+3. A bug in the ASCII tcp stuff was introduced on my site this month
+   and has been fixed.  I don't know if the bug was on my old distribution.
+
+4. Significant changes were made to the internal handling of acknowledgements
+   and handling data within the receive window.
+
+5. A bug used to annoy SCO and possibly other system consoles - fixed.
+   When WATTCP wished to refuse unwanted sessions from remote systems, it
+   would be missing a small flag.  Most tcp's didn't notice this flaw.
+
+6. Type of Service flag now RFC compliant - currently unused in non-military
+   installations, this flag could be used to set priorities for TELNET
+   sessions versus bulk data transfers like FTP, particularly over slow
+   lines.  Phil Karn (Mr. KA9Q) is currently researching this area and
+   so this upgrade should make WATTCP code react properly (unlike SunOS, BSD,
+   etc.) in sites which use his TCPs.
+
+Erick
+
+- - -
+Speed/Performance               (1/04/1992)
+
+    The tcp code has undergone some mods to make it much faster, with
+    reads up to 120 kilobytes/s and writes up to 42 kilobytes/s on the
+    same subnet as my Sun.
+
+    These speed were great, but my pc is usually on a subnet.  There, the
+    speeds were about 26 kB/s in writes and 70 kB/s in reads.
+
+    For read's I was able to use good old sock_fastread.  For writes,
+    sock_fastwrite / sock_write just don't cut it because they are limited
+    to the small buffer size located in the tcp_Socket structure.
+
+    I've added a new call which let's you get around that limitation,
+    sock_enqueue().  This new routine let's you specify a buffer of data
+    you wish to enqueue for transmission.  WATTCP records the address of
+    that buffer and its length, and starts to transmit it according to
+    the TCP rules.  You are not allowed to touch that buffer until all
+    the data is fully transmitted, something you can tell by using the
+    sock_tbused( s ) until it returns zero.  You must also keep calling
+    tcp_tick() or sock_tick() as those routines schedule transmissions.
+
+
+    Here is some sample code which writes out a disk file:
+
+    tcp_open...
+    f->dhanle = open( ....
+    ...
+    while ( 1 ) {
+        /* check connection and do background stuff */
+        if (tcp_tick( s ) == 0) break;
+
+        /* see if we can schedule more data */
+        if ( sock_tbused( s ) == 0 ){
+            printf("disk reading %u bytes\n", ftpdbufferlen );
+            if ((diff = read( f->dhandle, ftpdbuffer, ftpdbufferlen )) <= 0 ) {
+                /* eof or possibly error condition */
+                break;
+            } else {
+                /* data ready to send */
+                sock_enqueue( s, ftpdbuffer, diff );
+            }
+        }
+    }
+
+    close( f->dhandle );
+    sock_close( s );
+- - -
+SMTPSERV  (in separate file: SMTPSERV.ZIP)
+
+    This program accepts inbound mail and places it into mail spool files
+    almost identically to the way Phil Karn's NOS does.  You can download the
+    executable in pub/wattcp/smtpserv.zip.  If you find it useful or wish
+    to have it changed, let me know.
+
+-----------------------------------------------------------------------------
+
+Large Model                     (9/13/1991)
+    You can compile large or small model applications.  Check out the
+    MAKEFILE in the .\APPS subdirectory to see how easy it is to switch.
+
+    The fullsrc.zip collection automatically produces large and small
+    model libraries.
+
+    There is a potential problem when you compile applications because
+    you make the same mistake I did and place tcp_Socket on the stack
+    by declaring it an automatic variable.  The 'C' stack is normally
+    only four K, slightly less than the tcp_Socket structure.
+
+    I didn't figure this one out very quickly, so tcp_open, udp_open,
+    and tcp_listen have code to warn you immediately and exit in case
+    you forget.
+
+-----------------------------------------------------------------------------
+
+TCP Fixes                       (9/13/1991)
+     The TCP portion of WATTCP has had numerous improvements.  I've managed
+     to significantly reduce the packet count while improving performance
+     and reliability.
+
+-----------------------------------------------------------------------------
+
+New Wattcp Programs
+     The latest release of MS-Kermit includes the WATTCP kernel, letting you
+     use it as a TELNET program.  I do not know where the ftp site is,
+     but it will probably be announced soon on Comp.protocols.tcp-ip.ibmpc
+     in the near future.
+
+     LPD is a line printer server which will let a PC accept jobs from UNIX.
+     It offers some simple device restriction capabilities.  You can spool
+     jobs out any DOS file or device.  It requires a little few lines
+     of work to be used at any site other than mine.  It is available
+
+     COMD.EXE is a simple program can be used to allow network access to
+     RS232 devices.  With a little work it could be converted into a modem
+     pool.  It is available from [129.97.128.196] pub/wattcp/comd.zip.
+
+     If you have any improvements or new applications, please let me know.
+     I will gladly distribute them for you.
+
+-----------------------------------------------------------------------------
+
+Nested Config Files             (7/16/91)
+    Wattcp config files may be easily nested to allow for centralized
+    control of most parameters with local overrides, or user specific
+    extensions.
+
+    To include a nested config file, use the following line in the
+    main config file:
+
+        include = filename
+    eg. include = c:\local.cfg
+
+    If the local file could not be found, a warning message is displayed.
+    You may wish to use a local file if it exists, but not display a message
+    if it does not.  To do that, simply prepend the filename with a question
+    mark.
+
+    eg. include = ?c:\local.cfg
+
+    When the nested file is complete it will return to the main file.
+
+    The nesting limit is dependant upon the number of unused file handles
+    and the stack size.
+
+-----------------------------------------------------------------------------
+
+TCP/UDP Packet Dumps            (7/10/1991)
+    TCP/UDP packet dumping features have been added and may prove useful
+    for testing and debugging your applications.
+
+    The debugger dumps packets, which gives you a feel for what the
+    kernal and the other end are trying to do.
+
+    It's my job to try to make things go as fast as possible with as
+    few packets as possible (least load).  Actually, when you use the
+    dumping feature you usually INCREASE the packet count because the
+    dumper takes time which times out the scheduler and causes
+    retransmits.
+
+    To include the debugging features in your program, add the line
+        dbuginit();
+    to your program *before* you call sock_init();
+
+    To enable/disable the debugger, include the following lines in your
+    WATTCP.CFG file:
+        DEBUG.FILE=somename     # otherwise it will open a file called
+                                # WATTCP.DBG in the current subdirectory
+                                # somename could be con which will dump
+                                # to the screen
+        DEBUG.MODE=DUMP         # to dump TCP/UDP data, looks a bit like
+                                # DEBUG.COM
+   or   DEBUG.MODE=HEADERS      # to dump TCP/UDP headers
+   or   DEBUG.MODE=ALL          # to dump everything, headers and data
+
+   You may write some textual data directly to the file.  Remember, you
+   must send a 'C' string ending with a 0, and you must include your
+   own CRLFs.
+
+        db_write( char *msg );
+
+   NOTE: If you use this feature and you also use usr_init, you
+         must chain usr_init as described in the programmers manual,
+         and as show in TCPINFO.C.
+
+-----------------------------------------------------------------------------
+Good UDP Support                (6/5/1991)
+   Initially, only standard socket calls could be used for UDP.  That was kind
+   of shabby because UDP tends to be higher traffic, has no flow control, and
+   you wish to know record boundaries.
+
+   The new code allows you to declare a big buffer into which the incomming
+   UDP packets will be bufferred.  Once initialized with sock_recv_init, the
+   buffer is used until the socket is closed.  NOTE: sock_recv... and the
+   regular socket input routines are MUTUALLY EXCLUSIVE, you can not use
+   one and the other at the same time.  
+
+        byte bigbuf[ 8192 ];
+        byte smallbuf[ 512 ];
+        int templen;
+
+        if ( !udp_open( &data, localport, remote, remoteport, NULL) ) {
+            printf("Error opening UDP channel");
+            exit( 3 );
+        }
+        /* set the big buffer */
+        if ( sock_recv_init( &data, bigbuf, sizeof( bigbuf )) == -1 ) {
+            printf("Error setting the receive buffers");
+            exit( 3 );
+        }
+        while ( 1 ) {
+            tcp_tick( NULL );           /* got to do this or sock_tick */
+
+            /* check for incomming udp data */
+            if ( templen = sock_recv( &data, smallbuf, sizeof( smallbuf ))) {
+                /* something received and it was templen bytes long */
+            }
+        }
+        sock_Close( &data );
+
+   sock_recv... adds extra code, so it need not be used for simple UDP sockets
+   such as BOOTP which expects only a single packet.
+
+   See sock_mode checksums below for more interesting notes.
+
+-----------------------------------------------------------------------------
+UDP Checksums                   (6/5/1991)
+   sock_mode can be used to enable or disable checksums for udp sessions
+   using the following calls:
+
+        sock_mode( &socket, UDP_MODE_CHK );
+        sock_mode( &socket, UDP_MODE_NOCHK );
+
+   Unlike *some* systems, Waterloo TCP correctly assumes checksums are active
+   and allows an application to disable them on the fly as they consider
+   appropriate.
+
+   Either or both sides may disable or re-enable checksums.
+
+-----------------------------------------------------------------------------
+TCP Nagle Algorithm             (6/5/1991)
+   The Nagle algorithm is now used to collect data.  Nagle is ideally suited
+   to programs like TELNET (TCPPORT), etc. which send a lot of small chunks
+   of data.  Some programs, like X-Windows, real-time data collection, etc.,
+   should turn of the Nagle feature.  Nagle is on by default and should not
+   be disabled unless a true problem is experienced.
+
+        sock_mode( &socket, TCP_MODE_NONAGLE ); /* turns it off */
+        sock_mode( &socket, TCP_MODE_NAGLE );   /* re-enables it */
+
+-----------------------------------------------------------------------------
+getdomainname Changes           (6/5/1991)
+   getdomainname always took a string and length parameter, just like UNIX.
+   Now, if the length is zero, getdomainname just returns the pointer to
+   a system copy of the domainstring.
+
+-----------------------------------------------------------------------------
+gethostname sethostname Changes (6/5/1991)
+   gethostname and sethostname are now available.  They work identically to
+   get/setdomainname() (as enhanced above).  The host name can either be set
+   via the WATTCP.CFG file or via bootp.
+-----------------------------------------------------------------------------
+
+sock_PreRead addition           (4/26/1991)
+
+   int sock_PreRead( void *s, byte *dp, int len );
+
+   Some situations arise where it would be nice to read data without causing
+   it to disappear from the socket's buffer.  Usually that means double
+   buffering.  sock_PreRead works exactly like sock_FastRead, except it does
+   not remove the read data from the data buffers.  The returned value is the
+   number of bytes transferred, 0 for no data waiting, or -1 on a socket
+   error.
+
+   This function is intended for special cases which are not easily performed
+   using other methods.
+
+-----------------------------------------------------------------------------
+
+sethostid addition              (4/26/1991)
+
+   longword sethostid( longword ip );
+
+   This function sets the system's default ip address.  Changing the ip address
+   will destroy existing TCP and UDP sessions.  You should close all sockets
+   before calling this function.  The passed ip address is always returned.
+
+   This function is low level and rarely useful to an application programmer.
+
+   main()
+   {
+       longword ip = 0x80010101;   /* 128.1.1.1 */
+       char buffer[ 512 ];
+
+       sock_init();
+       sethostid( ip );
+       printf("IP address has been set to %s\n\r",
+           inet_ntoa( buffer, getipaddr() );
+   }
+
+-----------------------------------------------------------------------------
+
+setdomainname addition          (4/26/1991)
+
+   char *setdomainname( char *string);
+
+   The domain name returned by getdomainname and used for resolve() is set to
+   the value in the string passed to setdomainname().  Note that changing the
+   contents of the string after a setdomainname() call may or may not change
+   the value of the system domain string and is not recommended.  You are
+   recommended to dedicate a static location which will permanently hold that
+   name.
+
+   setdomainname( NULL ) is an acceptable way to totally remove any domain name
+   and subsequently resolves will not attempt to append a domain name.
+
+   The passed string is always returned, as demonstrated below.
+
+   This function is low level and rarely useful to an application programmer.
+
+   #include <stdio.h>
+   #include <tcp.h>
+   char buffer[ 512 ];  /* use a static or a calloc, do not place the name
+                           in a local variable on the stack, it may get lost! */
+   main()
+   {
+       sock_init();
+       puts("Enter a new domain");
+       gets( buffer );
+       printf("Was using %s\n\r", getdomainname());
+       printf("Now using %s\n\r", setdomainname( buffer ));
+
+       setdomainname( NULL );
+       puts("Now using no domain name");
+   }
+
+-----------------------------------------------------------------------------
+
+_arp_resolve addition           (4/26/1991)
+
+   _arp_resolve( longword ina, void *ethap)
+
+   Given an ip address (ina), find the hardware address.  If ethap is non-NULL,
+   place the hardware address in the buffer pointed to by ethap.
+
+   Each call to _arp_resolve checks a local cache to see if we already know
+   the hardware address.  If no entry exists for that IP address, steps
+   are taken to find a hardware address.  If the ip node is on our subnet,
+   an ARP request is broadcast, otherwise _arp_resolve is called recursively
+   to find the address to the gateway.
+
+   Socket opens intrinsically call _arp_resolve and place the hardware address
+   in the socket structure so they are no longer dependant upon existance in
+   the cache.  This means existing tcp and udp sessions do not automatically
+   reconfigure if a new route is found to the remote host, but this is typical
+   of pc implementations and is quite reasonable.
+
+   Programs which wish to force the hardware address to be in the arp cache
+   need only specify the ip address and NULL for the ethap buffer.
+
+   Returns 1 on success or 0 if the ip address could not be resolved.
+
+   This is a special use function and is rarely necessary for user
+   applications.
+
+-----------------------------------------------------------------------------
+

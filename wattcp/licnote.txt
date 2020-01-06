@@ -1,0 +1,11 @@
+At the time of writing in 2019 the WATTCP website has a version for download
+that is not under the GNU Library GPL; however, it was definitely released
+under that license in 2004 under the filename wat1104.zip and that is the
+version being used here. Evidence can be found on the archive.org copy of the
+WATTCP website:
+
+<https://web.archive.org/web/20041129012940/http://wattcp.com/>
+
+> There are two free WATTCP distributions, one for real mode DOS, and a
+> second which emphasizes 32 bit protected mode DOS. Both are GPL software.
+

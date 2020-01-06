@@ -1,0 +1,17 @@
+
+For advanced networking projects, or just to get the job done quicker,
+investigate FREE...: www.ertos.com
+
+It includes:
+    HTTP (web server)
+    CGI  (dynamic web pages)
+    server side includes
+    SNMP traps and servers
+    FTP server
+    SMTP mail client and server capabilities
+    high speed serial i/o
+    multithreading
+    TFTP client and server
+
+    
+

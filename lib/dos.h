@@ -11,6 +11,9 @@
 #define cmdline_argv  __argv
 #endif
 
+#define strcasecmp stricmp
+#define strncasecmp strnicmp
+
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
 

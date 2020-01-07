@@ -148,7 +148,7 @@ static struct flag *FindFlagForName(const char *name)
 
     for (i = 0; i < num_flags; ++i)
     {
-        if (!strcmp(flags[i].name, name))
+        if (!strcasecmp(flags[i].name, name))
         {
             return &flags[i];
         }
@@ -235,8 +235,8 @@ char **ParseCommandLine(int argc, char **argv)
         {
             return AppendArgList(NULL, argc - i, argv + i);
         }
-        if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "-help")
-         || !strcmp(argv[i], "--help"))
+        if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help")
+         || !strcasecmp(argv[i], "--help"))
         {
             goto help;
         }

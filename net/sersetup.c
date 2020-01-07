@@ -305,9 +305,16 @@ static void ReadModemCfg(void)
     FILE *f;
 
     f = fopen(modem_config_file, "r");
-    if (!f)
+    if (f == NULL)
     {
-        Error("Couldn't read '%s'", modem_config_file);
+        LogMessage("Couldn't read modem config from '%s'. Using generic modem "
+                   "settings; if these don't work well, you should supply a "
+                   "configuration file with '-modemcfg'.", modem_config_file);
+        // These are the settings from modem.str for "GENERIC 14.4 MODEM":
+        strncpy(startup, "AT &F &C1 &D2 &Q5 &K0 S46=0", sizeof(startup));
+        strncpy(shutdown, "AT Z H0", sizeof(shutdown));
+        baudrate = 14400;
+        return;
     }
     if (fgets(startup, sizeof(startup), f) == NULL
      || fgets(shutdown, sizeof(shutdown), f) == NULL

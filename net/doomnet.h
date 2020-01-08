@@ -2,13 +2,16 @@
 
 #include "lib/inttypes.h"
 
-#define	MAXNETNODES		8       // max computers in a game
-#define	MAXPLAYERS		8       // up to 8 with Hexen/Strife
+// Original Doom *setup tools only allowed up to 4 players; however, Hexen
+// and Strife allowed up to 8 players. Since we have vrottcom/vcommit
+// which support even more players, we bump this up to 16.
+#define MAXNETNODES     16
+#define MAXPLAYERS      16
 
-#define	CMD_SEND	1
-#define	CMD_GET		2
+#define CMD_SEND    1
+#define CMD_GET     2
 
-#define	DOOMCOM_ID		0x12345678l
+#define DOOMCOM_ID      0x12345678l
 
 typedef struct {
     long id;

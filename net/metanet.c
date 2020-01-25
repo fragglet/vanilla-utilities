@@ -703,7 +703,7 @@ static void PrintTopology(void)
         strncpy(indent_buf, "                             ",
                 sizeof(indent_buf));
         indent_buf[il * 4 + 4] = '\0';
-        LogMessage("%s\\ %s", indent_buf, NodeDescription(&nodes[i]));
+        LogMessage("%s\\ %s", indent_buf, NodeDescription(players[i]));
         last_first_hop = players[i]->addr[0];
     }
 }

@@ -851,7 +851,7 @@ int main(int argc, char *argv[])
     char **args;
 
     SetHelpText("Forwarding network-of-networks driver.",
-                "sersetup -com1 sersetup -com2 %s doom.exe");
+                "See METANET-HOWTO for examples.");
     APIPointerFlag("-net", AddDriver);
     BoolFlag("-forward", &forwarder,
              "Don't launch game, just forward packets.");

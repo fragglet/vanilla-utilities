@@ -14,6 +14,8 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 
+#include "adapters/nodemap.h"
+
 #define MAGIC_STRING "V~UTiLS!"
 
 struct discover_packet

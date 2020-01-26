@@ -11,10 +11,11 @@
 #include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
-#include "net/commit.h"
 #include "net/doomnet.h"
-#include "net/fragment.h"
-#include "net/nodemap.h"
+
+#include "adapters/commit.h"
+#include "adapters/fragment.h"
+#include "adapters/nodemap.h"
 
 static struct interrupt_hook net_interrupt;
 static doomcom_t far *inner_driver;

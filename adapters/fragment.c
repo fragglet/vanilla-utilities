@@ -8,8 +8,8 @@
 
 #include "lib/dos.h"
 #include "net/doomnet.h"
-#include "net/fragment.h"
-#include "net/nodemap.h"
+#include "adapters/fragment.h"
+#include "adapters/nodemap.h"
 
 #define FRAGMENT_SIZE 500
 #define REASSEMBLY_BUFFERS 8

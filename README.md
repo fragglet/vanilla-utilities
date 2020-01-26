@@ -21,8 +21,9 @@ and serial/modem drivers originally included with Doom.
 * **parsetup** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
 * **metanet** - networking driver that combines other networking drivers
-into a packet forwarding network. This allows, for example, three players on
-an IPX network to be joined by a fourth on a serial cable.
+into a packet forwarding network. This allows you, for example, to build a
+a four player game from daisy-chaining null-modem cables.
+See [METANET-HOWTO](METANET-HOWTO.md) for more information.
 * **solo-net** - null/standalone network driver that starts a network game
 without any real connection. Replicates the `-solo-net` parameter found in
 many Doom source ports.

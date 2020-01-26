@@ -11,7 +11,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 
-#define MAX_FLAGS 20
+#define MAX_FLAGS 24
 
 enum flag_type {
     FLAG_BOOL,

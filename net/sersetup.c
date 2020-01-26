@@ -18,6 +18,7 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
+static int force_player1 = 0, force_player2 = 0;
 static doomcom_t doomcom;
 static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
@@ -158,6 +159,26 @@ static void far NetCallback(void)
     }
 }
 
+static void MakeLocalID(char *buf)
+{
+    uint32_t id;
+
+    if (force_player1)
+    {
+        id = 0;
+    }
+    else if (force_player2)
+    {
+        id = 999999UL;
+    }
+    else
+    {
+        id = (rand() << 16) | rand();
+        id = id % 1000000L;
+    }
+    sprintf(buf, "%.6ld", id);
+}
+
 /*
 =================
 =
@@ -171,14 +192,29 @@ void Connect(void)
 {
     clock_t last_time = 0, now;
     int localstage, remotestage;
+    char localid[7], remoteid[7];
+    int remoteplayer;
+    int new_protocol = 1;
     char str[20];
+
+    // allow override of automatic player ordering
+    if (force_player1)
+    {
+        doomcom.consoleplayer = 0;
+    }
+    else if (force_player2)
+    {
+        doomcom.consoleplayer = 1;
+    }
+
+    MakeLocalID(localid);
 
     //
     // wait for a good packet
     //
     LogMessage("Attempting to connect across serial link");
-
-    localstage = remotestage = 0;
+    localstage = 0;
+    remotestage = 0;
 
     do
     {
@@ -187,38 +223,70 @@ void Connect(void)
         while (ReadPacket())
         {
             packet[packetlen] = 0;
-            //                     printf ("read: %s\n",packet);
-            if (packetlen != 7)
-                goto badpacket;
-            if (strncmp(packet, "PLAY", 4))
-                goto badpacket;
-            remotestage = packet[6] - '0';
-            localstage = remotestage + 1;
-            if (packet[4] == '0' + doomcom.consoleplayer)
+
+            if (sscanf(packet, "ID%6c_%d", remoteid, &remotestage) == 2)
             {
-                doomcom.consoleplayer ^= 1;
-                localstage = remotestage = 0;
+                new_protocol = 1;
+                remoteid[6] = '\0';
+                if (!memcmp(localid, remoteid, 6))
+                {
+                    Error("Duplicate ID string received");
+                }
             }
+            else if (sscanf(packet, "PLAY%d_%d",
+                            &remoteplayer, &remotestage) == 2)
+            {
+                new_protocol = 0;
+
+                // The original sersetup code would swap the player number when
+                // detecting a conflict; however, this is not an algorithm that
+                // is guaranteed to ever terminate. In our case since we only
+                // ever use the old protocol when the other side needs to, we
+                // can use this asymmetry as a way of resolving the deadlock:
+                // we stick to our guns and do not change player, safe in the
+                // knowledge that the other side will adapt to us.
+                if (remoteplayer == doomcom.consoleplayer)
+                {
+                    remotestage = 0;
+                }
+            }
+            else
+            {
+                continue;
+            }
+
+            // We got a packet successfully. Trigger a response with new state.
+            localstage = remotestage + 1;
             last_time = 0;
         }
- badpacket:
 
         now = clock();
         if (now - last_time >= CLOCKS_PER_SEC)
         {
             last_time = now;
-            sprintf(str, "PLAY%i_%i", doomcom.consoleplayer, localstage);
+            if (new_protocol)
+            {
+                sprintf(str, "ID%6s_%d", localid, localstage);
+            }
+            else
+            {
+                sprintf(str, "PLAY%i_%i", doomcom.consoleplayer, localstage);
+            }
             WritePacket(str, strlen(str));
-            //                     printf ("wrote: %s\n",str);
         }
-
     } while (remotestage < 1);
+
+    if (new_protocol)
+    {
+        doomcom.consoleplayer = memcmp(localid, remoteid, sizeof(localid)) > 0;
+    }
 
     //
     // flush out any extras
     //
     while (ReadPacket())
-        ;
+    {
+    }
 }
 
 /*
@@ -391,9 +459,10 @@ void Answer(void)
 void main(int argc, char *argv[])
 {
     int answer = 0;
-    int force_player1 = 0;
     char *dial_no = NULL;
     char **args;
+
+    srand(GetEntropy());
 
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
@@ -402,7 +471,8 @@ void main(int argc, char *argv[])
                "dial the given phone number");
     StringFlag("-modemcfg", &modem_config_file, "filename",
                "specify config file for modem");
-    BoolFlag("-player1", &force_player1, "force this side to be player 1");
+    BoolFlag("-player1", &force_player1, "(and -player2) force player#");
+    BoolFlag("-player2", &force_player2, NULL);
     SerialRegisterFlags();
     NetRegisterFlags();
 
@@ -421,15 +491,6 @@ void main(int argc, char *argv[])
     doomcom.numnodes = 2;
     doomcom.numplayers = 2;
     doomcom.drone = 0;
-
-    //
-    // allow override of automatic player ordering to allow a slower computer
-    // to be set as player 1 always
-    //
-    if (force_player1)
-    {
-        doomcom.consoleplayer = 1;
-    }
 
     if (dial_no != NULL || answer)
     {

@@ -392,9 +392,8 @@ static void ReadModemCfg(void)
     }
     fclose(f);
 
-    errno = 0;
     baudrate = strtol(baudline, NULL, 10);
-    if (baudrate == 0 && errno != 0)
+    if (baudrate == 0)
     {
         Error("Error parsing baud rate '%s'", baudline);
     }

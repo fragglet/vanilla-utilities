@@ -10,6 +10,9 @@ typedef struct {
     int16_t drone;
     int16_t nodesfound;
     int16_t nodeswanted;
+    // xttl extensions:
+    int16_t dupwanted;
+    int16_t plnumwanted;
 } setupdata_t;
 
 typedef struct IPXPacketStructure {

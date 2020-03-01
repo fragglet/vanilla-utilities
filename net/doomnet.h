@@ -86,3 +86,5 @@ doomcom_t far *NetGetHandle(long l);
 void NetSendPacket(doomcom_t far *doomcom);
 int NetGetPacket(doomcom_t far *doomcom);
 
+extern int doomnet_dup, doomnet_extratics;
+

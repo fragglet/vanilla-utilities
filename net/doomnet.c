@@ -11,15 +11,15 @@
 
 static struct interrupt_hook net_interrupt;
 static void (far *isr_callback)(void);
-static int dup = 0, extratics = 0;
+int doomnet_dup = 1, doomnet_extratics = 0;
 
 void NetRegisterFlags(void)
 {
-    IntFlag("-dup", &dup, "n",
+    IntFlag("-dup", &doomnet_dup, "n",
             "reduce movement resolution & bandwidth by factor n");
-    IntFlag("-extratics", &extratics, "n",
+    IntFlag("-extratics", &doomnet_extratics, "n",
             "send n extra tics per packet as insurance");
-    BoolFlag("-extratic", &extratics, NULL);
+    BoolFlag("-extratic", &doomnet_extratics, NULL);
     IntFlag("-vector", &net_interrupt.force_vector, "v",
             "use interrupt vector v for network API");
 }
@@ -60,13 +60,13 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args,
 
     isr_callback = callback;
 
-    if (dup != 0)
+    if (doomnet_dup != 1)
     {
-        doomcom->ticdup = (short) dup;
+        doomcom->ticdup = (short) doomnet_dup;
     }
-    if (extratics != 0)
+    if (doomnet_extratics != 0)
     {
-        doomcom->extratics = (short) extratics;
+        doomcom->extratics = (short) doomnet_extratics;
     }
 
     // prepare for DOOM

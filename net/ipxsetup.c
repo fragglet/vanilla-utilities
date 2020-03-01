@@ -15,6 +15,7 @@
 doomcom_t doomcom;
 static int numnetnodes;
 
+static int force_player = -1;
 static setupdata_t nodesetup[MAXNETNODES];
 
 static void far NetCallback(void)
@@ -27,6 +28,118 @@ static void far NetCallback(void)
     else if (doomcom.command == CMD_GET)
     {
         GetPacket();
+    }
+}
+
+// Process a setup packet found in doomcom.
+static void ProcessSetupPacket(void)
+{
+    setupdata_t *setup;
+    int old_protocol;
+    int n;
+
+    setup = (setupdata_t *) doomcom.data;
+    old_protocol = doomcom.datalength < sizeof(setupdata_t);
+    // We support the xttl setup extensions but we still maintain compatibility
+    // with the original IPXSETUP.
+    if (old_protocol)
+    {
+        setup->dupwanted = 1;
+        setup->plnumwanted = -1;
+    }
+
+    n = doomcom.remotenode;
+
+    // New node?
+    if (doomcom.remotenode == -1)
+    {
+        n = doomcom.numnodes;
+        ++doomcom.numnodes;
+
+        memcpy(&nodeadr[n], &remoteadr, sizeof(nodeadr_t));
+     
+        LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
+                   remoteadr.node[0], remoteadr.node[1], remoteadr.node[2],
+                   remoteadr.node[3], remoteadr.node[4], remoteadr.node[5]);
+
+        if (force_player != -1 && old_protocol)
+        {
+            Error("Other node does not support -player.");
+        }
+        if (force_player != -1 && force_player == setup->plnumwanted)
+        {
+            Error("Other node is also using -player %d. One node must "
+                  "be changed to avoid clash.",
+                  setup->plnumwanted);
+        }
+        if (setup->dupwanted > doomnet_dup)
+        {
+            LogMessage("Other node is using -dup %d. Adjusting to match.",
+                       setup->dupwanted);
+            doomnet_dup = setup->dupwanted;
+        }
+    }
+
+    // update setup info
+    memcpy(&nodesetup[n], setup, sizeof(setupdata_t));
+
+    if (ipx_remotetime != -1)
+    {
+        // an early game packet, not a setup packet
+        if (doomcom.remotenode == -1)
+            Error("Got an unknown game packet during setup");
+
+        // if it already started, it must have found all nodes
+        nodesetup[n].nodesfound = nodesetup[n].nodeswanted;
+    }
+}
+
+static int DetermineConsolePlayer(void)
+{
+    int cnt, i, result;
+
+    if (force_player != -1)
+    {
+        return force_player - 1;
+    }
+
+    // How many auto-determined players have addresses lower than ours?
+    cnt = 0;
+    for (i = 0; i < numnetnodes; i++)
+    {
+        if (!nodesetup[i].drone
+         && nodesetup[i].plnumwanted == -1
+         && memcmp(&nodeadr[i], &nodeadr[0], sizeof(nodeadr[0])) < 0)
+        {
+            cnt++;
+        }
+    }
+
+    result = 0;
+    for (;;)
+    {
+        // Keep skipping forward until we land on a player number that
+        // hasn't been claimed by another node.
+        for (i = 0; i < numnetnodes; i++)
+        {
+            if (result == nodesetup[i].plnumwanted - 1)
+            {
+                break;
+            }
+        }
+        if (i < numnetnodes)
+        {
+            ++result;
+            continue;
+        }
+
+        // We go through the above loop 'cnt' number of times.
+        if (cnt == 0)
+        {
+            return result;
+        }
+        ++result;
+        --cnt;
     }
 }
 
@@ -45,8 +158,13 @@ void LookForNodes(void)
 {
     int i;
     clock_t now, last_time = 0;
-    setupdata_t *setup, *dest;
-    int total, console;
+    int total;
+
+    if (force_player != -1
+     && (force_player < 1 || force_player > numnetnodes))
+    {
+        Error("-player value must be in the range 1..%d", numnetnodes);
+    }
 
     //
     // wait until we get [numnetnodes] packets, then start playing
@@ -57,7 +175,6 @@ void LookForNodes(void)
                nodeadr[0].node[0], nodeadr[0].node[1], nodeadr[0].node[2],
                nodeadr[0].node[3], nodeadr[0].node[4], nodeadr[0].node[5]);
 
-    setup = (setupdata_t *) doomcom.data;
     ipx_localtime = -1;             // in setup time, not game time
 
     //
@@ -76,46 +193,9 @@ void LookForNodes(void)
         //
         while (GetPacket())
         {
-            if (doomcom.remotenode == -1)
-                dest = &nodesetup[doomcom.numnodes];
-            else
-                dest = &nodesetup[doomcom.remotenode];
-
-            if (ipx_remotetime != -1)
-            {                   // an early game packet, not a setup packet
-                if (doomcom.remotenode == -1)
-                    Error("Got an unknown game packet during setup");
-                // if it allready started, it must have found all nodes
-                dest->nodesfound = dest->nodeswanted;
-                continue;
-            }
-
-            // update setup ingo
-            memcpy(dest, setup, sizeof(*dest));
-
-            if (doomcom.remotenode != -1)
-                continue;       // allready know that node address
-
-            //
-            // this is a new node
-            //
-            memcpy(&nodeadr[doomcom.numnodes], &remoteadr,
-                   sizeof(nodeadr[doomcom.numnodes]));
-
-            //
-            // if this node has a lower address, take all startup info
-            //
-            if (memcmp(&remoteadr, &nodeadr[0], sizeof(&remoteadr)) < 0)
-            {
-            }
-
-            doomcom.numnodes++;
-
-            LogMessage(
-                "Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
-                remoteadr.node[0], remoteadr.node[1], remoteadr.node[2],
-                remoteadr.node[3], remoteadr.node[4], remoteadr.node[5]);
+            ProcessSetupPacket();
         }
+
         //
         // we are done if all nodes have found all other nodes
         //
@@ -130,25 +210,22 @@ void LookForNodes(void)
         // send out a broadcast packet every second
         //
         now = clock();
-        if (now - last_time < CLOCKS_PER_SEC)
-            continue;
-        last_time = now;
+        if (now - last_time >= CLOCKS_PER_SEC)
+        {
+            last_time = now;
 
-        doomcom.datalength = sizeof(*setup);
+            nodesetup[0].nodesfound = doomcom.numnodes;
+            nodesetup[0].plnumwanted = force_player;
+            nodesetup[0].dupwanted = doomnet_dup;
+            memcpy(&doomcom.data, &nodesetup[0], sizeof(setupdata_t));
 
-        nodesetup[0].nodesfound = doomcom.numnodes;
-
-        memcpy(&doomcom.data, &nodesetup[0], sizeof(*setup));
-
-        SendPacket(MAXNETNODES);        // send to all
+            doomcom.datalength = sizeof(setupdata_t);
+            SendPacket(MAXNETNODES);        // send to all
+        }
 
     } while (1);
 
-    //
-    // count players
-    //
     total = 0;
-    console = 0;
 
     for (i = 0; i < numnetnodes; i++)
     {
@@ -157,17 +234,15 @@ void LookForNodes(void)
         total++;
         if (total > MAXPLAYERS)
             Error("More than %i players specified!", MAXPLAYERS);
-        if (memcmp(&nodeadr[i], &nodeadr[0], sizeof(nodeadr[0])) < 0)
-            console++;
     }
 
     if (!total)
         Error("No players specified for game!");
 
-    doomcom.consoleplayer = console;
+    doomcom.consoleplayer = DetermineConsolePlayer();
     doomcom.numplayers = total;
 
-    LogMessage("Console is player %i of %i", console + 1, total);
+    LogMessage("Console is player %i of %i", doomcom.consoleplayer + 1, total);
 }
 
 /*
@@ -197,6 +272,7 @@ void main(int argc, char *argv[])
                 "%s -nodes 4 doom.exe -warp 2 2 -deathmatch -skill 4");
     IntFlag("-nodes", &numnetnodes, "n",
             "number of nodes (players) in game, default 2");
+    IntFlag("-player", &force_player, "p", "force this to be player #p");
     IPXRegisterFlags();
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);

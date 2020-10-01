@@ -1,4 +1,8 @@
 
+![vutils icon](vutils.png)
+
+# The Vanilla Utilities
+
 This is a collection of DOS utilities for interacting with Doom's external
 driver APIs. Specifically it includes improved versions of Doom's network
 drivers (IPXSETUP and SERSETUP) along with APIs for the

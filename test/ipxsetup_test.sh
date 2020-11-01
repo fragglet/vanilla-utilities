@@ -27,7 +27,7 @@ for i in $(seq 7); do
 	[autoexec]
 	$AUTOEXEC_BOILERPLATE
 	ipxnet connect 127.0.0.1 $TEST_PORT
-	ipxsetup -nodes 8 fakedoom -out t:CLIENT$I.TXT -secret $((1000 + i))
+	ipxsetup -nodes 8 fakedoom -out t:CLIENT$i.TXT -secret $((1000 + i))
 	exit
 END
 done
@@ -37,7 +37,7 @@ wait_dosboxes
 # Check the log files look as expected.
 # All players generate an identical log file and all secrets are included.
 for i in $(seq 7); do
-	diff -u $TEST_DIR/SERVER.TXT $TEST_DIR/CLIENT$I.TXT
+	diff -u $TEST_DIR/SERVER.TXT $TEST_DIR/CLIENT$i.TXT
 done
 
 for i in $(seq 0 7); do

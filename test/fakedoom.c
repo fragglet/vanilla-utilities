@@ -12,8 +12,11 @@
 #include "net/doomnet.h"
 #include "stat/stats.h"
 
+#define MAGIC_NUMBER 0x83b3
+
 struct test_packet
 {
+    unsigned int magic;
     int consoleplayer;
     int secret;
 };
@@ -52,6 +55,7 @@ static void SendTestPackets(void)
 
     for (i = 1; i < doomcom->numnodes; ++i)
     {
+        pkt->magic = MAGIC_NUMBER;
         pkt->consoleplayer = doomcom->consoleplayer;
         pkt->secret = net_secret;
         doomcom->datalength = sizeof(struct test_packet);
@@ -82,12 +86,25 @@ static void RunNetworkTest(void)
             last_send = now;
         }
 
-        if (NetGetPacket(doomcom)
-         && doomcom->datalength == sizeof(struct test_packet))
-        {
-            secrets[pkt->consoleplayer] = pkt->secret;
-            got_nodes |= 1 << doomcom->remotenode;
+        if (!NetGetPacket(doomcom)) {
+            continue;
         }
+
+        if (doomcom->datalength != sizeof(struct test_packet)) {
+            LogMessage("Packet from %d wrong length, %d != %d",
+                       doomcom->remotenode, doomcom->datalength,
+                       sizeof(struct test_packet));
+            continue;
+        }
+        if (pkt->magic != MAGIC_NUMBER)
+        {
+            LogMessage("Packet from %d wrong magic number, %04x != %04x",
+                       doomcom->remotenode, pkt->magic, MAGIC_NUMBER);
+            continue;
+        }
+        secrets[pkt->consoleplayer] = pkt->secret;
+        got_nodes |= 1 << doomcom->remotenode;
+
     } while (got_nodes != (1 << doomcom->numnodes) - 1);
 
     SendTestPackets();

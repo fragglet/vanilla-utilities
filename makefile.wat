@@ -2,7 +2,7 @@
 # makefile for OpenWatcom wmake
 # To invoke: wmake -f makefile.wat
 
-SOURCE_DIRS = ctrl;lib;net;stat;adapters
+SOURCE_DIRS = ctrl;lib;net;stat;adapters;test
 CFLAGS = -I.
 
 REPLAY_OBJS = ctrl\replay.o ctrl\control.o lib\common.lib
@@ -20,6 +20,8 @@ VCOMMIT_OBJS = adapters\vcommit.o adapters\fragment.o net\doomnet.o &
                adapters\nodemap.o lib\common.lib
 VROTTCOM_OBJS = adapters\vrottcom.o adapters\fragment.o net\doomnet.o &
                 adapters\nodemap.o lib\common.lib
+FAKEDOOM_OBJS = test\fakedoom.o net\doomnet.o ctrl\control.o &
+                stat\stats.o lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
@@ -52,6 +54,8 @@ vcommit.exe: $(VCOMMIT_OBJS)
 	wcl -fe=$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
 	wcl -fe=$@ $(VROTTCOM_OBJS)
+fakedoom.exe: $(FAKEDOOM_OBJS)
+	wcl -fe=$@ $(FAKEDOOM_OBJS)
 
 .EXTENSIONS:
 .EXTENSIONS: .exe .o .asm .c

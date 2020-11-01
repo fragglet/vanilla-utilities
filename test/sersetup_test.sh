@@ -1,31 +1,27 @@
 #!/bin/bash
 
 TEST_PORT=30328
+SERVER_OPTIONS="
+[serial]
+serial1 = modem listenport:$TEST_PORT
+"
+CLIENT_OPTIONS="
+[serial]
+serial1 = modem
+"
 
 set -eu
 
 . test/common.sh
 
-dosbox_with_conf <<END
-[serial]
-serial1 = modem listenport:$TEST_PORT
-
-[autoexec]
-$AUTOEXEC_BOILERPLATE
+dosbox_with_conf "$SERVER_OPTIONS" <<END
 sersetup -answer fakedoom -out t:ANSWER.TXT -secret 1000
-exit
 END
 
 sleep 1
 
-dosbox_with_conf <<END
-[serial]
-serial1 = modem
-
-[autoexec]
-$AUTOEXEC_BOILERPLATE
+dosbox_with_conf "$CLIENT_OPTIONS" <<END
 sersetup -dial 127.0.0.1:$TEST_PORT fakedoom -out t:DIAL.TXT -secret 2000
-exit
 END
 
 wait_dosboxes

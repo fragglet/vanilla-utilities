@@ -14,6 +14,8 @@
 #define MIN_USER_INTERRUPT  0x60
 #define MAX_USER_INTERRUPT  0x80
 
+unsigned char isr_stack_space[ISR_STACK_SIZE];
+
 static int FindFreeInterrupt(void)
 {
     int i;

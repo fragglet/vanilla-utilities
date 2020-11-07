@@ -31,7 +31,9 @@ static void UnhookDoomVector(void)
 
 static void interrupt far NetISR(void)
 {
+    SWITCH_ISR_STACK;
     isr_callback();
+    RESTORE_ISR_STACK;
 }
 
 /*

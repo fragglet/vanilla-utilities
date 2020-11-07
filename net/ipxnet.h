@@ -1,5 +1,7 @@
 // ipxnet.h
 
+#include "lib/inttypes.h"
+
 //===========================================================================
 
 #define NUMPACKETS      10      // max outstanding packets before loss

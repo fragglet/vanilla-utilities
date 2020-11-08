@@ -16,6 +16,10 @@
 
 unsigned char isr_stack_space[ISR_STACK_SIZE];
 
+#ifdef __WATCOMC__
+unsigned int old_stacklow;
+#endif
+
 static int FindFreeInterrupt(void)
 {
     int i;

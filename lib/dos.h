@@ -37,9 +37,19 @@
 
 #if defined(__TURBOC__)
 
-#define SwitchStack(new_sp) \
+#define RESTORE_ISR_STACK \
     do { \
-        unsigned int nsp = (new_sp); \
+        asm pop bp; \
+        asm pop cx; \
+        asm pop bx; \
+        asm mov sp, cx; \
+        asm mov ss, bx; \
+    } while(0)
+
+#define SWITCH_ISR_STACK \
+    do { \
+        unsigned int nsp = \
+            (FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
         asm mov ax, nsp; \
         asm mov bx, ss; \
         asm mov cx, sp; \
@@ -50,15 +60,6 @@
         asm push cx; \
         asm push bp; \
         asm mov bp, sp; \
-    } while(0)
-
-#define RestoreStack() \
-    do { \
-        asm pop bp; \
-        asm pop cx; \
-        asm pop bx; \
-        asm mov sp, cx; \
-        asm mov ss, bx; \
     } while(0)
 
 #elif defined(__WATCOMC__)
@@ -86,6 +87,24 @@ extern void RestoreStack(void);
     "mov ss, bx" \
     modify [bx cx];
 
+extern unsigned int old_stacklow;
+extern unsigned int _STACKLOW;  // Watcom-internal
+
+// For Watcom we must override the _STACKLOW variable to point to the bottom
+// of the new stack, in order to play nice with Watcom's stack overflow
+// detection code that gets included in function headers.
+#define SWITCH_ISR_STACK \
+    do { \
+	SwitchStack(FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
+        old_stacklow = _STACKLOW; \
+        _STACKLOW = FP_OFF(isr_stack_space); \
+    } while(0)
+#define RESTORE_ISR_STACK \
+    do { \
+        RestoreStack(); \
+        _STACKLOW = old_stacklow; \
+    } while(0)
+
 #else
 
 #error No stack switching implemented for this compiler!
@@ -107,9 +126,6 @@ void RestoreInterrupt(struct interrupt_hook *state);
 long GetEntropy(void);
 
 extern unsigned char isr_stack_space[ISR_STACK_SIZE];
-#define SWITCH_ISR_STACK \
-	SwitchStack(FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32))
-#define RESTORE_ISR_STACK RestoreStack()
 
 void far_memcpy(void far *dest, void far *src, size_t nbytes);
 int far_memcmp(void far *a, void far *b, size_t nbytes);

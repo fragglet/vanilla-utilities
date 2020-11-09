@@ -4,8 +4,8 @@
 #include <process.h>
 #include <assert.h>
 
-#include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 

@@ -29,9 +29,9 @@ EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
 
 all: $(EXES)
 
-lib\common.lib: lib\flag.o lib\log.o lib\dos.o
+lib\common.lib: lib\flag.o lib\log.o lib\dos.o lib\ints.o
 	del $@
-	wlib $@ +lib\flag.o +lib\log.o +lib\dos.o
+	wlib $@ +lib\flag.o +lib\log.o +lib\dos.o +lib\ints.o
 replay.exe: $(REPLAY_OBJS)
 	wcl -fe=$@ $(REPLAY_OBJS)
 analogjs.exe: $(ANALOGJS_OBJS)

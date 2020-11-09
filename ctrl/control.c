@@ -32,6 +32,7 @@
 
 #include "ctrl/control.h"
 #include "lib/dos.h"
+#include "lib/ints.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 

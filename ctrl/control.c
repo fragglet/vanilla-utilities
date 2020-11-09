@@ -51,6 +51,8 @@ static control_callback_t int_callback;
 
 static void interrupt far ControlISR()
 {
+    SWITCH_ISR_STACK;
+
     // If we have a next_handle, invoke the next -control driver in the
     // chain to populate the ticcmd before we invoke our callback
     // function. Otherwise, we just start by zeroing out the ticcmd.
@@ -62,7 +64,10 @@ static void interrupt far ControlISR()
     {
         memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
     }
+
     int_callback(&control_buf.ticcmd);
+
+    RESTORE_ISR_STACK;
 }
 
 static void ControlPointerCallback(long l)

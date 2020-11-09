@@ -1,7 +1,7 @@
 
 #include <dos.h>
 
-#define ISR_STACK_SIZE 2048
+#define ISR_STACK_SIZE 1024
 
 /* SwitchStack() should be called at the start of an ISR function to swap
  * out the stack pointer to point to the isr_stack_space memory block.

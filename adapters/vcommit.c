@@ -21,7 +21,7 @@ static struct interrupt_hook net_interrupt;
 static doomcom_t far *inner_driver;
 static gamecom_t gamecom;
 
-static void interrupt far NetISR(void)
+static void ExecuteCommand(void)
 {
     struct reassembled_packet *pkt;
     int i;
@@ -59,6 +59,13 @@ static void interrupt far NetISR(void)
             }
             break;
     }
+}
+
+static void interrupt far NetISR(void)
+{
+    SWITCH_ISR_STACK;
+    ExecuteCommand();
+    RESTORE_ISR_STACK;
 }
 
 static void SetDriver(long l)

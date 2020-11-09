@@ -21,7 +21,7 @@ static struct interrupt_hook net_interrupt;
 static doomcom_t far *inner_driver;
 static rottcom_t rottcom;
 
-static void interrupt far NetISR(void)
+static void interrupt far ExecuteCommand(void)
 {
     struct reassembled_packet *pkt;
 
@@ -44,6 +44,13 @@ static void interrupt far NetISR(void)
             far_memcpy(rottcom.data, pkt->data, pkt->datalength);
             break;
     }
+}
+
+static void interrupt far NetISR(void)
+{
+    SWITCH_ISR_STACK;
+    ExecuteCommand();
+    RESTORE_ISR_STACK;
 }
 
 static void SetDriver(long l)

@@ -32,46 +32,46 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 
-static uint8_t *demo_buf, *demo_end;
-static uint8_t *demo_p;
+static FILE *demo_stream;
 static char *demo_filename = NULL;
 static int is_strife = 0;
 
 static void far ReplayCallback(ticcmd_t *ticcmd)
 {
-    int space_needed;
+    unsigned char ticbuf[6];
+    int ticbuf_size, nbytes;
 
     if (is_strife)
     {
-        space_needed = 6;
+        ticbuf_size = 6;
     }
     else
     {
-        space_needed = 4;
+        ticbuf_size = 4;
     }
 
-    // EOF?
+    nbytes = fread(ticbuf, 1, ticbuf_size, demo_stream);
 
-    if (*demo_p == 0x80 || demo_p + space_needed >= demo_end)
+    // EOF?
+    if (nbytes < ticbuf_size || ticbuf[0] == 0x80)
     {
         return;
     }
 
-    ticcmd->forwardmove = *demo_p++;
-    ticcmd->sidemove = *demo_p++;
-    ticcmd->angleturn = (*demo_p++ << 8);
-    ticcmd->buttons = *demo_p++;
+    ticcmd->forwardmove = ticbuf[0];
+    ticcmd->sidemove = ticbuf[1];
+    ticcmd->angleturn = (ticbuf[2] << 8);
+    ticcmd->buttons = ticbuf[3];
 
     if (is_strife)
     {
-        ticcmd->buttons2 = *demo_p++;
-        ticcmd->inventoryitem = *demo_p++;
+        ticcmd->buttons2 = ticbuf[4];
+        ticcmd->inventoryitem = ticbuf[5];
     }
 }
 
-static void LoadDemo(char *filename)
+static void OpenDemo(char *filename)
 {
-    FILE *fs;
     size_t len;
     int header_size;
 
@@ -84,31 +84,14 @@ static void LoadDemo(char *filename)
         header_size = 13;
     }
 
-    fs = fopen(filename, "rb");
+    demo_stream = fopen(filename, "rb");
 
-    if (fs == NULL)
+    if (demo_stream == NULL)
     {
         Error("Failed to open %s", filename);
     }
 
-    fseek(fs, 0, SEEK_END);
-    len = ftell(fs) - header_size;
-
-    demo_buf = malloc(len);
-
-    if (demo_buf == NULL)
-    {
-        Error("Failed to allocate demo buffer (%d bytes)", len);
-    }
-
-    fseek(fs, header_size, SEEK_SET);
-    if (fread(demo_buf, len, 1, fs) < 1)
-    {
-        Error("Failed to read entire demo from %s", filename);
-    }
-
-    demo_p = demo_buf;
-    demo_end = demo_buf + len;
+    fseek(demo_stream, header_size, SEEK_SET);
 }
 
 int main(int argc, char *argv[])
@@ -132,9 +115,9 @@ int main(int argc, char *argv[])
         ErrorPrintUsage("No command given to run.");
     }
 
-    LoadDemo(demo_filename);
-
+    OpenDemo(demo_filename);
     ControlLaunchDoom(args, ReplayCallback);
+    fclose(demo_stream);
 
     return 0;
 }

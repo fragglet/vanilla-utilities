@@ -295,9 +295,11 @@ int GetPacket(void)
     //
     // got a good packet
     //
-    if (packet->ecb.CompletionCode)
-        Error("GetPacket: ecb.ComletionCode = 0x%x",
+    if (packet->ecb.CompletionCode != 0)
+    {
+        Error("GetPacket: ecb.CompletionCode = 0x%x",
               packet->ecb.CompletionCode);
+    }
 
     // set remoteadr to the sender of the packet
     memcpy(&remoteadr, packet->ipx.sNode, sizeof(remoteadr));

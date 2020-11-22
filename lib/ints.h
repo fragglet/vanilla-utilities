@@ -95,13 +95,13 @@ extern unsigned int _STACKLOW;  // Watcom-internal
 
 #endif
 
-typedef void (interrupt far *interrupt_handler_t)(void);
+typedef void (interrupt far *interrupt_handler_t)();
 
 struct interrupt_hook
 {
+    int force_vector;
     int interrupt_num;
     interrupt_handler_t old_isr;
-    int force_vector;
 };
 
 int FindAndHookInterrupt(struct interrupt_hook *state,

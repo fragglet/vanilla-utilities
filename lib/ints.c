@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <bios.h>
 
-#include "lib/inttypes.h"
 #include "lib/ints.h"
 #include "lib/log.h"
 
@@ -41,7 +40,6 @@ int FindAndHookInterrupt(struct interrupt_hook *state,
 {
     if (state->force_vector != 0)
     {
-        LogMessage("Using forced interrupt vector 0x%x", state->force_vector);
         state->interrupt_num = state->force_vector;
     }
     else

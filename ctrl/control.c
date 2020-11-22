@@ -66,7 +66,13 @@ static void interrupt far ControlISR()
         memset(&control_buf.ticcmd, 0, sizeof(ticcmd_t));
     }
 
-    int_callback(&control_buf.ticcmd);
+    // The callback may invoke DOS API functions to read/write files,
+    // so switch back to our PSP for the duration of the callback.
+    {
+        unsigned int saved_psp = SwitchPSP();
+        int_callback(&control_buf.ticcmd);
+        RestorePSP(saved_psp);
+    }
 
     RESTORE_ISR_STACK;
 }

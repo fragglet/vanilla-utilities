@@ -107,6 +107,8 @@ struct interrupt_hook
 int FindAndHookInterrupt(struct interrupt_hook *state,
                          interrupt_handler_t isr);
 void RestoreInterrupt(struct interrupt_hook *state);
+unsigned int SwitchPSP(void);
+void RestorePSP(unsigned int old_psp);
 
 extern unsigned char isr_stack_space[ISR_STACK_SIZE];
 

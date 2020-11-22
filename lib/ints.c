@@ -68,3 +68,28 @@ void RestoreInterrupt(struct interrupt_hook *state)
     state->interrupt_num = 0;
 }
 
+#define DOS_INTERRUPT_API  0x21
+#define DOS_API_SET_CURRENT_PROCESS  0x50
+#define DOS_API_GET_CURRENT_PROCESS  0x51
+
+void RestorePSP(unsigned int psp)
+{
+    union REGS regs;
+    regs.h.ah = DOS_API_SET_CURRENT_PROCESS;
+    regs.x.bx = psp;
+    int86(DOS_INTERRUPT_API, &regs, &regs);
+}
+
+unsigned int SwitchPSP(void)
+{
+    union REGS regs;
+
+    regs.h.ah = DOS_API_GET_CURRENT_PROCESS;
+    int86(DOS_INTERRUPT_API, &regs, &regs);
+
+    // Now we switch back to our own PSP during the lifetime of the ISR.
+    RestorePSP(_psp);
+
+    return regs.x.bx;
+}
+

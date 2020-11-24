@@ -1,5 +1,3 @@
-// port.c
-
 //  Copyright 1994 Scott Coleman, American Society of Reverse Engineers
 
 //   This program is free software; you can redistribute it and/or modify
@@ -133,17 +131,13 @@ void GetPort(void)
 
 void InitPort(void)
 {
-
-    //
-    // find the irq and io address of the port
-    //
+    // find the irq and i/o address of the port
     GetPort();
 
     bufseg = FP_SEG(pktbuf);
     bufofs = FP_OFF(pktbuf);
 
     InitISR();
-
 }
 
 /*

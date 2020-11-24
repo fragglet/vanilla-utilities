@@ -1,5 +1,3 @@
-// serport.c
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,24 +76,33 @@ void GetUart(void)
     static int MCA_IRQs[] = { 4, 3, 3, 3 };
 
     if (com2)
+    {
         comport = 2;
+    }
     else if (com3)
+    {
         comport = 3;
+    }
     else if (com4)
+    {
         comport = 4;
+    }
     else
+    {
         comport = 1;
+    }
 
     regs.h.ah = 0xc0;
     int86x(0x15, &regs, &regs, &sregs);
-    if (regs.x.cflag)
+    if (regs.x.cflag != 0)
     {
         irq = ISA_IRQs[comport - 1];
         uart = ISA_uarts[comport - 1];
         return;
     }
+
     system_data = (char far *)(((long)sregs.es << 16) + regs.x.bx);
-    if (system_data[5] & 0x02)
+    if ((system_data[5] & 0x02) != 0)
     {
         irq = MCA_IRQs[comport - 1];
         uart = MCA_uarts[comport - 1];
@@ -163,20 +170,13 @@ void InitPort(long baudrate)
     // Allow baud rate override via command line:
     baudrate = OverrideBaudRate(baudrate);
 
-    //
-    // find the irq and io address of the port
-    //
+    // find the irq and i/o address of the port
     GetUart();
 
-    //
     // disable all uart interrupts
-    //
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, 0);
 
-    //
     // init com port settings
-    //
-
     LogMessage("Setting port to %lu baud", baudrate);
 
     // set baud rate
@@ -191,9 +191,7 @@ void InitPort(long baudrate)
     // set modem control register (OUT2+RTS+DTR)
     OUTPUT(uart + MODEM_CONTROL_REGISTER, 8 + 2 + 1);
 
-    //
     // check for a 16550
-    //
     if (force_8250)
     {
         // allow a forced 8250
@@ -214,36 +212,35 @@ void InitPort(long baudrate)
         }
     }
 
-    //
-    // clear out any pending uart events
-    //
-    for (u = 0; u < 16; u++)    // clear an entire 16550 silo
+    // clear out any pending uart events: clear an entire 16550 silo
+    for (u = 0; u < 16; u++)
+    {
         INPUT(uart + RECEIVE_BUFFER_REGISTER);
+    }
 
     do
     {
-        switch (u = INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
+        u = INPUT(uart + INTERRUPT_ID_REGISTER) & 7;
+        switch (u)
         {
-        case IIR_MODEM_STATUS_INTERRUPT:
-            modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
-            break;
+            case IIR_MODEM_STATUS_INTERRUPT:
+                modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
+                break;
 
-        case IIR_LINE_STATUS_INTERRUPT:
-            line_status = INPUT(uart + LINE_STATUS_REGISTER);
-            break;
+            case IIR_LINE_STATUS_INTERRUPT:
+                line_status = INPUT(uart + LINE_STATUS_REGISTER);
+                break;
 
-        case IIR_TX_HOLDING_REGISTER_INTERRUPT:
-            break;
+            case IIR_TX_HOLDING_REGISTER_INTERRUPT:
+                break;
 
-        case IIR_RX_DATA_READY_INTERRUPT:
-            INPUT(uart + RECEIVE_BUFFER_REGISTER);
-            break;
+            case IIR_RX_DATA_READY_INTERRUPT:
+                INPUT(uart + RECEIVE_BUFFER_REGISTER);
+                break;
         }
     } while (!(u & 1));
 
-    //
     // hook the irq vector
-    //
     irqintnum = irq + 8;
 
     oldirqvect = _dos_getvect(irqintnum);
@@ -263,12 +260,10 @@ void InitPort(long baudrate)
     _disable();
 
     // enable RX and TX interrupts at the uart
-
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
            IER_RX_DATA_READY + IER_TX_HOLDING_REGISTER_EMPTY);
 
     // enable interrupts through the interrupt controller
-
     OUTPUT(0x20, 0xc2);
 
     _enable();
@@ -289,16 +284,17 @@ void ShutdownPort(void)
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, 0);
     OUTPUT(uart + MODEM_CONTROL_REGISTER, 0);
 
-    for (u = 0; u < 16; u++)    // clear an entire 16550 silo
+    // clear an entire 16550 silo
+    for (u = 0; u < 16; u++)
+    {
         INPUT(uart + RECEIVE_BUFFER_REGISTER);
+    }
 
     OUTPUT(0x20 + 1, INPUT(0x20 + 1) | (1 << irq));
 
     _dos_setvect(irqintnum, oldirqvect);
 
-    //
     // init com port settings to defaults
-    //
     regs.x.ax = 0xf3;           //f3= 9600 n 8 1
     regs.x.dx = comport - 1;
     int86(0x14, &regs, &regs);
@@ -309,7 +305,9 @@ int ReadByte(void)
     int c;
 
     if (inque.tail >= inque.head)
+    {
         return -1;
+    }
     c = inque.data[inque.tail & (QUESIZE - 1)];
     inque.tail++;
     return c;
@@ -329,43 +327,37 @@ static void interrupt far ISR8250(void)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
         {
-            // not enabled
-        case IIR_MODEM_STATUS_INTERRUPT:
-            modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
-            break;
+            case IIR_MODEM_STATUS_INTERRUPT:
+                // not enabled
+                modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
+                break;
 
-            // not enabled
-        case IIR_LINE_STATUS_INTERRUPT:
-            line_status = INPUT(uart + LINE_STATUS_REGISTER);
-            break;
+            case IIR_LINE_STATUS_INTERRUPT:
+                // not enabled
+                line_status = INPUT(uart + LINE_STATUS_REGISTER);
+                break;
 
-            //
-            // transmit
-            //
-        case IIR_TX_HOLDING_REGISTER_INTERRUPT:
-            if (outque.tail < outque.head)
-            {
-                c = outque.data[outque.tail & (QUESIZE - 1)];
-                outque.tail++;
-                OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
-            }
-            break;
+            case IIR_TX_HOLDING_REGISTER_INTERRUPT:
+                // transmit
+                if (outque.tail < outque.head)
+                {
+                    c = outque.data[outque.tail & (QUESIZE - 1)];
+                    outque.tail++;
+                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                }
+                break;
 
-            //
-            // receive
-            //
-        case IIR_RX_DATA_READY_INTERRUPT:
-            c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-            inque.data[inque.head & (QUESIZE - 1)] = c;
-            inque.head++;
-            break;
+            case IIR_RX_DATA_READY_INTERRUPT:
+                // receive
+                c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
+                inque.data[inque.head & (QUESIZE - 1)] = c;
+                inque.head++;
+                break;
 
-            //
-            // done
-            //
-        default:
-            OUTPUT(0x20, 0x20);
-            return;
+            default:
+                // done
+                OUTPUT(0x20, 0x20);
+                return;
         }
     }
 }
@@ -379,48 +371,42 @@ static void interrupt far ISR16550(void)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
         {
-            // not enabled
-        case IIR_MODEM_STATUS_INTERRUPT:
-            modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
-            break;
+            case IIR_MODEM_STATUS_INTERRUPT:
+                // not enabled
+                modem_status = INPUT(uart + MODEM_STATUS_REGISTER);
+                break;
 
-            // not enabled
-        case IIR_LINE_STATUS_INTERRUPT:
-            line_status = INPUT(uart + LINE_STATUS_REGISTER);
-            break;
+            case IIR_LINE_STATUS_INTERRUPT:
+                // not enabled
+                line_status = INPUT(uart + LINE_STATUS_REGISTER);
+                break;
 
-            //
-            // transmit
-            //
-        case IIR_TX_HOLDING_REGISTER_INTERRUPT:
-            count = 16;
-            while (outque.tail < outque.head && count--)
-            {
-                c = outque.data[outque.tail & (QUESIZE - 1)];
-                outque.tail++;
-                OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
-            }
-            break;
+            case IIR_TX_HOLDING_REGISTER_INTERRUPT:
+                // transmit
+                count = 16;
+                while (outque.tail < outque.head && count--)
+                {
+                    c = outque.data[outque.tail & (QUESIZE - 1)];
+                    outque.tail++;
+                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                }
+                break;
 
-            //
-            // receive
-            //
-        case IIR_RX_DATA_READY_INTERRUPT:
-            do
-            {
-                c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                inque.data[inque.head & (QUESIZE - 1)] = c;
-                inque.head++;
-            } while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
+            case IIR_RX_DATA_READY_INTERRUPT:
+                // receive
+                do
+                {
+                    c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
+                    inque.data[inque.head & (QUESIZE - 1)] = c;
+                    inque.head++;
+                } while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
 
-            break;
+                break;
 
-            //
-            // done
-            //
-        default:
-            OUTPUT(0x20, 0x20);
-            return;
+            default:
+                // done
+                OUTPUT(0x20, 0x20);
+                return;
         }
     }
 }

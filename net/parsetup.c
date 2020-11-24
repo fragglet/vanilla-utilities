@@ -1,5 +1,3 @@
-// parsetup.c
-
 //  Copyright 1994 Scott Coleman, American Society of Reverse Engineers
 
 //   This program is free software; you can redistribute it and/or modify
@@ -96,7 +94,9 @@ static void far NetCallback(void)
             memcpy(doomcom.data, pktbuf, recv_count);
         }
         else
+        {
             doomcom.remotenode = -1;
+        }
     }
 }
 
@@ -117,10 +117,7 @@ void Connect(void)
 
     LogMessage("Attempting to connect across parallel link.");
 
-    //
     // wait for a good packet
-    //
-
     localstage = remotestage = 0;
 
     do
@@ -132,9 +129,13 @@ void Connect(void)
             pktbuf[recv_count] = 0;
             // LogMessage("Read: %s", pktbuf);
             if (recv_count != 7)
+            {
                 goto badpacket;
+            }
             if (strncmp(pktbuf, "PLAY", 4))
+            {
                 goto badpacket;
+            }
             remotestage = pktbuf[6] - '0';
             localstage = remotestage + 1;
             if (pktbuf[4] == '0' + doomcom.consoleplayer)
@@ -157,11 +158,10 @@ void Connect(void)
 
     } while (remotestage < 1);
 
-    //
     // flush out any extras
-    //
     while (ReadPacket())
-        ;
+    {
+    }
 }
 
 /*
@@ -176,7 +176,6 @@ void main(int argc, char *argv[])
 {
     char **args;
     int force_player1;
-    time_t t;
 
     SetHelpText("Doom parallel port network device driver",
                 "%s doom2.exe -warp 15 -skill 3");
@@ -189,9 +188,7 @@ void main(int argc, char *argv[])
         ErrorPrintUsage("No command given to run.");
     }
 
-    //
     // set network characteristics
-    //
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
     doomcom.consoleplayer = 0;
@@ -199,28 +196,20 @@ void main(int argc, char *argv[])
     doomcom.numplayers = 2;
     doomcom.drone = 0;
 
-    t = time(&t);
-
-    //
     // allow override of automatic player ordering to allow a slower computer
     // to be set as player 1 always
-    //
     if (force_player1)
     {
         doomcom.consoleplayer = 1;
     }
 
-    //
     // establish communications
-    //
     InitPort();
     atexit(ShutdownPort);
 
     Connect();
 
-    //
     // launch DOOM
-    //
     NetLaunchDoom(&doomcom, args, NetCallback);
 }
 

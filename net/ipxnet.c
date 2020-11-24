@@ -1,5 +1,3 @@
-// ipxnet.c
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -30,7 +28,7 @@ nodeadr_t remoteadr;            // set by each GetPacket
 
 static localadr_t localadr;            // set at startup
 
-static int port_flag = DOOM_DEFAULT_PORT;
+static int port_flag = (int) DOOM_DEFAULT_PORT;
 static int socketid;
 
 static union REGS regs;                // scratch for int86 calls
@@ -63,8 +61,10 @@ int OpenSocket(short socketNumber)
     regs.h.al = 0;              // longevity
     regs.x.dx = socketNumber;
     int86(0x7A, &regs, &regs);
-    if (regs.h.al)
+    if (regs.h.al != 0)
+    {
         Error("OpenSocket: 0x%x", regs.h.al);
+    }
     return regs.x.dx;
 }
 
@@ -82,8 +82,10 @@ void ListenForPacket(ECB *ecb)
     regs.x.bx = 4;
 
     int86x(0x7a, &regs, &regs, &sregs);
-    if (regs.h.al)
+    if (regs.h.al != 0)
+    {
         Error("ListenForPacket: 0x%x", regs.h.al);
+    }
 }
 
 void GetLocalAddress(void)
@@ -93,8 +95,10 @@ void GetLocalAddress(void)
     regs.x.bx = 9;
 
     int86x(0x7a, &regs, &regs, &sregs);
-    if (regs.h.al)
+    if (regs.h.al != 0)
+    {
         Error("Get inet addr: 0x%x", regs.h.al);
+    }
 }
 
 void IPXRegisterFlags(void)
@@ -114,20 +118,18 @@ void InitNetwork(void)
 {
     int i, j;
 
-    //
     // get IPX function address
-    //
     regs.x.ax = 0x7a00;
     int86x(0x2f, &regs, &regs, &sregs);
     if (regs.h.al != 0xff)
+    {
         Error("IPX not detected\n");
+    }
 
     enteripx[0] = regs.x.di;
     enteripx[1] = sregs.es;
 
-    //
     // allocate a socket for sending and receiving
-    //
     socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
     if (port_flag != (int) DOOM_DEFAULT_PORT)
     {
@@ -139,9 +141,7 @@ void InitNetwork(void)
 
     GetLocalAddress();
 
-    //
     // set up several receiving ECBs
-    //
     memset(packets, 0, NUMPACKETS * sizeof(packet_t));
 
     for (i = 1; i < NUMPACKETS; i++)
@@ -155,9 +155,7 @@ void InitNetwork(void)
         ListenForPacket(&packets[i].ecb);
     }
 
-    //
     // set up a sending ECB
-    //
     memset(&packets[0], 0, sizeof(packets[0]));
 
     packets[0].ecb.ECBSocket = socketid;
@@ -165,7 +163,9 @@ void InitNetwork(void)
     packets[0].ecb.fAddress[0] = FP_OFF(&packets[0].ipx);
     packets[0].ecb.fAddress[1] = FP_SEG(&packets[0].ipx);
     for (j = 0; j < 4; j++)
+    {
         packets[0].ipx.dNetwork[j] = localadr.network[j];
+    }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
     packets[0].ecb.f2Address[0] = FP_OFF(doomcom.data);
@@ -173,12 +173,15 @@ void InitNetwork(void)
 
     // known local node at 0
     for (i = 0; i < 6; i++)
+    {
         nodeadr[0].node[i] = localadr.node[i];
+    }
 
     // broadcast node at MAXNETNODES
     for (j = 0; j < 6; j++)
+    {
         nodeadr[MAXNETNODES].node[j] = 0xff;
-
+    }
 }
 
 /*
@@ -212,8 +215,10 @@ void SendPacket(int destination)
 
     // set the address
     for (j = 0; j < 6; j++)
+    {
         packets[0].ipx.dNode[j] = packets[0].ecb.ImmediateAddress[j] =
             nodeadr[destination].node[j];
+    }
 
     // set the length (ipx + time + datalength)
     packets[0].ecb.fSize = sizeof(IPXPacket) + 4;
@@ -227,7 +232,9 @@ void SendPacket(int destination)
     int86x(0x7a, &regs, &regs, &sregs);
 
     if (regs.h.al)
+    {
         Error("SendPacket: 0x%x", regs.h.al);
+    }
 
     while (packets[0].ecb.InUseFlag != 0)
     {
@@ -280,7 +287,9 @@ int GetPacket(void)
     }
 
     if (besttic == LONG_MAX)
+    {
         return 0;               // no packets
+    }
 
     packet = &packets[packetnum];
 
@@ -292,9 +301,7 @@ int GetPacket(void)
 
     ipx_remotetime = besttic;
 
-    //
     // got a good packet
-    //
     if (packet->ecb.CompletionCode != 0)
     {
         Error("GetPacket: ecb.CompletionCode = 0x%x",
@@ -304,10 +311,17 @@ int GetPacket(void)
     // set remoteadr to the sender of the packet
     memcpy(&remoteadr, packet->ipx.sNode, sizeof(remoteadr));
     for (i = 0; i < doomcom.numnodes; i++)
+    {
         if (!memcmp(&remoteadr, &nodeadr[i], sizeof(remoteadr)))
+        {
             break;
+        }
+    }
+
     if (i < doomcom.numnodes)
+    {
         doomcom.remotenode = i;
+    }
     else
     {
         if (ipx_localtime != -1)

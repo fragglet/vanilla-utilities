@@ -1,5 +1,3 @@
-// doomnet.h
-
 #include "lib/inttypes.h"
 
 // Original Doom *setup tools only allowed up to 4 players; however, Hexen

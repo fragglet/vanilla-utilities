@@ -1,5 +1,3 @@
-// sersetup.c
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,13 +36,19 @@ void WriteBuffer(char *buffer, unsigned int count)
 {
     // if this would overrun the buffer, throw everything else out
     if (outque.head - outque.tail + count > QUESIZE)
+    {
         outque.tail = outque.head;
+    }
 
     while (count--)
+    {
         WriteByte(*buffer++);
+    }
 
     if (INPUT(uart + LINE_STATUS_REGISTER) & 0x40)
+    {
         JumpStart();
+    }
 }
 
 /*
@@ -68,8 +72,7 @@ int ReadPacket(void)
     int c;
 
     // if the buffer has overflowed, throw everything out
-
-    if (inque.head - inque.tail > QUESIZE - 4)  // check for buffer overflow
+    if (inque.head - inque.tail > QUESIZE - 4)
     {
         inque.tail = inque.head;
         newpacket = 1;
@@ -86,25 +89,33 @@ int ReadPacket(void)
     {
         c = ReadByte();
         if (c < 0)
-            return 0;       // haven't read a complete packet
+        {
+           // haven't read a complete packet
+            return 0;
+        }
         //printf ("%c",c);
         if (inescape)
         {
             inescape = 0;
             if (c != FRAMECHAR)
             {
+                // got a good packet
                 newpacket = 1;
-                return 1;    // got a good packet
+                return 1;
             }
         }
         else if (c == FRAMECHAR)
         {
+            // don't know yet if it is a terminator or a literal FRAMECHAR
             inescape = 1;
-            continue;           // don't know yet if it is a terminator
-        }                       // or a literal FRAMECHAR
+            continue;
+        }
 
         if (packetlen >= MAXPACKET)
-            continue;           // oversize packet
+        {
+            // oversize packet
+            continue;
+        }
         packet[packetlen] = c;
         packetlen++;
     } while (1);
@@ -125,12 +136,17 @@ void WritePacket(char *buffer, int len)
 
     b = 0;
     if (len > MAXPACKET)
+    {
         return;
+    }
 
     while (len--)
     {
         if (*buffer == FRAMECHAR)
-            localbuffer[b++] = FRAMECHAR;       // escape it for literal
+        {
+            // escape for literal
+            localbuffer[b++] = FRAMECHAR;
+        }
         localbuffer[b++] = *buffer++;
     }
 
@@ -155,7 +171,9 @@ static void far NetCallback(void)
             memcpy(doomcom.data, packet, packetlen);
         }
         else
+        {
             doomcom.remotenode = -1;
+        }
     }
 }
 
@@ -209,9 +227,7 @@ void Connect(void)
 
     MakeLocalID(localid);
 
-    //
     // wait for a good packet
-    //
     LogMessage("Attempting to connect across serial link");
     localstage = 0;
     remotestage = 0;
@@ -281,9 +297,7 @@ void Connect(void)
         doomcom.consoleplayer = memcmp(localid, remoteid, sizeof(localid)) > 0;
     }
 
-    //
     // flush out any extras
-    //
     while (ReadPacket())
     {
     }
@@ -481,9 +495,7 @@ void main(int argc, char *argv[])
         ErrorPrintUsage("No command given to run.");
     }
 
-    //
     // set network characteristics
-    //
     doomcom.ticdup = 1;
     doomcom.extratics = 0;
     doomcom.consoleplayer = 0;
@@ -496,9 +508,7 @@ void main(int argc, char *argv[])
         ReadModemCfg();
     }
 
-    //
     // establish communications
-    //
     InitPort(baudrate);
     atexit(ShutdownPort);
 
@@ -513,8 +523,6 @@ void main(int argc, char *argv[])
 
     Connect();
 
-    //
     // launch DOOM
-    //
     NetLaunchDoom(&doomcom, args, NetCallback);
 }

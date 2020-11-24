@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
@@ -181,6 +182,124 @@ static int MustParseInt(const char *flag_name, char *val)
     return (int) result;
 }
 
+static char **ReadResponseFile(char *filename)
+{
+    char **result = NULL;
+    FILE *fs;
+    char *readbuf;
+    char *arg;
+    size_t readbuf_len;
+    size_t arg_len;
+
+    fs = fopen(filename, "r");
+    if (fs == NULL)
+    {
+        Error("Response file not found: '%s'", filename);
+    }
+
+    // Will be lazily allocated:
+    readbuf = NULL; readbuf_len = 0;
+
+    for (;;)
+    {
+        int c;
+
+        // Skip past any whitespace
+        while (!feof(fs))
+        {
+            c = fgetc(fs);
+            if (!isspace(c))
+            {
+                break;
+            }
+        }
+        if (feof(fs))
+        {
+            break;
+        }
+
+        // At this point we have read the first character of the next argument.
+        // An argument consists of a sequence of non-space characters.
+        // If we wanted to be especially thoughtful we'd consider quotes so
+        // that we can support "long file names", but I'm lazy.
+        arg_len = 0;
+        while (!feof(fs) && !isspace(c))
+        {
+            if (arg_len + 1 > readbuf_len)
+            {
+                readbuf_len += 64;
+                readbuf = realloc(readbuf, readbuf_len);
+                assert(readbuf != NULL);
+            }
+            readbuf[arg_len] = c;
+            ++arg_len;
+
+            // Next character.
+            c = fgetc(fs);
+        }
+
+        readbuf[arg_len] = '\0';
+        arg = strdup(readbuf);
+        assert(arg != NULL);
+        result = AppendArgList(result, 1, &arg);
+    }
+
+    free(readbuf);
+    fclose(fs);
+
+    return result;
+}
+
+static int ArgListLength(char **args)
+{
+    int result = 0;
+    int i;
+
+    if (args != NULL)
+    {
+        for (i = 0; args[i] != NULL; ++i)
+        {
+            ++result;
+        }
+    }
+
+    return result;
+}
+
+static char **ExpandResponseArgs(int argc, char **argv)
+{
+    char **result;
+    int i;
+
+    result = AppendArgList(NULL, argc, argv);
+
+    for (i = 1; i < argc; ++i)
+    {
+        char **new_result, **response_args;
+        int response_args_len;
+
+        if (result[i][0] != '@')
+        {
+            continue;
+        }
+
+        response_args = ReadResponseFile(result[i] + 1);
+        response_args_len = ArgListLength(response_args);
+
+        new_result = AppendArgList(NULL, i, result),
+        new_result = AppendArgList(
+            new_result, response_args_len, response_args),
+        new_result = AppendArgList(new_result, argc - i - 1, result + i + 1);
+
+        free(result);
+        result = new_result;
+        argc += response_args_len - 1;
+        i += response_args_len - 1;
+    }
+
+    return result;
+}
+
 static void StripAPIPointers(int *argc, char **argv)
 {
     struct flag *f;
@@ -217,7 +336,7 @@ static void StripAPIPointers(int *argc, char **argv)
     *argc = j;
 }
 
-char **ParseCommandLine(int argc, char **argv)
+static char **DoParseArgs(int argc, char **argv)
 {
     struct flag *f;
     int i;
@@ -283,19 +402,24 @@ help:
     return NULL;  // unreachable
 }
 
+char **ParseCommandLine(int argc, char **argv)
+{
+    char **expanded_args, **result;
+    int expanded_args_len;
+
+    expanded_args = ExpandResponseArgs(argc, argv);
+    expanded_args_len = ArgListLength(expanded_args);
+
+    result = DoParseArgs(expanded_args_len, expanded_args);
+
+    free(expanded_args);
+
+    return result;
+}
+
 static char **ExtendArgList(char **args, int *current_argc, int extra_args)
 {
-    int i;
-
-    *current_argc = 0;
-
-    if (args != NULL)
-    {
-        for (i = 0; args[i] != NULL; ++i)
-        {
-            ++*current_argc;
-        }
-    }
+    *current_argc = ArgListLength(args);
 
     args = realloc(args, sizeof(*args) * (*current_argc + extra_args + 1));
     assert(args != NULL);

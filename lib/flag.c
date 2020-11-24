@@ -12,6 +12,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 
+#define MAX_COMMAND_LINE_LEN 126
 #define MAX_FLAGS 24
 
 enum flag_type {
@@ -36,6 +37,7 @@ struct flag {
 static char *description, *example;
 static struct flag flags[MAX_FLAGS];
 static int num_flags;
+static char *response_file_arg = NULL;
 
 void SetHelpText(char *program_description, char *example_cmd)
 {
@@ -467,5 +469,86 @@ char **AppendArgs(char **args, ...)
     va_end(a);
 
     return args;
+}
+
+static void DeleteResponseFile(void)
+{
+    remove(response_file_arg + 1);
+    free(response_file_arg);
+    response_file_arg = NULL;
+}
+
+static void WriteResponseFile(int argc, char **argv)
+{
+    FILE *fs;
+    int i;
+
+    fs = fopen(response_file_arg + 1, "w");
+
+    for (i = 0; i < argc; ++i)
+    {
+        fprintf(fs, "%s\n", argv[i]);
+    }
+
+    fclose(fs);
+}
+
+// Workaround for DOS's very restricted command line size limit. If the given
+// command line in 'args' would exceed the limit, the list will be truncated,
+// the removed options will be moved out to a temporary response file and
+// replaced by a reference to the file of the form '@filename.rsp'.
+// This works because Doom itself supports response files, and we
+// transparently expand response file arguments (ExpandResponseArgs above).
+void SquashToResponseFile(char **args)
+{
+    int len, i;
+    int argc;
+
+    len = 0;
+    argc = 0;
+    for (i = 0; args[i] != NULL; ++i)
+    {
+        len += 1 + strlen(args[i]);
+        ++argc;
+    }
+
+    if (len <= MAX_COMMAND_LINE_LEN)
+    {
+        return;
+    }
+
+    // Lazily allocate the response file argument - we'll reuse the same
+    // filename for repeated calls and delete the file on exit.
+    // Using tmpnam() feels a bit wrong here but DOS is non-multitasking.
+    if (response_file_arg == NULL)
+    {
+        char *name = tmpnam(NULL);
+        response_file_arg = malloc(strlen(name) + 2);
+        assert(response_file_arg != NULL);
+        sprintf(response_file_arg, "@%s", name);
+        atexit(DeleteResponseFile);
+    }
+
+    // New command line must include response file name:
+    len += strlen(response_file_arg) + 1;
+
+    // Remove arguments from the list until we drop below the limit. We
+    // try to break where we find a '-' argument so that if we have eg.
+    // "-file foo.wad" the whole thing will go into the response file.
+    for (i = argc - 1; i > 1; --i)
+    {
+        len -= strlen(args[i]) + 1;
+        if (args[i][0] == '-' && len < MAX_COMMAND_LINE_LEN)
+        {
+            break;
+        }
+    }
+
+    // Write response file containing the cut arguments, and truncate the
+    // argument list to just include the @filename argument.
+    WriteResponseFile(argc - i, args + i);
+
+    args[i] = response_file_arg;
+    args[i + 1] = NULL;
 }
 

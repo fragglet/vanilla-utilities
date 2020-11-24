@@ -113,6 +113,8 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
     sprintf(addr_string, "%li", flataddr);
     args = AppendArgs(args, "-control", addr_string, NULL);
 
+    SquashToResponseFile(args);
+
     // Launch Doom:
     spawnv(P_WAIT, args[0], args);
 

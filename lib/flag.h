@@ -12,4 +12,5 @@ void PrintProgramUsage(FILE *output);
 char **ParseCommandLine(int argc, char **argv);
 char **AppendArgList(char **args, int argc, char **argv);
 char **AppendArgs(char **args, ...);
+void SquashToResponseFile(char **args);
 

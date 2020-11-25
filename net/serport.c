@@ -8,7 +8,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
-#include "net/sersetup.h"
+#include "net/serport.h"
 
 void JumpStart(void);
 

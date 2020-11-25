@@ -8,7 +8,7 @@
 #include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
-#include "net/sersetup.h"
+#include "net/serport.h"
 #include "net/doomnet.h"
 
 extern que_t inque, outque;

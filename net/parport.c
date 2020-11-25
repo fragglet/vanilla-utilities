@@ -25,7 +25,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
-#include "net/parsetup.h"
+#include "net/parport.h"
 
 unsigned int portbase = 0x378;
 unsigned irq = 7;

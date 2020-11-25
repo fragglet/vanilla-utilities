@@ -28,7 +28,7 @@
 #include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
-#include "net/parsetup.h"
+#include "net/parport.h"
 #include "net/doomnet.h"
 
 static doomcom_t doomcom;

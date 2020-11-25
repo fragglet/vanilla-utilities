@@ -31,6 +31,8 @@
 #include "net/parport.h"
 #include "net/doomnet.h"
 
+#define MAXPACKET	512
+
 static doomcom_t doomcom;
 unsigned newpkt = 0;
 
@@ -38,16 +40,6 @@ extern int __stdcall PLIOWritePacket(void);
 extern uint8_t pktbuf[];
 extern unsigned recv_count;
 extern unsigned errcnt;
-
-/*
-================
-=
-= ReadPacket
-=
-================
-*/
-
-#define MAXPACKET	512
 
 int ReadPacket(void)
 {
@@ -59,14 +51,6 @@ int ReadPacket(void)
 
     return 0;                // false - no packet available
 }
-
-/*
-=============
-=
-= WritePacket
-=
-=============
-*/
 
 int WritePacket(uint8_t *data, unsigned len)
 {
@@ -100,15 +84,7 @@ static void far NetCallback(void)
     }
 }
 
-/*
-=================
-=
-= Connect
-=
-= Figures out who is player 0 and 1
-=================
-*/
-
+// Figure out who is player 0 and 1
 void Connect(void)
 {
     clock_t last_time = 0, now;
@@ -163,14 +139,6 @@ void Connect(void)
     {
     }
 }
-
-/*
-=================
-=
-= main
-=
-=================
-*/
 
 void main(int argc, char *argv[])
 {

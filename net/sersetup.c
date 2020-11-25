@@ -24,14 +24,6 @@ static long baudrate = 9600;
 
 void ModemCommand(char *str);
 
-/*
-================
-=
-= WriteBuffer
-=
-================
-*/
-
 void WriteBuffer(char *buffer, unsigned int count)
 {
     // if this would overrun the buffer, throw everything else out
@@ -50,14 +42,6 @@ void WriteBuffer(char *buffer, unsigned int count)
         JumpStart();
     }
 }
-
-/*
-================
-=
-= ReadPacket
-=
-================
-*/
 
 #define MAXPACKET	512
 #define	FRAMECHAR	0x70
@@ -120,14 +104,6 @@ int ReadPacket(void)
         packetlen++;
     } while (1);
 }
-
-/*
-=============
-=
-= WritePacket
-=
-=============
-*/
 
 void WritePacket(char *buffer, int len)
 {
@@ -197,15 +173,7 @@ static void MakeLocalID(char *buf)
     sprintf(buf, "%.6ld", id);
 }
 
-/*
-=================
-=
-= Connect
-=
-= Figures out who is player 0 and 1
-=================
-*/
-
+// Figure out who is player 0 and 1
 void Connect(void)
 {
     clock_t last_time = 0, now;
@@ -303,14 +271,6 @@ void Connect(void)
     }
 }
 
-/*
-==============
-=
-= ModemCommand
-=
-==============
-*/
-
 void ModemCommand(char *str)
 {
     LogMessage("Modem command: %s", str);
@@ -318,19 +278,10 @@ void ModemCommand(char *str)
     WriteBuffer("\r", 1);
 }
 
-/*
-==============
-=
-= ModemResponse
-=
-= Waits for OK, RING, CONNECT, etc
-==============
-*/
-
-static char response[80];
-
+// Wait for OK, RING, CONNECT, etc
 void ModemResponse(char *resp)
 {
+    static char response[80];
     int c;
     int respptr;
 
@@ -373,14 +324,6 @@ static void HangupModem(void)
     delay(1250);
 }
 
-/*
-=============
-=
-= InitModem
-=
-=============
-*/
-
 static void ReadModemCfg(void)
 {
     char baudline[16];
@@ -413,14 +356,6 @@ static void ReadModemCfg(void)
     }
 }
 
-/*
-=============
-=
-= Dial
-=
-=============
-*/
-
 void Dial(char *dial_no)
 {
     char cmd[80];
@@ -438,14 +373,6 @@ void Dial(char *dial_no)
     doomcom.consoleplayer = 1;
 }
 
-/*
-=============
-=
-= Answer
-=
-=============
-*/
-
 void Answer(void)
 {
     atexit(HangupModem);
@@ -460,14 +387,6 @@ void Answer(void)
 
     doomcom.consoleplayer = 0;
 }
-
-/*
-=================
-=
-= main
-=
-=================
-*/
 
 void main(int argc, char *argv[])
 {

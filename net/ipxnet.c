@@ -1,3 +1,5 @@
+// Interface code to IPX network API
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -10,14 +12,6 @@
 #include "net/ipxnet.h"
 
 #define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */
-
-/*
-=============================================================================
-
-						IPX PACKET DRIVER
-
-=============================================================================
-*/
 
 extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
@@ -38,8 +32,6 @@ static unsigned short enteripx[2];
 
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
-
-//===========================================================================
 
 static const char *hex = "0123456789abcdef";
 
@@ -105,14 +97,6 @@ void IPXRegisterFlags(void)
 {
     IntFlag("-port", &port_flag, "port", "use alternate IPX port number");
 }
-
-/*
-====================
-=
-= InitNetwork
-=
-====================
-*/
 
 void InitNetwork(void)
 {
@@ -184,28 +168,13 @@ void InitNetwork(void)
     }
 }
 
-/*
-====================
-=
-= ShutdownNetwork
-=
-====================
-*/
-
 void ShutdownNetwork(void)
 {
     CloseSocket(socketid);
 }
 
-/*
-==============
-=
-= SendPacket
-=
-= A destination of MAXNETNODES is a broadcast
-==============
-*/
-
+// Send packet to the given destination.
+// A destination of MAXNETNODES is a broadcast.
 void SendPacket(int destination)
 {
     int j;
@@ -249,16 +218,7 @@ unsigned short ShortSwap(unsigned short i)
     return ((i & 255) << 8) + ((i >> 8) & 255);
 }
 
-/*
-==============
-=
-= GetPacket
-=
-= Returns false if no packet is waiting
-=
-==============
-*/
-
+// Returns false if no packet is waiting
 int GetPacket(void)
 {
     int packetnum;

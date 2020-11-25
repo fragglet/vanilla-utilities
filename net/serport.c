@@ -58,14 +58,6 @@ void SerialRegisterFlags(void)
     IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
 }
 
-/*
-==============
-=
-= GetUart
-=
-==============
-*/
-
 void GetUart(void)
 {
     char far *system_data;
@@ -152,14 +144,6 @@ static long OverrideBaudRate(long baudrate)
 
     return baudrate;
 }
-
-/*
-===============
-=
-= InitPort
-=
-===============
-*/
 
 void InitPort(long baudrate)
 {
@@ -268,14 +252,6 @@ void InitPort(long baudrate)
 
     _enable();
 }
-
-/*
-=============
-=
-= ShutdownPort
-=
-=============
-*/
 
 void ShutdownPort(void)
 {
@@ -411,15 +387,7 @@ static void interrupt far ISR16550(void)
     }
 }
 
-/*
-===============
-=
-= JumpStart
-=
-= Start up the transmition interrupts by sending the first char
-===============
-*/
-
+// Start up the transmition interrupts by sending the first char
 void JumpStart(void)
 {
     int c;

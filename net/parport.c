@@ -88,14 +88,6 @@ void ParallelRegisterFlags(void)
     IntFlag("-irq", &irq, "irq", "IRQ number for parallel port");
 }
 
-/*
-==============
-=
-= GetPort
-=
-==============
-*/
-
 void GetPort(void)
 {
     if (port_flag != 0)
@@ -121,14 +113,6 @@ void GetPort(void)
                portbase, irq);
 }
 
-/*
-===============
-=
-= InitPort
-=
-===============
-*/
-
 void InitPort(void)
 {
     // find the irq and i/o address of the port
@@ -140,18 +124,9 @@ void InitPort(void)
     InitISR();
 }
 
-/*
-=============
-=
-= ShutdownPort
-=
-=============
-*/
-
 void ShutdownPort(void)
 {
     OUTPUT(0x21, oldmask);    // disable IRQs
     _dos_setvect(irq + 8, oldisr);   // restore vector
 }
 
-//==========================================================================

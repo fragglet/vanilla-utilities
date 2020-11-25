@@ -143,17 +143,8 @@ static int DetermineConsolePlayer(void)
     }
 }
 
-/*
-===================
-=
-= LookForNodes
-=
-= Finds all the nodes for the game and works out player numbers among them
-=
-= Exits with nodesetup[0..numnodes] and nodeadr[0..numnodes] filled in
-===================
-*/
-
+// Find all nodes for the game and work out player numbers among them
+// Exits with nodesetup[0..numnodes] and nodeadr[0..numnodes] filled in
 void LookForNodes(void)
 {
     int i;
@@ -247,14 +238,6 @@ void LookForNodes(void)
 
     LogMessage("Console is player %i of %i", doomcom.consoleplayer + 1, total);
 }
-
-/*
-=============
-=
-= main
-=
-=============
-*/
 
 void main(int argc, char *argv[])
 {

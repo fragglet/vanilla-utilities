@@ -16,7 +16,7 @@ static int numnetnodes;
 static int force_player = -1;
 static setupdata_t nodesetup[MAXNETNODES];
 
-static void far NetCallback(void)
+static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {

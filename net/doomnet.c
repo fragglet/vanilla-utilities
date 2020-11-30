@@ -10,7 +10,7 @@
 #include "net/doomnet.h"
 
 static struct interrupt_hook net_interrupt;
-static void (far *isr_callback)(void);
+static void (*isr_callback)(void);
 int doomnet_dup = 1, doomnet_extratics = 0;
 
 void NetRegisterFlags(void)
@@ -55,7 +55,7 @@ These fields in doomcom should be filled in before calling:
 */
 
 void NetLaunchDoom(doomcom_t far *doomcom, char **args,
-                   void (far *callback)(void))
+                   void (*callback)(void))
 {
     char addrstring[10];
     long flatadr;

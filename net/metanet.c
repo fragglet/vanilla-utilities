@@ -791,7 +791,7 @@ static void PrintStats(void)
     }
 }
 
-static void far NetCallback(void)
+static void NetCallback(void)
 {
     switch (doomcom.command)
     {

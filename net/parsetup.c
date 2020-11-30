@@ -63,7 +63,7 @@ int WritePacket(uint8_t *data, unsigned len)
     return PLIOWritePacket();
 }
 
-static void far NetCallback(void)
+static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {

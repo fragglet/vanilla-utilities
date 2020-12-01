@@ -51,7 +51,6 @@ static void ProcessPackets(struct arbitration_state *arb)
     while (DoGetPacket(arb))
     {
         packet[arb->doomcom->datalength] = '\0';
-printf("got packet, %d bytes: %s\n", arb->doomcom->datalength, packet);
 
         if (sscanf(packet, "ID%6c_%d", remoteid, &remotestage) == 2)
         {

@@ -155,8 +155,8 @@ static void ForwardPacket(doomcom_t far *src)
     // Decode next hop from first byte of routing dest:
     ddriver = ADDR_DRIVER(hdr->dest[0]);
     dnode = ADDR_NODE(hdr->dest[0]);
-    if (ddriver >= num_drivers || dnode >= num_nodes
-     || drivers[ddriver] == src || dnode == 0)
+    if (ddriver >= num_drivers || drivers[ddriver] == src
+     || dnode == 0 || dnode >= drivers[ddriver]->numnodes)
     {
         ++stats_invalid_dest;
         return;

@@ -84,4 +84,3 @@ void ShutdownNetwork(void);
 void SendPacket(int destination);
 int GetPacket(void);
 
-void PrintAddress(nodeaddr_t *addr, char *str);

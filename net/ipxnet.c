@@ -34,20 +34,6 @@ static void __stdcall (*ipx_call)(void);
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
 
-static const char *hex = "0123456789abcdef";
-
-void PrintAddress(nodeaddr_t *addr, char *str)
-{
-    int i;
-
-    for (i = 0; i < 6; i++)
-    {
-        *str++ = hex[addr->node[i] >> 4];
-        *str++ = hex[addr->node[i] & 15];
-    }
-    *str = 0;
-}
-
 int OpenSocket(short socketNumber)
 {
     ipx_regs.x.bx = 0;

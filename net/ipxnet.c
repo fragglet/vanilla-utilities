@@ -29,8 +29,7 @@ static localadr_t localadr;            // set at startup
 static int port_flag = (int) DOOM_DEFAULT_PORT;
 static int socketid;
 
-static union REGS regs;                // scratch for int86 calls
-static struct SREGS sregs;
+static void __stdcall (*ipx_call)(void);
 
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
@@ -54,7 +53,7 @@ int OpenSocket(short socketNumber)
     ipx_regs.x.bx = 0;
     ipx_regs.h.al = 0;              // longevity
     ipx_regs.x.dx = socketNumber;
-    OldIPXCall();
+    ipx_call();
     if (ipx_regs.h.al != 0)
     {
         Error("OpenSocket: 0x%x", ipx_regs.h.al);
@@ -66,7 +65,7 @@ void CloseSocket(short socketNumber)
 {
     ipx_regs.x.bx = 1;
     ipx_regs.x.dx = socketNumber;
-    OldIPXCall();
+    ipx_call();
 }
 
 void ListenForPacket(ECB *ecb)
@@ -74,8 +73,7 @@ void ListenForPacket(ECB *ecb)
     ipx_regs.x.si = FP_OFF(ecb);
     ipx_regs.x.es = FP_SEG(ecb);
     ipx_regs.x.bx = 4;
-
-    OldIPXCall();
+    ipx_call();
     if (ipx_regs.h.al != 0)
     {
         Error("ListenForPacket: 0x%x", ipx_regs.h.al);
@@ -87,8 +85,7 @@ void GetLocalAddress(void)
     ipx_regs.x.si = FP_OFF(&localadr);
     ipx_regs.x.es = FP_SEG(&localadr);
     ipx_regs.x.bx = 9;
-
-    OldIPXCall();
+    ipx_call();
     if (ipx_regs.h.al != 0)
     {
         Error("Get inet addr: 0x%x", ipx_regs.h.al);
@@ -100,16 +97,47 @@ void IPXRegisterFlags(void)
     IntFlag("-port", &port_flag, "port", "use alternate IPX port number");
 }
 
+static void InitIPX(void)
+{
+    union REGS regs;
+    struct SREGS sregs;
+    static const localadr_t dummy_addr = {
+        {0x3c, 0x61, 0x96, 0x5f},
+        {0x0f, 0xa3, 0xca, 0xd6, 0x2f, 0x56},
+    };
+
+    // First, try to use the newer, redirector-based API:
+    regs.x.ax = 0x7a00;
+    int86x(0x2f, &regs, &regs, &sregs);
+    if (regs.h.al == 0xff)
+    {
+        ipx_call = NewIPXCall;
+        ipx_entrypoint = MK_FP(sregs.es, regs.x.di);
+        return;
+    }
+
+    // Try to detect the older, interrupt-based API. We issue a GetLocalAddress
+    // API call and check if the buffer gets overwritten.
+    memcpy(&localadr, &dummy_addr, sizeof(localadr_t));
+    ipx_regs.x.bx = 9;
+    ipx_regs.x.si = FP_OFF(&localadr);
+    ipx_regs.x.es = FP_SEG(&localadr);
+    OldIPXCall();
+    if (memcmp(&localadr, &dummy_addr, sizeof(localadr_t)) != 0)
+    {
+        ipx_call = OldIPXCall;
+        LogMessage("Note: falling back to older, interrupt-based IPX API");
+        return;
+    }
+
+    Error("IPX not detected");
+}
+
 void InitNetwork(void)
 {
     int i, j;
 
-    regs.x.ax = 0x7a00;
-    int86x(0x2f, &regs, &regs, &sregs);
-    if (regs.h.al != 0xff)
-    {
-        Error("IPX not detected");
-    }
+    InitIPX();
 
     // allocate a socket for sending and receiving
     socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
@@ -195,8 +223,7 @@ void SendPacket(int destination)
     ipx_regs.x.si = FP_OFF(&packets[0]);
     ipx_regs.x.es = FP_SEG(&packets[0]);
     ipx_regs.x.bx = 3;
-    OldIPXCall();
-
+    ipx_call();
     if (ipx_regs.h.al)
     {
         Error("SendPacket: 0x%x", ipx_regs.h.al);
@@ -206,7 +233,7 @@ void SendPacket(int destination)
     {
         // IPX Relinquish Control - polled drivers MUST have this here!
         ipx_regs.x.bx = 10;
-        OldIPXCall();
+        ipx_call();
     }
 }
 

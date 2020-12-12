@@ -62,7 +62,7 @@ _NewIPXCall:
     mov dx, _ipx_regs.ipxr_dx
     mov es, _ipx_regs.ipxr_es
     mov si, _ipx_regs.ipxr_si
-    call cs:_ipx_entrypoint
+    call ds:_ipx_entrypoint
     mov _ipx_regs.ipxr_ax, ax
     mov _ipx_regs.ipxr_bx, bx
     mov _ipx_regs.ipxr_cx, cx

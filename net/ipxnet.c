@@ -5,10 +5,14 @@
 #include <limits.h>
 #include <string.h>
 
+#include "lib/inttypes.h"
+
 #include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
+
 #include "net/doomnet.h"
+#include "net/ipxcall.h"
 #include "net/ipxnet.h"
 
 #define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */
@@ -27,8 +31,6 @@ static int socketid;
 
 static union REGS regs;                // scratch for int86 calls
 static struct SREGS sregs;
-
-static unsigned short enteripx[2];
 
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
@@ -49,47 +51,47 @@ void PrintAddress(nodeadr_t *adr, char *str)
 
 int OpenSocket(short socketNumber)
 {
-    regs.x.bx = 0;
-    regs.h.al = 0;              // longevity
-    regs.x.dx = socketNumber;
-    int86(0x7A, &regs, &regs);
-    if (regs.h.al != 0)
+    ipx_regs.x.bx = 0;
+    ipx_regs.h.al = 0;              // longevity
+    ipx_regs.x.dx = socketNumber;
+    OldIPXCall();
+    if (ipx_regs.h.al != 0)
     {
-        Error("OpenSocket: 0x%x", regs.h.al);
+        Error("OpenSocket: 0x%x", ipx_regs.h.al);
     }
-    return regs.x.dx;
+    return ipx_regs.x.dx;
 }
 
 void CloseSocket(short socketNumber)
 {
-    regs.x.bx = 1;
-    regs.x.dx = socketNumber;
-    int86(0x7A, &regs, &regs);
+    ipx_regs.x.bx = 1;
+    ipx_regs.x.dx = socketNumber;
+    OldIPXCall();
 }
 
 void ListenForPacket(ECB *ecb)
 {
-    regs.x.si = FP_OFF(ecb);
-    sregs.es = FP_SEG(ecb);
-    regs.x.bx = 4;
+    ipx_regs.x.si = FP_OFF(ecb);
+    ipx_regs.x.es = FP_SEG(ecb);
+    ipx_regs.x.bx = 4;
 
-    int86x(0x7a, &regs, &regs, &sregs);
-    if (regs.h.al != 0)
+    OldIPXCall();
+    if (ipx_regs.h.al != 0)
     {
-        Error("ListenForPacket: 0x%x", regs.h.al);
+        Error("ListenForPacket: 0x%x", ipx_regs.h.al);
     }
 }
 
 void GetLocalAddress(void)
 {
-    regs.x.si = FP_OFF(&localadr);
-    sregs.es = FP_SEG(&localadr);
-    regs.x.bx = 9;
+    ipx_regs.x.si = FP_OFF(&localadr);
+    ipx_regs.x.es = FP_SEG(&localadr);
+    ipx_regs.x.bx = 9;
 
-    int86x(0x7a, &regs, &regs, &sregs);
-    if (regs.h.al != 0)
+    OldIPXCall();
+    if (ipx_regs.h.al != 0)
     {
-        Error("Get inet addr: 0x%x", regs.h.al);
+        Error("Get inet addr: 0x%x", ipx_regs.h.al);
     }
 }
 
@@ -102,16 +104,12 @@ void InitNetwork(void)
 {
     int i, j;
 
-    // get IPX function address
     regs.x.ax = 0x7a00;
     int86x(0x2f, &regs, &regs, &sregs);
     if (regs.h.al != 0xff)
     {
-        Error("IPX not detected\n");
+        Error("IPX not detected");
     }
-
-    enteripx[0] = regs.x.di;
-    enteripx[1] = sregs.es;
 
     // allocate a socket for sending and receiving
     socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
@@ -194,22 +192,21 @@ void SendPacket(int destination)
     packets[0].ecb.f2Size = doomcom.datalength + 4;
 
     // send the packet
-    regs.x.si = FP_OFF(&packets[0]);
-    sregs.es = FP_SEG(&packets[0]);
-    regs.x.bx = 3;
+    ipx_regs.x.si = FP_OFF(&packets[0]);
+    ipx_regs.x.es = FP_SEG(&packets[0]);
+    ipx_regs.x.bx = 3;
+    OldIPXCall();
 
-    int86x(0x7a, &regs, &regs, &sregs);
-
-    if (regs.h.al)
+    if (ipx_regs.h.al)
     {
-        Error("SendPacket: 0x%x", regs.h.al);
+        Error("SendPacket: 0x%x", ipx_regs.h.al);
     }
 
     while (packets[0].ecb.InUseFlag != 0)
     {
         // IPX Relinquish Control - polled drivers MUST have this here!
-        regs.x.bx = 10;
-        int86x(0x7a, &regs, &regs, &sregs);
+        ipx_regs.x.bx = 10;
+        OldIPXCall();
     }
 }
 

@@ -7,7 +7,8 @@ CFLAGS = -I.
 
 REPLAY_OBJS = ctrl\replay.o ctrl\control.o lib\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.o ctrl\control.o ctrl\joystick.o lib\common.lib
-IPXSETUP_OBJS = net\ipxsetup.o net\doomnet.o net\ipxnet.o lib\common.lib
+IPXSETUP_OBJS = net\ipxsetup.o net\doomnet.o net\ipxnet.o net\ipxcall.o &
+                lib\common.lib
 SERSETUP_OBJS = net\sersetup.o net\doomnet.o net\serport.o net\serarb.o &
                 lib\common.lib
 PARSETUP_OBJS = net\parsetup.o net\doomnet.o net\parport.o net\plio.o &

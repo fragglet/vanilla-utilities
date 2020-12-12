@@ -210,7 +210,7 @@ void SendPacket(int destination)
     ipx_regs.x.es = FP_SEG(&packets[0]);
     ipx_regs.x.bx = 3;
     ipx_call();
-    if (ipx_regs.h.al)
+    if (ipx_regs.h.al != 0)
     {
         Error("SendPacket: 0x%x", ipx_regs.h.al);
     }
@@ -292,13 +292,11 @@ int GetPacket(void)
     {
         doomcom.remotenode = i;
     }
-    else
+    else if (ipx_localtime != -1)
     {
-        if (ipx_localtime != -1)
-        {                       // this really shouldn't happen
-            ListenForPacket(&packet->ecb);
-            return 0;
-        }
+        // this really shouldn't happen
+        ListenForPacket(&packet->ecb);
+        return 0;
     }
 
     // copy out the data

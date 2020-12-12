@@ -54,11 +54,11 @@ static void ProcessSetupPacket(void)
         n = doomcom.numnodes;
         ++doomcom.numnodes;
 
-        memcpy(&nodeadr[n], &remoteadr, sizeof(nodeadr_t));
+        memcpy(&nodeaddr[n], &remoteaddr, sizeof(nodeaddr_t));
 
         LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
-                   remoteadr.node[0], remoteadr.node[1], remoteadr.node[2],
-                   remoteadr.node[3], remoteadr.node[4], remoteadr.node[5]);
+                   remoteaddr.node[0], remoteaddr.node[1], remoteaddr.node[2],
+                   remoteaddr.node[3], remoteaddr.node[4], remoteaddr.node[5]);
 
         if (force_player != -1 && old_protocol)
         {
@@ -109,7 +109,7 @@ static int DetermineConsolePlayer(void)
     {
         if (!nodesetup[i].drone
          && nodesetup[i].plnumwanted == -1
-         && memcmp(&nodeadr[i], &nodeadr[0], sizeof(nodeadr[0])) < 0)
+         && memcmp(&nodeaddr[i], &nodeaddr[0], sizeof(nodeaddr[0])) < 0)
         {
             cnt++;
         }
@@ -144,7 +144,7 @@ static int DetermineConsolePlayer(void)
 }
 
 // Find all nodes for the game and work out player numbers among them
-// Exits with nodesetup[0..numnodes] and nodeadr[0..numnodes] filled in
+// Exits with nodesetup[0..numnodes] and nodeaddr[0..numnodes] filled in
 void LookForNodes(void)
 {
     int i;
@@ -161,8 +161,8 @@ void LookForNodes(void)
     // the playernumbers are assigned by netid
     LogMessage("Attempting to find %d players on IPX network", numnetnodes);
     LogMessage("Local address is %02x:%02x:%02x:%02x:%02x:%02x",
-               nodeadr[0].node[0], nodeadr[0].node[1], nodeadr[0].node[2],
-               nodeadr[0].node[3], nodeadr[0].node[4], nodeadr[0].node[5]);
+               nodeaddr[0].node[0], nodeaddr[0].node[1], nodeaddr[0].node[2],
+               nodeaddr[0].node[3], nodeaddr[0].node[4], nodeaddr[0].node[5]);
 
     ipx_localtime = -1;             // in setup time, not game time
 

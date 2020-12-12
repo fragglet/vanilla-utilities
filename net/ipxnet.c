@@ -20,11 +20,11 @@
 extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
 
-nodeadr_t nodeadr[MAXNETNODES + 1];     // first is local, last is broadcast
+nodeaddr_t nodeaddr[MAXNETNODES + 1];     // first is local, last is broadcast
 
-nodeadr_t remoteadr;            // set by each GetPacket
+nodeaddr_t remoteaddr;            // set by each GetPacket
 
-static localadr_t localadr;            // set at startup
+static localaddr_t localaddr;            // set at startup
 
 static int port_flag = (int) DOOM_DEFAULT_PORT;
 static int socketid;
@@ -36,14 +36,14 @@ long ipx_remotetime;
 
 static const char *hex = "0123456789abcdef";
 
-void PrintAddress(nodeadr_t *adr, char *str)
+void PrintAddress(nodeaddr_t *addr, char *str)
 {
     int i;
 
     for (i = 0; i < 6; i++)
     {
-        *str++ = hex[adr->node[i] >> 4];
-        *str++ = hex[adr->node[i] & 15];
+        *str++ = hex[addr->node[i] >> 4];
+        *str++ = hex[addr->node[i] & 15];
     }
     *str = 0;
 }
@@ -82,8 +82,8 @@ void ListenForPacket(ECB *ecb)
 
 void GetLocalAddress(void)
 {
-    ipx_regs.x.si = FP_OFF(&localadr);
-    ipx_regs.x.es = FP_SEG(&localadr);
+    ipx_regs.x.si = FP_OFF(&localaddr);
+    ipx_regs.x.es = FP_SEG(&localaddr);
     ipx_regs.x.bx = 9;
     ipx_call();
     if (ipx_regs.h.al != 0)
@@ -101,7 +101,7 @@ static void InitIPX(void)
 {
     union REGS regs;
     struct SREGS sregs;
-    static const localadr_t dummy_addr = {
+    static const localaddr_t dummy_addr = {
         {0x3c, 0x61, 0x96, 0x5f},
         {0x0f, 0xa3, 0xca, 0xd6, 0x2f, 0x56},
     };
@@ -118,12 +118,12 @@ static void InitIPX(void)
 
     // Try to detect the older, interrupt-based API. We issue a GetLocalAddress
     // API call and check if the buffer gets overwritten.
-    memcpy(&localadr, &dummy_addr, sizeof(localadr_t));
+    memcpy(&localaddr, &dummy_addr, sizeof(localaddr_t));
     ipx_regs.x.bx = 9;
-    ipx_regs.x.si = FP_OFF(&localadr);
-    ipx_regs.x.es = FP_SEG(&localadr);
+    ipx_regs.x.si = FP_OFF(&localaddr);
+    ipx_regs.x.es = FP_SEG(&localaddr);
     OldIPXCall();
-    if (memcmp(&localadr, &dummy_addr, sizeof(localadr_t)) != 0)
+    if (memcmp(&localaddr, &dummy_addr, sizeof(localaddr_t)) != 0)
     {
         ipx_call = OldIPXCall;
         LogMessage("Note: falling back to older, interrupt-based IPX API");
@@ -174,7 +174,7 @@ void InitNetwork(void)
     packets[0].ecb.fAddress[1] = FP_SEG(&packets[0].ipx);
     for (j = 0; j < 4; j++)
     {
-        packets[0].ipx.dNetwork[j] = localadr.network[j];
+        packets[0].ipx.dNetwork[j] = localaddr.network[j];
     }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
@@ -184,13 +184,13 @@ void InitNetwork(void)
     // known local node at 0
     for (i = 0; i < 6; i++)
     {
-        nodeadr[0].node[i] = localadr.node[i];
+        nodeaddr[0].node[i] = localaddr.node[i];
     }
 
     // broadcast node at MAXNETNODES
     for (j = 0; j < 6; j++)
     {
-        nodeadr[MAXNETNODES].node[j] = 0xff;
+        nodeaddr[MAXNETNODES].node[j] = 0xff;
     }
 }
 
@@ -212,7 +212,7 @@ void SendPacket(int destination)
     for (j = 0; j < 6; j++)
     {
         packets[0].ipx.dNode[j] = packets[0].ecb.ImmediateAddress[j] =
-            nodeadr[destination].node[j];
+            nodeaddr[destination].node[j];
     }
 
     // set the length (ipx + time + datalength)
@@ -292,11 +292,11 @@ int GetPacket(void)
               packet->ecb.CompletionCode);
     }
 
-    // set remoteadr to the sender of the packet
-    memcpy(&remoteadr, packet->ipx.sNode, sizeof(remoteadr));
+    // set remoteaddr to the sender of the packet
+    memcpy(&remoteaddr, packet->ipx.sNode, sizeof(remoteaddr));
     for (i = 0; i < doomcom.numnodes; i++)
     {
-        if (!memcmp(&remoteadr, &nodeadr[i], sizeof(remoteadr)))
+        if (!memcmp(&remoteaddr, &nodeaddr[i], sizeof(remoteaddr)))
         {
             break;
         }

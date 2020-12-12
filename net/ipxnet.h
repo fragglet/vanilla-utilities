@@ -33,11 +33,11 @@ typedef struct IPXPacketStructure {
 typedef struct {
     uint8_t network[4];            /* high-low */
     uint8_t node[6];               /* high-low */
-} localadr_t;
+} localaddr_t;
 
 typedef struct {
     uint8_t node[6];               /* high-low */
-} nodeadr_t;
+} nodeaddr_t;
 
 typedef struct ECBStructure {
     uint16_t Link[2];              /* offset-segment */
@@ -70,13 +70,13 @@ typedef struct {
 extern doomcom_t doomcom;
 extern int gameid;
 
-extern nodeadr_t nodeadr[MAXNETNODES + 1];
+extern nodeaddr_t nodeaddr[MAXNETNODES + 1];
 extern int localnodenum;
 
 extern long ipx_localtime;          // for time stamp in packets
 extern long ipx_remotetime;         // timestamp of last packet gotten
 
-extern nodeadr_t remoteadr;
+extern nodeaddr_t remoteaddr;
 
 void IPXRegisterFlags(void);
 void InitNetwork(void);
@@ -84,4 +84,4 @@ void ShutdownNetwork(void);
 void SendPacket(int destination);
 int GetPacket(void);
 
-void PrintAddress(nodeadr_t *adr, char *str);
+void PrintAddress(nodeaddr_t *addr, char *str);

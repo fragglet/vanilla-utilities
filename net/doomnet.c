@@ -58,7 +58,7 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args,
                    void (*callback)(void))
 {
     char addrstring[10];
-    long flatadr;
+    long flataddr;
 
     isr_callback = callback;
 
@@ -87,8 +87,8 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args,
     atexit(UnhookDoomVector);
 
     // Add -net &doomcom
-    flatadr = (long) FP_SEG(doomcom) * 16 + FP_OFF(doomcom);
-    sprintf(addrstring, "%lu", flatadr);
+    flataddr = (long) FP_SEG(doomcom) * 16 + FP_OFF(doomcom);
+    sprintf(addrstring, "%lu", flataddr);
     args = AppendArgs(args, "-net", addrstring, NULL);
 
     SquashToResponseFile(args);

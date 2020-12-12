@@ -11,7 +11,7 @@ IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj lib\common.lib
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
                 net\serarb.obj lib\common.lib
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \
-                net\plio.obj lib\common.lib
+                net\plio.obj net\serarb.obj lib\common.lib
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\common.lib
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\common.lib
 METANET_OBJS = net\metanet.obj net\doomnet.obj lib\common.lib

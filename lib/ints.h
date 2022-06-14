@@ -26,8 +26,8 @@
         asm pop bp; \
         asm pop cx; \
         asm pop bx; \
-        asm mov sp, cx; \
         asm mov ss, bx; \
+        asm mov sp, cx; \
     } while(0)
 
 #define SWITCH_ISR_STACK \
@@ -67,8 +67,8 @@ extern void RestoreStack(void);
     "pop bp" \
     "pop cx" \
     "pop bx" \
-    "mov sp, cx" \
     "mov ss, bx" \
+    "mov sp, cx" \
     modify [bx cx];
 
 extern unsigned int old_stacklow;
@@ -79,7 +79,7 @@ extern unsigned int _STACKLOW;  // Watcom-internal
 // detection code that gets included in function headers.
 #define SWITCH_ISR_STACK \
     do { \
-	SwitchStack(FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
+        SwitchStack(FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
         old_stacklow = _STACKLOW; \
         _STACKLOW = FP_OFF(isr_stack_space); \
     } while(0)

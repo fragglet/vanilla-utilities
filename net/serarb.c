@@ -170,7 +170,7 @@ void ArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void))
 
 void RegisterArbitrationFlags(void)
 {
-    BoolFlag("-player1", &force_player1, "(and -player2) force player#");
+    BoolFlag("-player1", &force_player1, "(or -player2) force player#");
     BoolFlag("-player2", &force_player2, NULL);
 }
 

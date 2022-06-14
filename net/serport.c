@@ -41,12 +41,12 @@ static int baud_38400 = 0, baud_57600 = 0, baud_115200 = 0;
 
 void SerialRegisterFlags(void)
 {
-    BoolFlag("-com2", &com2, "(and -com3, -com4) use COMx instead of COM1");
+    BoolFlag("-com2", &com2, "(or -com3/-com4) use COMx instead of COM1");
     BoolFlag("-com3", &com3, NULL);
     BoolFlag("-com4", &com4, NULL);
 
     BoolFlag("-9600", &baud_9600,
-             "(and -14400, -19200, -38400, -57600, -115200) baud rate");
+             "(or -14400/-19200/-38400/-57600/-115200) set baud rate");
     BoolFlag("-14400", &baud_14400, NULL);
     BoolFlag("-19200", &baud_19200, NULL);
     BoolFlag("-38400", &baud_38400, NULL);

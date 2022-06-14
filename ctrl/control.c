@@ -86,8 +86,7 @@ static void ControlPointerCallback(long l)
 void ControlRegisterFlags(void)
 {
     APIPointerFlag("-control", ControlPointerCallback);
-    IntFlag("-cvector", &control_interrupt.force_vector, "vector",
-            "use the specified interrupt vector");
+    IntFlag("-cvector", &control_interrupt.force_vector, "vector", NULL);
 }
 
 // Launch the game. args[0] is the program to invoke.

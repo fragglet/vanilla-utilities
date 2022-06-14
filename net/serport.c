@@ -53,9 +53,9 @@ void SerialRegisterFlags(void)
     BoolFlag("-57600", &baud_57600, NULL);
     BoolFlag("-115200", &baud_115200, NULL);
 
-    BoolFlag("-8250", &force_8250, "force detect 8250 UART, not 16550");
-    IntFlag("-port", &port_flag, "port", "explicit I/O port for UART");
-    IntFlag("-irq", &irq_flag, "irq", "explicit IRQ number for UART");
+    BoolFlag("-8250", &force_8250, NULL);
+    IntFlag("-port", &port_flag, "port", NULL);
+    IntFlag("-irq", &irq_flag, "irq", NULL);
 }
 
 void GetUart(void)

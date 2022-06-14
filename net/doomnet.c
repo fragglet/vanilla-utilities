@@ -20,8 +20,7 @@ void NetRegisterFlags(void)
     IntFlag("-extratics", &doomnet_extratics, "n",
             "send n extra tics per packet as insurance");
     BoolFlag("-extratic", &doomnet_extratics, NULL);
-    IntFlag("-vector", &net_interrupt.force_vector, "v",
-            "use interrupt vector v for network API");
+    IntFlag("-vector", &net_interrupt.force_vector, "v", NULL);
 }
 
 static void UnhookDoomVector(void)

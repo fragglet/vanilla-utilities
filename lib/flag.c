@@ -8,12 +8,20 @@
 #include <limits.h>
 #include <assert.h>
 
+#include "lib/bakedin.h"
 #include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 
 #define MAX_COMMAND_LINE_LEN 126
 #define MAX_FLAGS 24
+
+// "Baked in" config contains command line arguments that are always added
+// to the command line. The .exe can be modified to change them.
+static const struct baked_in_config baked_in_config = {
+    BAKED_IN_MAGIC1 BAKED_IN_MAGIC2,
+    {0, 0},
+};
 
 enum flag_type {
     FLAG_BOOL,
@@ -137,7 +145,9 @@ void PrintProgramUsage(FILE *output)
         fprintf(output, "%s\n", f->help_text);
     }
 
-    if (example != NULL)
+    // We don't display the example when using a baked-in config, as the
+    // extra arguments can change the command syntax.
+    if (!HAVE_BAKED_IN_CONFIG(baked_in_config) && example != NULL)
     {
         fprintf(output, "\nExample:\n  ");
         fprintf(output, example, program);
@@ -268,38 +278,90 @@ static int ArgListLength(char **args)
     return result;
 }
 
-static char **ExpandResponseArgs(int argc, char **argv)
+static void ReorderArgsForBakedIn(char **args)
 {
-    char **result;
+    char **callee_args = NULL;
+    char **r, **w;
+    struct flag *f;
+
+    // We sort through the arguments list and look for flags we recognize.
+    // Every argument gets sorted into one of two lists: either the list
+    // of arguments for this program (args), or everything else / the program
+    // we will invoke (callee_args).
+    w = &args[1];
+    for (r = &args[1]; *r != NULL; r++)
+    {
+        f = FindFlagForName(*r);
+        if (f != NULL)
+        {
+            *w = *r;
+            ++w;
+            if (f->type != FLAG_BOOL && *(r + 1) != NULL)
+            {
+                ++r;
+                *w = *r;
+                ++w;
+            }
+        }
+        else
+        {
+            callee_args = AppendArgList(callee_args, 1, r);
+        }
+    }
+
+    // `w` now points to the end of the args for this program. Now we can copy
+    // back the callee args to the end. The length of `args` never changes.
+    memcpy(w, callee_args, sizeof(char *) * ArgListLength(callee_args));
+    free(callee_args);
+}
+
+static char **AppendBakedInArgs(char **args)
+{
+    const char *c;
+
+    c = baked_in_config.config;
+
+    while (*c != '\0')
+    {
+        args = AppendArgList(args, 1, (char **) &c);
+        c += strlen(c) + 1;
+    }
+
+    return args;
+}
+
+static char **ExpandResponseArgs(char **args)
+{
+    int argc;
     int i;
 
-    result = AppendArgList(NULL, argc, argv);
+    argc = ArgListLength(args);
 
     for (i = 1; i < argc; ++i)
     {
-        char **new_result, **response_args;
+        char **new_args, **response_args;
         int response_args_len;
 
-        if (result[i][0] != '@')
+        if (args[i][0] != '@')
         {
             continue;
         }
 
-        response_args = ReadResponseFile(result[i] + 1);
+        response_args = ReadResponseFile(args[i] + 1);
         response_args_len = ArgListLength(response_args);
 
-        new_result = AppendArgList(NULL, i, result),
-        new_result = AppendArgList(
-            new_result, response_args_len, response_args),
-        new_result = AppendArgList(new_result, argc - i - 1, result + i + 1);
+        new_args = AppendArgList(NULL, i, args),
+        new_args = AppendArgList(
+            new_args, response_args_len, response_args),
+        new_args = AppendArgList(new_args, argc - i - 1, args + i + 1);
 
-        free(result);
-        result = new_result;
+        free(args);
+        args = new_args;
         argc += response_args_len - 1;
         i += response_args_len - 1;
     }
 
-    return result;
+    return args;
 }
 
 static void StripAPIPointers(int *argc, char **argv)
@@ -345,7 +407,8 @@ static char **DoParseArgs(int argc, char **argv)
 
     if (argc == 1)
     {
-        goto help;
+        PrintProgramUsage(stdout);
+        exit(0);
     }
 
     StripAPIPointers(&argc, argv);
@@ -356,12 +419,6 @@ static char **DoParseArgs(int argc, char **argv)
         {
             return AppendArgList(NULL, argc - i, argv + i);
         }
-        if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help")
-         || !strcasecmp(argv[i], "--help"))
-        {
-            goto help;
-        }
-
         f = MustFindFlagForName(argv[i]);
         if (f->type != FLAG_BOOL &&
             (i + 1 >= argc || argv[i + 1][0] == '-'))
@@ -397,24 +454,38 @@ static char **DoParseArgs(int argc, char **argv)
     // No follow-on command was given. This may be an error but it's up to
     // the caller to decide.
     return NULL;
-
-help:
-    PrintProgramUsage(stdout);
-    exit(0);
-    return NULL;  // unreachable
 }
 
 char **ParseCommandLine(int argc, char **argv)
 {
-    char **expanded_args, **result;
-    int expanded_args_len;
+    char **args, **result;
+    int i;
 
-    expanded_args = ExpandResponseArgs(argc, argv);
-    expanded_args_len = ArgListLength(expanded_args);
+    for (i = 1; i < argc; i++)
+    {
+        if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help")
+         || !strcasecmp(argv[i], "--help"))
+        {
+            PrintProgramUsage(stdout);
+            exit(0);
+        }
+    }
 
-    result = DoParseArgs(expanded_args_len, expanded_args);
+    args = AppendArgList(NULL, 1, &argv[0]);
+    args = AppendBakedInArgs(args);
+    args = AppendArgList(args, argc - 1, &argv[1]);
+    args = ExpandResponseArgs(args);
 
-    free(expanded_args);
+    // When we have baked-in arguments, we have to do some rearranging
+    // to distinguish between args for this program and the one we invoke.
+    if (HAVE_BAKED_IN_CONFIG(baked_in_config))
+    {
+        ReorderArgsForBakedIn(args);
+    }
+
+    result = DoParseArgs(ArgListLength(args), args);
+
+    free(args);
 
     return result;
 }

@@ -278,11 +278,66 @@ static int ArgListLength(char **args)
     return result;
 }
 
-static void ReorderArgsForBakedIn(char **args)
+// Scan through command line arguments and try to identify the name of the
+// .exe that the user is trying to execute. We stop when we either reach an
+// argument that is not a flag, or not a flag that we recognize.
+static char *IdentifyCallee(int argc, char **argv)
+{
+    struct flag *f;
+    int i;
+
+    for (i = 1; i < argc; i++)
+    {
+        if (argv[i][0] != '-')
+        {
+            return argv[i];
+        }
+        f = FindFlagForName(argv[i]);
+        if (f == NULL)
+        {
+            break;
+        }
+        // Skip over parameter:
+        if (f->type != FLAG_BOOL)
+        {
+            ++i;
+        }
+    }
+    return NULL;
+}
+
+static void ReorderArgsForBakedIn(char **args, char *callee)
 {
     char **callee_args = NULL;
     char **r, **w;
     struct flag *f;
+
+    // This is to handle a corner case where only flags are baked in,
+    // and the user still supplies the name of the callee .exe.
+    // Example:
+    //   ipxsetup.exe has "-nodes 3 -skill 2" baked in.
+    // User invokes:
+    //   ipxsetup doom2.exe -warp 10
+    // After prepending baked-in args, this will have become:
+    //   ipxsetup -nodes 3 -skill 2 doom2.exe -warp 10
+    // But we don't know this flag --^^
+    // We need to move the .exe to the start so we instead get:
+    //   ipxsetup -nodes 3 doom2.exe -skill 2 -warp 10
+    if (callee != NULL)
+    {
+        int i;
+
+        for (i = 1; args[i] != NULL; i++)
+        {
+            // The use of == rather than strcmp() here is deliberate.
+            if (args[i] == callee)
+            {
+                memmove(&args[2], &args[1], sizeof(char *) * (i - 1));
+                args[1] = callee;
+                break;
+            }
+        }
+    }
 
     // We sort through the arguments list and look for flags we recognize.
     // Every argument gets sorted into one of two lists: either the list
@@ -480,7 +535,7 @@ char **ParseCommandLine(int argc, char **argv)
     // to distinguish between args for this program and the one we invoke.
     if (HAVE_BAKED_IN_CONFIG(baked_in_config))
     {
-        ReorderArgsForBakedIn(args);
+        ReorderArgsForBakedIn(args, IdentifyCallee(argc, argv));
     }
 
     result = DoParseArgs(ArgListLength(args), args);

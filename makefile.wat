@@ -22,12 +22,13 @@ VCOMMIT_OBJS = adapters\vcommit.o adapters\fragment.o net\doomnet.o &
                adapters\nodemap.o lib\common.lib
 VROTTCOM_OBJS = adapters\vrottcom.o adapters\fragment.o net\doomnet.o &
                 adapters\nodemap.o lib\common.lib
+VSETARGS_OBJS = lib\vsetargs.o
 FAKEDOOM_OBJS = test\fakedoom.o net\doomnet.o ctrl\control.o &
                 stat\stats.o lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
-       vcommit.exe vrottcom.exe
+       vcommit.exe vrottcom.exe vsetargs.exe
 
 all: $(EXES)
 
@@ -56,6 +57,8 @@ vcommit.exe: $(VCOMMIT_OBJS)
 	wcl -fe=$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
 	wcl -fe=$@ $(VROTTCOM_OBJS)
+vsetargs.exe: $(VSETARGS_OBJS)
+	wcl -fe=$@ $(VSETARGS_OBJS)
 fakedoom.exe: $(FAKEDOOM_OBJS)
 	wcl -fe=$@ $(FAKEDOOM_OBJS)
 

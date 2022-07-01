@@ -12,6 +12,5 @@ union ipx_regs {
 extern union ipx_regs ipx_regs;
 extern void far (*ipx_entrypoint)();
 
-extern void __stdcall OldIPXCall(void);
 extern void __stdcall NewIPXCall(void);
 

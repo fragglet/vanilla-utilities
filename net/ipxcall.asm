@@ -19,34 +19,6 @@ _ipx_entrypoint dd          0
 
 .code
 
-; Old-style call into IPX API by invoking interrupt 7Ah:
-public _OldIPXCall
-_OldIPXCall:
-    push bx
-    push cx
-    push dx
-    push es
-    push si
-    mov ax, _ipx_regs.ipxr_ax
-    mov bx, _ipx_regs.ipxr_bx
-    mov cx, _ipx_regs.ipxr_cx
-    mov dx, _ipx_regs.ipxr_dx
-    mov es, _ipx_regs.ipxr_es
-    mov si, _ipx_regs.ipxr_si
-    int 7Ah
-    mov _ipx_regs.ipxr_ax, ax
-    mov _ipx_regs.ipxr_bx, bx
-    mov _ipx_regs.ipxr_cx, cx
-    mov _ipx_regs.ipxr_dx, dx
-    mov _ipx_regs.ipxr_es, es
-    mov _ipx_regs.ipxr_si, si
-    pop si
-    pop es
-    pop dx
-    pop cx
-    pop bx
-    ret
-
 ; New-style call into IPX API by performing a far call into the IPX entrypoint
 ; function. The _ipx_entrypoint variable must have been initialized first.
 public _NewIPXCall

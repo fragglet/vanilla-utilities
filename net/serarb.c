@@ -139,7 +139,7 @@ void ArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void))
     arb.net_cmd = net_cmd;
     InitArbitration(&arb);
 
-    LogMessage("Attempting to connect across serial link");
+    LogMessage("Attempting to connect across link.");
 
     do
     {

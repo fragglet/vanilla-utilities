@@ -89,6 +89,8 @@ void main(int argc, char *argv[])
 {
     char **args;
 
+    srand(GetEntropy());
+
     SetHelpText("Doom parallel port network device driver",
                 "%s doom2.exe -warp 15 -skill 3");
     RegisterArbitrationFlags();

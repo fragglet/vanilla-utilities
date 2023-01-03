@@ -33,8 +33,11 @@ unsigned irq = 7;
 #define BUFSIZE 512
 static void (interrupt far *oldisr) ();
 static uint8_t oldmask;
-unsigned int errcnt = 0;
 static unsigned icnt = 0;
+unsigned int errors_wrong_checksum = 0;
+unsigned int errors_packet_overwritten = 0;
+unsigned int errors_wrong_start = 0;
+unsigned int errors_timeout = 0;
 
 uint8_t pktbuf[BUFSIZE];
 
@@ -45,11 +48,6 @@ unsigned int recv_count = 0;
 // Flags:
 static int lpt2, lpt3;
 static int port_flag;
-
-void __stdcall CountInErr(void)
-{
-    errcnt++;
-}
 
 extern void __stdcall PLIORecvPacket(void);
 

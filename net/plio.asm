@@ -51,6 +51,10 @@ extrn   _bufofs:word
 extrn   _recv_count:word
 extrn   _newpkt:word
 extrn   _portbase:word
+extrn   _errors_wrong_checksum:word
+extrn   _errors_packet_overwritten:word
+extrn   _errors_wrong_start:word
+extrn   _errors_timeout:word
 
 send_nib_count	db	?
 recv_byte_count	db	?
@@ -225,8 +229,6 @@ send_nibble_2:
 	ret
 
 
-        extrn   _CountInErr: near
-
 recv_char	db	'0'
 
         public  _PLIORecvPacket
@@ -240,7 +242,8 @@ _PLIORecvPacket:
         and     al, 11111000b           ; mask off the shit
         cmp     al,0c0h                 ; it must be 0c0h, otherwise spurious.
 	je	recv_real
-        jmp     recv_err
+	inc     _errors_wrong_start
+        jmp     recv_free
 recv_real:
 
         ; mov     al,recv_char
@@ -261,32 +264,41 @@ recv_real:
         mov     dx, _portbase
         inc     dx
 	call	recv_byte		;get the count.
-        jc      recv_err                        ;it timed out.
+        jc      recv_timeout            ;it timed out.
 	mov	cl,al
 	call	recv_byte
-        jc      recv_err                        ;it timed out.
+        jc      recv_timeout            ;it timed out.
 	mov	ch,al
 	xor	bl,bl
         mov     _recv_count,cx
 recv_1:
 	call	recv_byte		;get a data byte.
-        jc      recv_err                        ;it timed out.
+        jc      recv_timeout            ;it timed out.
 	add	bl,al
 	stosb
 	loop	recv_1
 
 	call	recv_byte		;get the checksum.
-        jc      recv_err                        ;it timed out.
+        jc      recv_timeout            ;it timed out.
 	cmp	al,bl			;checksum okay?
-        jne     recv_err                ;no.
+        jne     recv_wrong_checksum     ;no.
 
 	jmp	short recv_free
 
-recv_err:
-	call    _CountInErr
+recv_wrong_checksum:
+	inc     _errors_wrong_checksum
+	jmp     short recv_free
+
+recv_timeout:
+	inc     _errors_timeout
+	jmp     short recv_free
 
 recv_free:
+	cmp     _newpkt, 00h
+	je      recv_not_overwritten
+	inc     _errors_packet_overwritten
 
+recv_not_overwritten:
 ;wait for the other end to reset to zero.
         mov     _newpkt, 1
 	mov	ax,10			;1/9th of a second.

@@ -341,6 +341,16 @@ recv_low_nibble:
 	pop	cx
 	jne	recv_byte_1
 
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,dx			;reread to make sure input has settled
+
 	shr	al,1			;put our bits into position.
 	shr	al,1
 	shr	al,1
@@ -370,6 +380,16 @@ recv_high_nibble:
 	loope	recv_high_nibble
 	pop	cx
 	je	recv_byte_1
+
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+	in	al,61h
+        in      al,61h
+	in	al,dx			;reread to make sure input has settled
 
 	shl	al,1			;put our bits into position.
 	and	al,0f0h

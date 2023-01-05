@@ -46,10 +46,11 @@ REQUEST_IRQ	equ	08h
 STATUS		equ	1
 CONTROL		equ	2
 
+extrn   _PacketReceived: near
+
 extrn   _bufseg:word
 extrn   _bufofs:word
 extrn   _recv_count:word
-extrn   _newpkt:word
 extrn   _portbase:word
 extrn   _errors_wrong_checksum:word
 extrn   _errors_packet_overwritten:word
@@ -283,6 +284,8 @@ recv_1:
 	cmp	al,bl			;checksum okay?
         jne     recv_wrong_checksum     ;no.
 
+	call    _PacketReceived         ; packet received!
+
 	jmp	short recv_free
 
 recv_wrong_checksum:
@@ -294,13 +297,7 @@ recv_timeout:
 	jmp     short recv_free
 
 recv_free:
-	cmp     _newpkt, 00h
-	je      recv_not_overwritten
-	inc     _errors_packet_overwritten
-
-recv_not_overwritten:
 ;wait for the other end to reset to zero.
-        mov     _newpkt, 1
 	mov	ax,10			;1/9th of a second.
 	call	set_timeout
         mov     dx, _portbase

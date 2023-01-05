@@ -27,10 +27,17 @@
 #include "net/doomnet.h"
 #include "net/parport.h"
 
+#define NUM_RX_BUFFERS 16
+#define BUFSIZE 512
+
+struct rx_buffer {
+    uint8_t buffer[BUFSIZE];
+    unsigned int len;
+};
+
 unsigned int portbase = 0x378;
 unsigned irq = 7;
 
-#define BUFSIZE 512
 static void (interrupt far *oldisr) ();
 static uint8_t oldmask;
 static unsigned icnt = 0;
@@ -39,7 +46,8 @@ unsigned int errors_packet_overwritten = 0;
 unsigned int errors_wrong_start = 0;
 unsigned int errors_timeout = 0;
 
-uint8_t pktbuf[BUFSIZE];
+static struct rx_buffer rx_buffers[NUM_RX_BUFFERS];
+static unsigned int rx_buffer_head, rx_buffer_tail;
 
 unsigned int bufseg = 0;
 unsigned int bufofs = 0;
@@ -51,12 +59,65 @@ static int port_flag;
 
 extern void __stdcall PLIORecvPacket(void);
 
+// Called by the I/O code when a complete packet has been received.
+// When called, the buffer (in the rx_buffer_head'th buffer) has been
+// populated, and recv_count is set to the packet length.
+void __stdcall PacketReceived(void)
+{
+    struct rx_buffer *buf = &rx_buffers[rx_buffer_head];
+    unsigned int next_head;
+
+    if (buf->len != 0)
+    {
+        ++errors_packet_overwritten;
+    }
+
+    buf->len = recv_count;
+
+    // Advance head, but we don't overflow the queue. If there are no more
+    // buffers available, we will end up overwriting a packet.
+    next_head = (rx_buffer_head + 1) & (NUM_RX_BUFFERS - 1);
+    if (next_head != rx_buffer_tail)
+    {
+        rx_buffer_head = next_head;
+    }
+}
+
 void interrupt far ReceiveISR(void)
 {
     icnt++;
+
+    bufseg = FP_SEG(&rx_buffers[rx_buffer_head].buffer);
+    bufofs = FP_OFF(&rx_buffers[rx_buffer_head].buffer);
+
     PLIORecvPacket();
 
     OUTPUT(0x20, 0x20);
+}
+
+// Returns zero if there is no packet waiting to be received.
+unsigned int NextPacket(uint8_t *result_buf, unsigned int max_len)
+{
+    struct rx_buffer *buf;
+    unsigned int result;
+
+    while (rx_buffer_head != rx_buffer_tail)
+    {
+        buf = &rx_buffers[rx_buffer_tail];
+        rx_buffer_tail = (rx_buffer_tail + 1) & (NUM_RX_BUFFERS - 1);
+
+        // We skip over packets if they would overflow result_buf.
+        if (buf->len <= max_len)
+        {
+            memcpy(result_buf, &buf->buffer, buf->len);
+            result = buf->len;
+            buf->len = 0;
+
+            return result;
+        }
+    }
+
+    return 0;
 }
 
 void InitISR(void)
@@ -74,7 +135,6 @@ void InitISR(void)
     OUTPUT(0x21, mask);
 
     OUTPUT(0x20, 0x20);
-
 }
 
 void ParallelRegisterFlags(void)
@@ -114,9 +174,6 @@ void InitPort(void)
 {
     // find the irq and i/o address of the port
     GetPort();
-
-    bufseg = FP_SEG(pktbuf);
-    bufofs = FP_OFF(pktbuf);
 
     InitISR();
 }

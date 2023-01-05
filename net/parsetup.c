@@ -76,11 +76,10 @@ static void NetCallback(void)
     }
     else if (doomcom.command == CMD_GET)
     {
-        if (ReadPacket() && recv_count <= sizeof(doomcom.data))
+        doomcom.datalength = NextPacket(doomcom.data, sizeof(doomcom.data));
+        if (doomcom.datalength > 0)
         {
             doomcom.remotenode = 1;
-            doomcom.datalength = recv_count;
-            memcpy(doomcom.data, pktbuf, recv_count);
         }
         else
         {

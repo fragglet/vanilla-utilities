@@ -16,8 +16,6 @@ ver equ     0
 ;   along with this program; if not, write to the Free Software
 ;   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-include net/defs.asm
-
 .model small
 
 .data
@@ -45,6 +43,13 @@ DATA		equ	0
 REQUEST_IRQ	equ	08h
 STATUS		equ	1
 CONTROL		equ	2
+
+MTU		equ	512
+
+CANT_SEND	equ	12		;the packet couldn't be sent (usually
+					;hardware error)
+NO_SPACE	equ	9		;operation failed because of
+					;insufficient space
 
 extrn   _PacketReceived: near
 
@@ -114,7 +119,7 @@ send_pkt:
 ;exit with nc if ok, or else cy if error, dh set to error number.
 	assume	ds:nothing
 
-	cmp	cx,GIANT		; Is this packet too large?
+	cmp	cx,MTU			; Is this packet too large?
 	ja	send_pkt_toobig
 
 ;cause an interrupt on the other end.
@@ -432,7 +437,7 @@ timer_isr:
 ;end_resident and end_free_mem.
 	public end_resident,end_free_mem
 end_resident	label	byte
-	db	GIANT dup(?)
+	db	MTU dup(?)
 end_free_mem	label	byte
 
 

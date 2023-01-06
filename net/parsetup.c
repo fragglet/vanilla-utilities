@@ -76,12 +76,14 @@ static void NetCallback(void)
 
 void main(int argc, char *argv[])
 {
+    int printstats = 0;
     char **args;
 
     srand(GetEntropy());
 
     SetHelpText("Doom parallel port network device driver",
                 "%s doom2.exe -warp 15 -skill 3");
+    BoolFlag("-printstats", &printstats, NULL);
     RegisterArbitrationFlags();
     ParallelRegisterFlags();
     NetRegisterFlags();
@@ -108,7 +110,7 @@ void main(int argc, char *argv[])
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);
 
-    if (errors_timeout + errors_packet_overwritten + errors_wrong_checksum > 0)
+    if (printstats)
     {
         printf("timeouts: %d overwritten: %d wrong checksum: %d",
                errors_timeout, errors_packet_overwritten,

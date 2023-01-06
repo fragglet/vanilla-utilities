@@ -1,6 +1,4 @@
 ver equ     0
-;History:562,1
-
 ;  Copyright, 1988-1992, Russell Nelson, Crynwr Software
 
 ;   This program is free software; you can redistribute it and/or modify
@@ -39,10 +37,7 @@ PUBLIC        _plio_write_seg, _plio_write_off, _plio_write_len
 ; until all bytes have been transferred ]
 ; 		<-0
 
-DATA		equ	0
 REQUEST_IRQ	equ	08h
-STATUS		equ	1
-CONTROL		equ	2
 
 MTU		equ	512
 
@@ -61,9 +56,6 @@ extrn   _errors_wrong_checksum:word
 extrn   _errors_packet_overwritten:word
 extrn   _errors_wrong_start:word
 extrn   _errors_timeout:word
-
-send_nib_count	db	?
-recv_byte_count	db	?
 
 ;put into the public domain by Russell Nelson, nelson@crynwr.com
 
@@ -94,7 +86,6 @@ latch_timer:
 	xchg	ah,al
 	ret
 
-
 do_timeout:
 ;call at *least* every 27.5ms when checking for timeout.  Returns nz
 ;if we haven't timed out yet.
@@ -106,17 +97,12 @@ do_timeout:
 	jnc	do_timeout_1		;no.
 	dec	cs:timeout		;Did we hit the timeout value yet?
 	ret
+
 do_timeout_1:
 	or	sp,sp			;ensure nz.
         ret
 
-
 send_pkt:
-;enter with es:di->upcall routine, (0:0) if no upcall is desired.
-;  (only if the high-performance bit is set in driver_function)
-;enter with ds:si -> packet, cx = packet length.
-;if we're a high-performance driver, es:di -> upcall.
-;exit with nc if ok, or else cy if error, dh set to error number.
 	assume	ds:nothing
 
 	cmp	cx,MTU			; Is this packet too large?
@@ -139,9 +125,9 @@ send_pkt_1:
 	call	do_timeout
 	jne	send_pkt_1
 	jmp	short send_pkt_4	;if it times out, they're not listening.
+
 send_pkt_2:
 
-	mov	send_nib_count,0
         mov     dx, _portbase
 	mov	al,cl			;send the count.
 	call	send_byte
@@ -173,15 +159,12 @@ send_pkt_toobig:
 
 send_pkt_4:
         mov     dx, _portbase
-	mov	al,send_nib_count
 	xor	al,al			;clear the data.
 	out	dx,al
 	mov	dh,CANT_SEND
 	stc
 	ret
-;
-; It's important to ensure that the most recent setport is a setport DATA.
-;
+
 send_byte:
 ;enter with al = byte to send.
 ;exit with cy if it timed out.
@@ -195,8 +178,7 @@ send_byte:
 	shr	al,1
 	shr	al,1			;clock bit is cleared by shr.
 send_nibble:
-;enter with setport DATA, al[3-0] = nibble to output.
-;exit with dx set to DATA.
+;enter with al[3-0] = nibble to output.
 	out	dx,al
 	and	al,10h			;get the bit we're waiting for to come back.
 	shl	al,1			;put it in the right position.
@@ -217,21 +199,19 @@ send_nibble_1:
 	pop	cx
 	jne	send_nibble_2
 
-	inc	send_nib_count
-        mov     dx, _portbase                ;leave with setport DATA.
+        mov     dx, _portbase
 	clc
 	ret
+
 send_nibble_2:
 	stc
 	ret
 
-
-recv_char	db	'0'
-
         public  _PLIORecvPacket
 _PLIORecvPacket:
-;called from the recv isr.  All registers have been saved, and ds=cs.
-;Upon exit, the interrupt will be acknowledged.
+;called from the recv isr.
+; _bufseg:_bufofs have been initialized to point to a buffer into which we
+; can receive a packet.
 
         mov     dx, _portbase
         inc     dx                      ; see if we've gotten a real interrupt.
@@ -241,13 +221,8 @@ _PLIORecvPacket:
 	je	recv_real
 	inc     _errors_wrong_start
         jmp     recv_free
+
 recv_real:
-
-        ; mov     al,recv_char
-        ; inc     recv_char
-        ; and     recv_char,'7'
-        ; to_scrn 24,79,al
-
         mov     ax, _bufseg
         mov     es, ax
         mov     di, _bufofs
@@ -255,8 +230,6 @@ recv_real:
         mov     dx, _portbase
 	mov	al,1			;say that we're ready.
 	out	dx,al
-
-	mov	recv_byte_count,0
 
         mov     dx, _portbase
         inc     dx
@@ -307,20 +280,13 @@ recv_pkt_1:
 	call	do_timeout
 	jne	recv_pkt_1
 
-	mov	al,recv_byte_count
 recv_4:
         mov     dx, _portbase
 	xor	al,al
 	out	dx,al
 	ret
 
-        mov     dx, _portbase
-        inc     dx
-                                        ;this code doesn't get executed,
-					;but it sets up for call to recv_byte.
-
 recv_byte:
-;called with setport STATUS.
 ;exit with nc, al = byte, or cy if it timed out.
 
 	push	cx
@@ -401,29 +367,13 @@ recv_high_nibble:
         mov     dx, _portbase
         inc     dx
 
-	inc	recv_byte_count
-
 	mov	al,ah
 	clc
 	ret
+
 recv_byte_1:
 	stc
 	ret
-
-
-        public  timer_isr
-timer_isr:
-;if the first instruction is an iret, then the timer is not hooked
-	iret
-
-;any code after this will not be kept after initialization. Buffers
-;used by the program, if any, are allocated from the memory between
-;end_resident and end_free_mem.
-	public end_resident,end_free_mem
-end_resident	label	byte
-	db	MTU dup(?)
-end_free_mem	label	byte
-
 
 public _PLIOWritePacket
 _PLIOWritePacket:

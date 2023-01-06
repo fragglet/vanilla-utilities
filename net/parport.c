@@ -42,7 +42,6 @@ static void (interrupt far *oldisr) ();
 static uint8_t oldmask;
 unsigned int errors_wrong_checksum = 0;
 unsigned int errors_packet_overwritten = 0;
-unsigned int errors_wrong_start = 0;
 unsigned int errors_timeout = 0;
 
 static struct rx_buffer rx_buffers[NUM_RX_BUFFERS];

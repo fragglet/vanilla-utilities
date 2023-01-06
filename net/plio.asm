@@ -54,7 +54,6 @@ extrn   _recv_count:word
 extrn   _portbase:word
 extrn   _errors_wrong_checksum:word
 extrn   _errors_packet_overwritten:word
-extrn   _errors_wrong_start:word
 extrn   _errors_timeout:word
 
 ;put into the public domain by Russell Nelson, nelson@crynwr.com
@@ -219,7 +218,6 @@ _PLIORecvPacket:
         and     al, 11111000b           ; mask off the shit
         cmp     al,0c0h                 ; it must be 0c0h, otherwise spurious.
 	je	recv_real
-	inc     _errors_wrong_start
         jmp     recv_free
 
 recv_real:

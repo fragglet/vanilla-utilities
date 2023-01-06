@@ -35,7 +35,6 @@
 #define MAXPACKET	512
 
 static doomcom_t doomcom;
-unsigned newpkt = 0;
 
 extern unsigned int errors_wrong_checksum;
 extern unsigned int errors_packet_overwritten;
@@ -43,19 +42,7 @@ extern unsigned int errors_wrong_start;
 extern unsigned int errors_timeout;
 
 extern int __stdcall PLIOWritePacket(void);
-extern uint8_t pktbuf[];
 extern unsigned recv_count;
-
-int ReadPacket(void)
-{
-    if (newpkt)
-    {
-        newpkt = 0;
-        return 1;            // true - got a good packet
-    }
-
-    return 0;                // false - no packet available
-}
 
 int WritePacket(uint8_t *data, unsigned len)
 {

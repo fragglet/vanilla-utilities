@@ -40,7 +40,6 @@ unsigned irq = 7;
 
 static void (interrupt far *oldisr) ();
 static uint8_t oldmask;
-static unsigned icnt = 0;
 unsigned int errors_wrong_checksum = 0;
 unsigned int errors_packet_overwritten = 0;
 unsigned int errors_wrong_start = 0;
@@ -85,8 +84,6 @@ void __stdcall PacketReceived(void)
 
 void interrupt far ReceiveISR(void)
 {
-    icnt++;
-
     bufseg = FP_SEG(&rx_buffers[rx_buffer_head].buffer);
     bufofs = FP_OFF(&rx_buffers[rx_buffer_head].buffer);
 

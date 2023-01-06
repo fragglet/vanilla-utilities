@@ -158,8 +158,6 @@ send_pkt_3:
 	loop	send_pkt_3
 
 	mov	al,bl			;send the checksum.
-        ; mov     hexout_color,30h        ;aqua
-        ; call    hexout_more
 	call	send_byte
 	jc	send_pkt_4		;it timed out.
 
@@ -176,8 +174,6 @@ send_pkt_toobig:
 send_pkt_4:
         mov     dx, _portbase
 	mov	al,send_nib_count
-        ; mov     hexout_color,20h        ;green
-        ; call    hexout_more
 	xor	al,al			;clear the data.
 	out	dx,al
 	mov	dh,CANT_SEND
@@ -207,8 +203,6 @@ send_nibble:
 	shl	al,1
 	shl	al,1
 	mov	ah,al
-        ; mov     hexout_color,60h        ;orange
-        ; call    hexout_more
 
         mov     dx, _portbase
         inc     dx
@@ -222,9 +216,6 @@ send_nibble_1:
 	loopne	send_nibble_1
 	pop	cx
 	jne	send_nibble_2
-
-        ; mov     hexout_color,50h        ;purple
-        ; call    hexout_more
 
 	inc	send_nib_count
         mov     dx, _portbase                ;leave with setport DATA.
@@ -313,15 +304,10 @@ recv_pkt_1:
         cmp     al,80h                  ;wait for them to output 0.
 	je	recv_4
 
-        ; mov     hexout_color,20h        ;green
-        ; call    hexout_more
-
 	call	do_timeout
 	jne	recv_pkt_1
 
 	mov	al,recv_byte_count
-        ; mov     hexout_color,20h        ;green
-        ; call    hexout_more
 recv_4:
         mov     dx, _portbase
 	xor	al,al
@@ -418,8 +404,6 @@ recv_high_nibble:
 	inc	recv_byte_count
 
 	mov	al,ah
-        ; mov     hexout_color,40h        ;red
-        ; call    hexout_more
 	clc
 	ret
 recv_byte_1:

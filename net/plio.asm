@@ -308,11 +308,7 @@ recv_low_nibble:
 	in	al,61h
 	in	al,61h
 	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
+	in      al,61h
 	in	al,dx			;reread to make sure input has settled
 
 	shr	al,1			;put our bits into position.
@@ -346,13 +342,9 @@ recv_high_nibble:
 	je	recv_byte_1
 
 	in	al,61h
+	in      al,61h
 	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
-	in	al,61h
-        in      al,61h
+	in      al,61h
 	in	al,dx			;reread to make sure input has settled
 
 	shl	al,1			;put our bits into position.

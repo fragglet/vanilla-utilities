@@ -10,7 +10,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 
-#define MAXDRIVERS 16
+#define MAXDRIVERS 8
 
 static void FlushBroadcastPending(void);
 
@@ -26,7 +26,7 @@ static void FlushBroadcastPending(void);
 #define NODE_STATUS_FORWARDER     0x08
 #define NODE_STATUS_QUIT          0x10
 
-#define ADDR_DRIVER(x)  (((x) >> 5) & 0x1f)
+#define ADDR_DRIVER(x)  (((x) >> 5) & 0x07)
 #define ADDR_NODE(x)    ((x) & 0x1f)
 #define MAKE_ADDRESS(driver, node)  (((driver) << 5) | node)
 
@@ -162,7 +162,7 @@ static void ForwardPacket(int driver_index)
     if (hdr->src[sizeof(hdr->src) - 1] != 0)
     {
         ++stats_too_many_hops;
-	return;
+        return;
     }
     far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
     hdr->src[0] = MAKE_ADDRESS(driver_index, src->remotenode);

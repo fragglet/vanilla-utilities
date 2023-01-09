@@ -67,7 +67,7 @@ static void SendTestPackets(void)
 static void RunNetworkTest(void)
 {
     struct test_packet far *pkt = (void far *) doomcom->data;
-    clock_t now, last_send = 0;
+    clock_t now, start_time, last_send = 0;
     int secrets[MAXPLAYERS];
     int i, got_nodes;
 
@@ -75,6 +75,8 @@ static void RunNetworkTest(void)
 
     secrets[doomcom->consoleplayer] = net_secret;
     got_nodes = 1 << 0;
+
+    start_time = clock();
 
     do
     {
@@ -105,10 +107,8 @@ static void RunNetworkTest(void)
         secrets[pkt->consoleplayer] = pkt->secret;
         got_nodes |= 1 << doomcom->remotenode;
 
-    } while (got_nodes != (1 << doomcom->numnodes) - 1);
-
-    SendTestPackets();
-    SendTestPackets();
+    } while (clock() < start_time + 5 * CLOCKS_PER_SEC
+          || got_nodes != (1 << doomcom->numnodes) - 1);
 
     for (i = 0; i < doomcom->numplayers; ++i)
     {

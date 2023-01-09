@@ -24,6 +24,7 @@ static void FlushBroadcastPending(void);
 #define NODE_STATUS_READY         0x02
 #define NODE_STATUS_LAUNCHED      0x04
 #define NODE_STATUS_FORWARDER     0x08
+#define NODE_STATUS_QUIT          0x10
 
 #define ADDR_DRIVER(x)  (((x) >> 5) & 0x1f)
 #define ADDR_NODE(x)    ((x) & 0x1f)
@@ -39,6 +40,7 @@ enum meta_packet_type
     META_PACKET_DATA,
     META_PACKET_DISCOVER,
     META_PACKET_STATUS,
+    META_PACKET_QUIT,
 };
 
 struct meta_header
@@ -366,6 +368,41 @@ static void HandleDiscover(uint8_t first_hop, struct meta_discover_msg far *dsc)
     }
 }
 
+static void NodeQuit(uint8_t first_hop, struct meta_header far *hdr)
+{
+    struct node_data *node;
+    node_addr_t src;
+    int prefix_len, i, node_id;
+
+    far_memmove(src, hdr->src, sizeof(node_addr_t));
+    node_id = NodeForAddr(first_hop, src);
+    if (node_id < 0)
+    {
+        return;
+    }
+
+    // We must flag not only the source node as having quit, but also any
+    // other nodes that we were accessing through that node.
+    node = &nodes[node_id];
+
+    for (prefix_len = 0; prefix_len < sizeof(node_addr_t); ++prefix_len)
+    {
+        if (node->addr[prefix_len] == 0)
+        {
+            break;
+        }
+    }
+
+    for (i = 0; i < num_nodes; ++i)
+    {
+        if (first_hop == node->first_hop
+         && !memcmp(node->addr, nodes[i].addr, prefix_len))
+        {
+            nodes[i].flags |= NODE_STATUS_QUIT;
+        }
+    }
+}
+
 static int HandlePacket(uint8_t first_hop, doomcom_t far *dc)
 {
     struct meta_header far *hdr;
@@ -392,6 +429,10 @@ static int HandlePacket(uint8_t first_hop, doomcom_t far *dc)
 
         case META_PACKET_DISCOVER:
             HandleDiscover(first_hop, (struct meta_discover_msg far *) hdr);
+            break;
+
+        case META_PACKET_QUIT:
+            NodeQuit(first_hop, hdr);
             break;
 
         default:
@@ -816,16 +857,36 @@ static void NetCallback(void)
     }
 }
 
+static int AllPlayersQuit(void)
+{
+    int i;
+
+    // When all players are marked as having quit, the forwarding loop can
+    // quit. However, we don't wait on other forwarders as it would cause a
+    // circular dependency.
+    for (i = 1; i < num_nodes; ++i)
+    {
+        if ((nodes[i].flags & (NODE_STATUS_FORWARDER|NODE_STATUS_QUIT)) == 0)
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 static void RunForwarder(void)
 {
     LogMessage("Entering packet forwarding mode.");
 
-    for (;;)
+    while (!AllPlayersQuit())
     {
         CheckAbort("Packet forwarder");
         GetPacket();
         // TODO: Print some statistics occasionally?
     }
+
+    LogMessage("All reachable players have quit.");
 }
 
 static void AddDriver(long l)
@@ -854,6 +915,28 @@ static void SeedRandom(void)
     }
 
     srand(entropy);
+}
+
+static void SendQuit(void)
+{
+    doomcom_t far *dc;
+    struct meta_header far *dsc;
+    int d, n;
+
+    for (d = 0; d < num_drivers; ++d)
+    {
+        dc = drivers[d];
+        dsc = (struct meta_header far *) dc->data;
+        dsc->magic = META_MAGIC | (unsigned long) META_PACKET_QUIT;
+        far_bzero(dsc->src, sizeof(node_addr_t));
+        far_memmove(dsc->dest, broadcast, sizeof(node_addr_t));
+
+        for (n = 1; n < dc->numnodes; ++n)
+        {
+            dc->remotenode = n;
+            NetSendPacket(dc);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -908,6 +991,7 @@ int main(int argc, char *argv[])
         NetLaunchDoom(&doomcom, args, NetCallback);
     }
 
+    SendQuit();
     PrintStats();
 
     return 0;

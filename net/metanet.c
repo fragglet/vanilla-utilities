@@ -930,6 +930,7 @@ static void SendQuit(void)
         dsc->magic = META_MAGIC | (unsigned long) META_PACKET_QUIT;
         far_bzero(dsc->src, sizeof(node_addr_t));
         far_memmove(dsc->dest, broadcast, sizeof(node_addr_t));
+        dc->datalength = sizeof(struct meta_header);
 
         for (n = 1; n < dc->numnodes; ++n)
         {

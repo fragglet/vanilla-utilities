@@ -66,6 +66,7 @@ struct meta_discover_msg
 
 struct node_data
 {
+    uint8_t first_hop;
     node_addr_t addr;
     uint8_t flags;
     int station_id;
@@ -145,12 +146,24 @@ static void ForwardBroadcast(doomcom_t far *src)
     }
 }
 
-static void ForwardPacket(doomcom_t far *src)
+static void ForwardPacket(int driver_index)
 {
+    doomcom_t far *src = drivers[driver_index];
     unsigned int ddriver, dnode;
     struct meta_header far *hdr;
 
     hdr = (struct meta_header far *) src->data;
+
+    // Update src address to include return path; this is needed
+    // even if we are delivering the packet to ourself so we get
+    // an accurate source address.
+    if (hdr->src[sizeof(hdr->src) - 1] != 0)
+    {
+        ++stats_too_many_hops;
+	return;
+    }
+    far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
+    hdr->src[0] = MAKE_ADDRESS(driver_index, src->remotenode);
 
     // Decode next hop from first byte of routing dest:
     ddriver = ADDR_DRIVER(hdr->dest[0]);
@@ -194,16 +207,6 @@ static int GetAndForward(int driver_index)
             ++stats_wrong_magic;
             continue;
         }
-        // Update src address to include return path; this is needed
-        // even if we are delivering the packet to ourself so we get
-        // an accurate source address.
-        if (hdr->src[sizeof(hdr->src) - 1] != 0)
-        {
-            ++stats_too_many_hops;
-            continue;
-        }
-        far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
-        hdr->src[0] = MAKE_ADDRESS(driver_index, dc->remotenode);
         // Packet for ourself?
         if (hdr->dest[0] == 0)
         {
@@ -217,19 +220,20 @@ static int GetAndForward(int driver_index)
             ++stats_rx_broadcasts;
             return 1;
         }
-        ForwardPacket(dc);
+        ForwardPacket(driver_index);
     }
 
     return 0;
 }
 
-static int NodeForAddr(node_addr_t addr)
+static int NodeForAddr(uint8_t first_hop, node_addr_t addr)
 {
     unsigned int i;
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (!memcmp(nodes[i].addr, addr, sizeof(node_addr_t)))
+        if (first_hop == nodes[i].first_hop
+         && !memcmp(nodes[i].addr, addr, sizeof(node_addr_t)))
         {
             return i;
         }
@@ -253,12 +257,12 @@ static int AppendNextHop(node_addr_t addr, uint8_t next_hop)
     return 0;
 }
 
-static struct node_data *NodeOrAddNode(node_addr_t addr)
+static struct node_data *NodeOrAddNode(uint8_t first_hop, node_addr_t addr)
 {
     struct node_data *result;
     int node_idx;
 
-    node_idx = NodeForAddr(addr);
+    node_idx = NodeForAddr(first_hop, addr);
     if (node_idx >= 0)
     {
         return &nodes[node_idx];
@@ -271,6 +275,7 @@ static struct node_data *NodeOrAddNode(node_addr_t addr)
 
     result = &nodes[num_nodes];
     ++num_nodes;
+    result->first_hop = first_hop;
     memcpy(result->addr, addr, sizeof(node_addr_t));
 
     return result;
@@ -280,16 +285,13 @@ static void SendDiscover(struct node_data *node)
 {
     doomcom_t far *dc;
     struct meta_discover_msg far *dsc;
-    unsigned int first_hop;
     int d, n;
 
-    first_hop = node->addr[0];
-    dc = drivers[ADDR_DRIVER(first_hop)];
+    dc = drivers[ADDR_DRIVER(node->first_hop)];
     dsc = (struct meta_discover_msg far *) dc->data;
     dsc->header.magic = META_MAGIC | (unsigned long) META_PACKET_DISCOVER;
     far_bzero(dsc->header.src, sizeof(node_addr_t));
-    far_memmove(dsc->header.dest, node->addr + 1, sizeof(node_addr_t) - 1);
-    dsc->header.dest[sizeof(node_addr_t) - 1] = 0;
+    far_memmove(dsc->header.dest, node->addr, sizeof(node_addr_t));
 
     dsc->status = nodes[0].flags;
     dsc->num_neighbors = 0;
@@ -302,7 +304,7 @@ static void SendDiscover(struct node_data *node)
         // interface and including them could cause a routing loop.
         // The destination only cares about what can be accessed *through*
         // this node.
-        if (d == ADDR_DRIVER(first_hop))
+        if (d == ADDR_DRIVER(node->first_hop))
         {
             continue;
         }
@@ -319,11 +321,11 @@ static void SendDiscover(struct node_data *node)
 
     // Send packet.
     dc->datalength = sizeof(struct meta_discover_msg);
-    dc->remotenode = ADDR_NODE(first_hop);
+    dc->remotenode = ADDR_NODE(node->first_hop);
     NetSendPacket(dc);
 }
 
-static void HandleDiscover(struct meta_discover_msg far *dsc)
+static void HandleDiscover(uint8_t first_hop, struct meta_discover_msg far *dsc)
 {
     struct node_data *node;
     static node_addr_t addr;
@@ -331,7 +333,7 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
 
     far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
 
-    node = NodeOrAddNode(addr);
+    node = NodeOrAddNode(first_hop, addr);
     if (node == NULL)
     {
         return;
@@ -351,18 +353,20 @@ static void HandleDiscover(struct meta_discover_msg far *dsc)
     node->flags = dsc->status | NODE_STATUS_GOT_DISCOVER;
     node->station_id = dsc->station_id;
 
+    // We go through the list of neighbors for this node and add more nodes
+    // if we aren't yet aware of them.
     for (i = 0; i < dsc->num_neighbors && i < MAXNETNODES; ++i)
     {
         far_memmove(addr, dsc->header.src, sizeof(node_addr_t));
 
         if (AppendNextHop(addr, dsc->neighbors[i]))
         {
-            NodeOrAddNode(addr);
+            NodeOrAddNode(first_hop, addr);
         }
     }
 }
 
-static int HandlePacket(doomcom_t far *dc)
+static int HandlePacket(uint8_t first_hop, doomcom_t far *dc)
 {
     struct meta_header far *hdr;
     struct meta_data_msg far *msg;
@@ -375,7 +379,7 @@ static int HandlePacket(doomcom_t far *dc)
         case META_PACKET_DATA:
             msg = (struct meta_data_msg far *) dc->data;
             far_memmove(addr, msg->header.src, sizeof(node_addr_t));
-            doomcom.remotenode = NodeForAddr(addr);
+            doomcom.remotenode = NodeForAddr(first_hop, addr);
             if (doomcom.remotenode < 0)
             {
                 ++stats_unknown_src;
@@ -387,7 +391,7 @@ static int HandlePacket(doomcom_t far *dc)
             return 1;
 
         case META_PACKET_DISCOVER:
-            HandleDiscover((struct meta_discover_msg far *) hdr);
+            HandleDiscover(first_hop, (struct meta_discover_msg far *) hdr);
             break;
 
         default:
@@ -402,6 +406,7 @@ static int HandlePacket(doomcom_t far *dc)
 static void GetPacket(void)
 {
     int i;
+    uint8_t first_hop;
 
     // We want to ensure packets are never held up in the broadcast buffer
     // otherwise it may affect latency. Doom's NetUpdate() calls SendPacket
@@ -415,6 +420,7 @@ static void GetPacket(void)
         {
             if (GetAndForward(i))
             {
+                first_hop = MAKE_ADDRESS(i, drivers[i]->remotenode);
                 break;
             }
         }
@@ -425,7 +431,7 @@ static void GetPacket(void)
             return;
         }
 
-        if (HandlePacket(drivers[i]))
+        if (HandlePacket(first_hop, drivers[i]))
         {
             // Got a data packet and populated doomcom
             return;
@@ -444,17 +450,15 @@ static void SendFromBuffer(doomcom_t *src)
 
     // First entry in node_addr is the first hop
     node = &nodes[src->remotenode];
-    first_hop = node->addr[0];
-    dc = drivers[ADDR_DRIVER(first_hop)];
-    dc->remotenode = ADDR_NODE(first_hop);
+    dc = drivers[ADDR_DRIVER(node->first_hop)];
+    dc->remotenode = ADDR_NODE(node->first_hop);
 
     dc->datalength = sizeof(struct meta_header) + src->datalength;
     msg = (struct meta_data_msg far *) dc->data;
     msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
     far_bzero(msg->header.src, sizeof(node_addr_t));
     far_bzero(msg->header.dest, sizeof(node_addr_t));
-    far_memmove(msg->header.dest, node->addr + 1,
-                sizeof(node_addr_t) - 1);
+    far_memmove(msg->header.dest, node->addr, sizeof(node_addr_t));
     far_memmove(msg->data, src->data, src->datalength);
 
     NetSendPacket(dc);
@@ -567,7 +571,8 @@ static void InitNodes(void)
         {
             if (num_nodes < MAXNETNODES)
             {
-                nodes[num_nodes].addr[0] = MAKE_ADDRESS(d, n);
+                nodes[num_nodes].first_hop = MAKE_ADDRESS(d, n);
+                far_bzero(nodes[num_nodes].addr, sizeof(node_addr_t));
                 ++num_nodes;
             }
         }
@@ -654,6 +659,12 @@ static int CompareAddrs(const void *_a, const void *_b)
 {
     const struct node_data *a = *((struct node_data **) _a),
                            *b = *((struct node_data **) _b);
+    int result;
+    result = memcmp(&a->first_hop, &b->first_hop, 1);
+    if (result != 0)
+    {
+        return result;
+    }
     return memcmp(a->addr, b->addr, sizeof(node_addr_t));
 }
 
@@ -687,7 +698,7 @@ static void PrintTopology(void)
     last_first_hop = -1;
     for (i = 1; i < num_nodes; ++i)
     {
-        driver = ADDR_DRIVER(players[i]->addr[0]);
+        driver = ADDR_DRIVER(players[i]->first_hop);
         if (driver != ADDR_DRIVER(last_first_hop))
         {
             LogMessage("    \\ Driver %d:", driver);
@@ -701,9 +712,9 @@ static void PrintTopology(void)
         }
         strncpy(indent_buf, "                             ",
                 sizeof(indent_buf));
-        indent_buf[il * 4 + 4] = '\0';
+        indent_buf[il * 4 + 8] = '\0';
         LogMessage("%s\\ %s", indent_buf, NodeDescription(players[i]));
-        last_first_hop = players[i]->addr[0];
+        last_first_hop = players[i]->first_hop;
     }
 }
 

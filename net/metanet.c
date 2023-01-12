@@ -122,10 +122,12 @@ static const struct
     { &stats_setup_packets, "setup_packets" },
 };
 
-static void ForwardBroadcast(doomcom_t far *src)
+static void SendBroadcast(doomcom_t far *src, node_addr_t src_addr)
 {
     doomcom_t far *dest;
+    struct meta_header far *hdr;
     int ddriver, dnode;
+    doomcom_t far *dc;
 
     for (ddriver = 0; ddriver < num_drivers; ++ddriver)
     {
@@ -137,8 +139,10 @@ static void ForwardBroadcast(doomcom_t far *src)
             continue;
         }
 
+        hdr = (struct meta_header far *) dest->data;
         dest->datalength = src->datalength;
         far_memmove(dest->data, src->data, src->datalength);
+        far_memmove(hdr->src, src_addr, sizeof(node_addr_t));
 
         for (dnode = 1; dnode < dest->numnodes; ++dnode)
         {
@@ -148,24 +152,62 @@ static void ForwardBroadcast(doomcom_t far *src)
     }
 }
 
-static void ForwardPacket(int driver_index)
+// Constructs a new source address based on old address and new hop.
+// This may not be possible if we have reached the hop limit.
+static int PrependPreviousHop(node_addr_t far result, uint8_t prev_hop,
+                              node_addr_t far old_addr)
+{
+    if (old_addr[sizeof(node_addr_t) - 1] != 0)
+    {
+        ++stats_too_many_hops;
+        return 0;
+    }
+
+    far_memmove(result + 1, old_addr, sizeof(node_addr_t) - 1);
+    result[0] = prev_hop;
+
+    return 1;
+}
+
+static void ForwardBroadcast(int driver_index)
 {
     doomcom_t far *src = drivers[driver_index];
-    unsigned int ddriver, dnode;
     struct meta_header far *hdr;
+    node_addr_t src_addr;
+
+    ++stats_rx_broadcasts;
+
+    // Fast path: leaf nodes just deliver broadcast packets locally.
+    if (num_drivers < 2)
+    {
+        return;
+    }
 
     hdr = (struct meta_header far *) src->data;
 
-    // Update src address to include return path; this is needed
-    // even if we are delivering the packet to ourself so we get
-    // an accurate source address.
-    if (hdr->src[sizeof(hdr->src) - 1] != 0)
+    if (PrependPreviousHop(
+        src_addr, MAKE_ADDRESS(driver_index, src->remotenode), hdr->src))
     {
-        ++stats_too_many_hops;
+        SendBroadcast(src, src_addr);
+    }
+}
+
+// ForwardPacket is called when there is a packet waiting in
+// drivers[driver_index] that needs to be forwarded. Returns true if the packet
+// should also be delivered locally.
+static void ForwardPacket(int driver_index)
+{
+    doomcom_t far *src = drivers[driver_index];
+    struct meta_header far *hdr;
+    unsigned int ddriver, dnode;
+
+    hdr = (struct meta_header far *) src->data;
+
+    if (!PrependPreviousHop(
+            hdr->src, MAKE_ADDRESS(driver_index, src->remotenode), hdr->src))
+    {
         return;
     }
-    far_memmove(hdr->src + 1, hdr->src, sizeof(hdr->src) - 1);
-    hdr->src[0] = MAKE_ADDRESS(driver_index, src->remotenode);
 
     // Decode next hop from first byte of routing dest:
     ddriver = ADDR_DRIVER(hdr->dest[0]);
@@ -176,6 +218,7 @@ static void ForwardPacket(int driver_index)
         ++stats_invalid_dest;
         return;
     }
+
     // Update destination.
     far_memmove(hdr->dest, hdr->dest + 1, sizeof(hdr->dest) - 1);
     hdr->dest[sizeof(hdr->dest) - 1] = 0;
@@ -215,14 +258,16 @@ static int GetAndForward(int driver_index)
             return 1;
         }
 
-        // This is a forwarding packet.
+        // This is a forwarding packet. For broadcasts we also deliver locally.
         if (far_memcmp(hdr->dest, broadcast, sizeof(node_addr_t)) == 0)
         {
-            ForwardBroadcast(dc);
-            ++stats_rx_broadcasts;
+            ForwardBroadcast(driver_index);
             return 1;
         }
-        ForwardPacket(driver_index);
+        else
+        {
+            ForwardPacket(driver_index);
+        }
     }
 
     return 0;
@@ -498,7 +543,6 @@ static void SendFromBuffer(doomcom_t *src)
     msg = (struct meta_data_msg far *) dc->data;
     msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
     far_bzero(msg->header.src, sizeof(node_addr_t));
-    far_bzero(msg->header.dest, sizeof(node_addr_t));
     far_memmove(msg->header.dest, node->addr, sizeof(node_addr_t));
     far_memmove(msg->data, src->data, src->datalength);
 
@@ -556,17 +600,17 @@ static int TryBroadcastStore(void)
     {
         // We have a complete broadcast packet. Prepend meta-header for send.
         struct meta_data_msg *msg;
+        node_addr_t src_addr;
 
         msg = (struct meta_data_msg *) bc_pending.data;
         memmove(msg->data, bc_pending.data, bc_pending.datalength);
 
         msg->header.magic = META_MAGIC | (unsigned long) META_PACKET_DATA;
-        memset(msg->header.src, 0, sizeof(node_addr_t));
+        memset(src_addr, 0, sizeof(node_addr_t));
         memcpy(msg->header.dest, broadcast, sizeof(node_addr_t));
         bc_pending.datalength += sizeof(struct meta_header);
 
-        // We reuse the ForwardBroadcast to send to all neighbors.
-        ForwardBroadcast(&bc_pending);
+        SendBroadcast(&bc_pending, src_addr);
         ++stats_tx_broadcasts;
 
         bc_pending_count = 0;

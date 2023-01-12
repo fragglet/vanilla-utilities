@@ -82,7 +82,7 @@ static void RunNetworkTest(void)
     {
         CheckAbort("Network test");
         now = clock();
-        if (now - last_send > 1)
+        if (now - last_send > CLOCKS_PER_SEC / 2)
         {
             SendTestPackets();
             last_send = now;

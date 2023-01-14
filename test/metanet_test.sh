@@ -127,13 +127,13 @@ done
 for node in C D E F G H I; do
     filename=MNTEST_${node}.TXT
     if diff MNTEST_A.TXT $filename 2>&1; then
-        result=1
-    else
         rm -f $filename
+    else
+        result=1
     fi
 done
 
-if [ $result -ne 0 ]; then
+if [ $result -eq 0 ]; then
     rm -f MNTEST_A.TXT
 fi
 

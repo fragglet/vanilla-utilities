@@ -37,7 +37,7 @@ struct rx_buffer {
 };
 
 unsigned int portbase = 0x378;
-unsigned int irq = 7;
+static int irq = 7;
 
 static struct irq_hook parport_interrupt;
 
@@ -54,7 +54,7 @@ unsigned int recv_count = 0;
 
 // Flags:
 static int lpt2, lpt3;
-static int port_flag;
+static int irq_flag = 0, port_flag;
 
 extern void __stdcall PLIORecvPacket(void);
 
@@ -130,7 +130,7 @@ void ParallelRegisterFlags(void)
     BoolFlag("-lpt2", &lpt2, "(or -lpt3) use LPTx instead of LPT1");
     BoolFlag("-lpt3", &lpt3, NULL);
     IntFlag("-port", &port_flag, "port number", NULL);
-    IntFlag("-irq", &irq, "irq", NULL);
+    IntFlag("-irq", &irq_flag, "irq", NULL);
 }
 
 void GetPort(void)
@@ -141,17 +141,36 @@ void GetPort(void)
     }
     else if (lpt2)
     {
-        portbase = 0x278;
         SetLogDistinguisher("LPT2");
+        if (irq_flag == 0)
+        {
+            LogMessage("Assuming IRQ 5 for LPT2; you might want to double "
+                       "check this. Use -irq to specify the right IRQ if "
+                       "this is wrong and you get problems.");
+            irq = 5;
+        }
+        portbase = 0x278;
     }
     else if (lpt3)
     {
-        portbase = 0x3bc;
         SetLogDistinguisher("LPT3");
+        if (irq_flag == 0)
+        {
+            Error("Cowardly refusing to guess IRQ for LPT3 because it's too "
+                  "unusual. Please use the -irq flag to specify the IRQ "
+                  "number for this port.");
+        }
+        portbase = 0x3bc;
     }
     else
     {
         SetLogDistinguisher("LPT1");
+        irq = 7;
+    }
+
+    if (irq_flag != 0)
+    {
+        irq = irq_flag;
     }
 
     LogMessage("Using parallel port with base address 0x%x and IRQ %u.",

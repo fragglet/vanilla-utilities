@@ -6,6 +6,7 @@
 
 #include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/serport.h"
@@ -18,6 +19,8 @@ static void interrupt far ISR16550(void);
 static union REGS regs;
 static struct SREGS sregs;
 
+static struct irq_hook uart_interrupt;
+
 que_t inque, outque;
 
 int uart;                       // io address
@@ -26,9 +29,6 @@ int irq;
 
 static int modem_status = -1;
 static int line_status = -1;
-
-static void (interrupt far *oldirqvect) (void);
-static int irqintnum;
 
 static int comport;
 
@@ -224,33 +224,33 @@ void InitPort(long baudrate)
         }
     } while (!(u & 1));
 
-    // hook the irq vector
-    irqintnum = irq + 8;
-
-    oldirqvect = _dos_getvect(irqintnum);
+    // hook the IRQ vector
     if (uart_type == UART_16550)
     {
-        _dos_setvect(irqintnum, ISR16550);
+        HookIRQ(&uart_interrupt, ISR16550, irq);
         LogMessage("UART = 16550");
     }
     else
     {
-        _dos_setvect(irqintnum, ISR8250);
+        HookIRQ(&uart_interrupt, ISR8250, irq);
         LogMessage("UART = 8250");
     }
-
-    OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));
-
-    _disable();
 
     // enable RX and TX interrupts at the uart
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
            IER_RX_DATA_READY + IER_TX_HOLDING_REGISTER_EMPTY);
 
-    // enable interrupts through the interrupt controller
+    // This was in the original SERSETUP source code and was a bit of a
+    // mystery, but I think I figured it out. This is setting OCW2 in the
+    // PIC to invoke the "Set Priority" command. Specifically, this sets a
+    // specific rotation where channel 2 is the bottom priority. Why?
+    // Well, if IRQ2 is the bottom priority, then IRQs 3 and 4 become the
+    // top priority, and those are the IRQs used by the COM1 and COM2
+    // UARTs. So this potentially gives a little bit of priority boost to
+    // the ISR. 
+    // Note the original comment attached to this line, "enable interrupts
+    // through the interrupt controller", is entirely misleading.
     OUTPUT(0x20, 0xc2);
-
-    _enable();
 }
 
 void ShutdownPort(void)
@@ -266,9 +266,7 @@ void ShutdownPort(void)
         INPUT(uart + RECEIVE_BUFFER_REGISTER);
     }
 
-    OUTPUT(0x20 + 1, INPUT(0x20 + 1) | (1 << irq));
-
-    _dos_setvect(irqintnum, oldirqvect);
+    RestoreIRQ(&uart_interrupt);
 
     // init com port settings to defaults
     regs.x.ax = 0xf3;           //f3= 9600 n 8 1
@@ -332,7 +330,7 @@ static void interrupt far ISR8250(void)
 
             default:
                 // done
-                OUTPUT(0x20, 0x20);
+                EndOfIRQ(&uart_interrupt);
                 return;
         }
     }
@@ -381,7 +379,7 @@ static void interrupt far ISR16550(void)
 
             default:
                 // done
-                OUTPUT(0x20, 0x20);
+                EndOfIRQ(&uart_interrupt);
                 return;
         }
     }

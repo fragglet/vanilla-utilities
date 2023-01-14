@@ -110,5 +110,20 @@ void RestoreInterrupt(struct interrupt_hook *state);
 unsigned int SwitchPSP(void);
 void RestorePSP(unsigned int old_psp);
 
+struct irq_hook
+{
+    unsigned int irq;
+    interrupt_handler_t old_isr;
+    unsigned int was_masked :1;
+    unsigned int chained    :1;
+};
+
+void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
+             unsigned int irq);
+void RestoreIRQ(struct irq_hook *state);
+void SetIRQMask(struct irq_hook *irq);
+void ClearIRQMask(struct irq_hook *irq);
+void EndOfIRQ(struct irq_hook *irq);
+
 extern unsigned char isr_stack_space[ISR_STACK_SIZE];
 

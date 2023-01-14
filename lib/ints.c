@@ -1,7 +1,9 @@
 
 #include <stdlib.h>
 #include <bios.h>
+#include <assert.h>
 
+#include "lib/dos.h"
 #include "lib/ints.h"
 #include "lib/log.h"
 
@@ -64,6 +66,66 @@ void RestoreInterrupt(struct interrupt_hook *state)
     }
     _dos_setvect(state->interrupt_num, state->old_isr);
     state->interrupt_num = 0;
+}
+
+#define PIC_COMMAND_PORT  0x20
+#define PIC_DATA_PORT     0x21
+
+void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
+             unsigned int irq)
+{
+    assert(irq < 8);
+
+    _disable();
+
+    state->irq = irq;
+    state->was_masked = (INPUT(PIC_DATA_PORT) & (1 << irq)) != 0;
+    state->chained = 0;  // TODO
+    state->old_isr = _dos_getvect(8 + irq);
+    _dos_setvect(8 + irq, isr);
+
+    ClearIRQMask(state);
+
+    _enable();
+}
+
+void RestoreIRQ(struct irq_hook *state)
+{
+    _disable();
+
+    SetIRQMask(state);
+    _dos_setvect(8 + state->irq, state->old_isr);
+
+    if (!state->was_masked)
+    {
+        ClearIRQMask(state);
+    }
+
+    _enable();
+}
+
+void SetIRQMask(struct irq_hook *irq)
+{
+    OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) | (1 << irq->irq));
+}
+
+void ClearIRQMask(struct irq_hook *irq)
+{
+    OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) & ~(1 << irq->irq));
+}
+
+void EndOfIRQ(struct irq_hook *irq)
+{
+    // In chained mode we call the original ISR and it sends the EOI
+    // to the PIC. Otherwise we send it ourselves.
+    if (irq->chained)
+    {
+        _chain_intr(irq->old_isr);
+    }
+    else
+    {
+        OUTPUT(PIC_COMMAND_PORT, 0x20);
+    }
 }
 
 #define DOS_INTERRUPT_API  0x21

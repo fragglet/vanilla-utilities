@@ -17,7 +17,7 @@ static void FlushBroadcastPending(void);
 // Magic number field overlaps with the normal Doom checksum field.
 // We ignore the top nybble so we can ignore NCMD_SETUP packets from
 // the underlying driver, and use the bottom nybble for packet type.
-#define META_MAGIC        0x01C36440L
+#define META_MAGIC        0x01C26440L
 #define META_MAGIC_MASK   0x0FFFFFF0L
 
 #define NODE_STATUS_GOT_DISCOVER  0x01
@@ -61,7 +61,7 @@ struct meta_discover_msg
     struct meta_header header;
     unsigned int status;
     int num_neighbors;
-    int station_id;
+    uint32_t station_id;
     // Next hop address byte for all immediate neighbors:
     uint8_t neighbors[MAXNETNODES];
 };
@@ -71,7 +71,7 @@ struct node_data
     uint8_t first_hop;
     node_addr_t addr;
     uint8_t flags;
-    int station_id;
+    uint32_t station_id;
     // Assigned by AssignPlayerNumbers:
     int player_num;
 };
@@ -640,7 +640,7 @@ static void InitNodes(void)
 
     num_nodes = 1;
     memset(nodes, 0, sizeof(nodes));
-    nodes[0].station_id = rand();
+    nodes[0].station_id = ((uint32_t) rand() << 16) | rand();
     nodes[0].flags = NODE_STATUS_GOT_DISCOVER;
 
     if (forwarder)
@@ -824,7 +824,7 @@ static int CheckReady(void)
             if (nodes[i].station_id == nodes[j].station_id)
             {
                 Error("Two nodes have the same station ID!\n"
-                      "Node %d and %d both have station ID %d\n",
+                      "Node %d and %d both have station ID %ld\n",
                       i, j, nodes[i].station_id);
             }
         }
@@ -852,7 +852,7 @@ static void DiscoverNodes(void)
         GetPacket();
 
         now = clock();
-        if (now - last_send > CLOCKS_PER_SEC)
+        if (last_send == 0 || now - last_send > CLOCKS_PER_SEC)
         {
             for (i = 1; i < num_nodes; ++i)
             {

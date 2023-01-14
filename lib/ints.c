@@ -102,6 +102,8 @@ void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
     // SERSETUPs on COM1 and COM3). So the first time that we hook the
     // interrupt we set a special environment variable. Other instances
     // then detect this and set chaining mode.
+    // Doing this also ensures that we send the EOI message to the PIC only
+    // once (see EndOfIRQ below).
     state->irq = irq;
     state->chained = CheckChainedIRQ(irq);
     if (!state->chained)
@@ -155,7 +157,9 @@ void ClearIRQMask(struct irq_hook *irq)
 void EndOfIRQ(struct irq_hook *irq)
 {
     // In chained mode we call the original ISR and it sends the EOI
-    // to the PIC. Otherwise we send it ourselves.
+    // to the PIC. Otherwise we send it ourselves. It is important that
+    // the interrupt is only acknowledged once, otherwise we can end up
+    // acknowledging the wrong interrupt.
     if (irq->chained)
     {
         _chain_intr(irq->old_isr);

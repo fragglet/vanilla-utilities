@@ -23,6 +23,7 @@
 
 #include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/parport.h"
@@ -36,10 +37,10 @@ struct rx_buffer {
 };
 
 unsigned int portbase = 0x378;
-unsigned irq = 7;
+unsigned int irq = 7;
 
-static void (interrupt far *oldisr) ();
-static uint8_t oldmask;
+static struct irq_hook parport_interrupt;
+
 unsigned int errors_wrong_checksum = 0;
 unsigned int errors_packet_overwritten = 0;
 unsigned int errors_timeout = 0;
@@ -88,7 +89,7 @@ void interrupt far ReceiveISR(void)
 
     PLIORecvPacket();
 
-    OUTPUT(0x20, 0x20);
+    EndOfIRQ(&parport_interrupt);
 }
 
 // Returns zero if there is no packet waiting to be received.
@@ -118,19 +119,10 @@ unsigned int NextPacket(uint8_t *result_buf, unsigned int max_len)
 
 void InitISR(void)
 {
-    uint8_t mask;
-
-    // install new interrupt hander for the printer port
-    oldisr = _dos_getvect(irq + 8);
-    _dos_setvect(irq + 8, ReceiveISR);
+    HookIRQ(&parport_interrupt, ReceiveISR, irq);
 
     // enable interrupts from the printer port
     OUTPUT(portbase + 2, INPUT(portbase + 2) | 0x10);
-    oldmask = INPUT(0x21);
-    mask = oldmask & ~(1 << irq);       // enable IRQ in ICR
-    OUTPUT(0x21, mask);
-
-    OUTPUT(0x20, 0x20);
 }
 
 void ParallelRegisterFlags(void)
@@ -176,7 +168,7 @@ void InitPort(void)
 
 void ShutdownPort(void)
 {
-    OUTPUT(0x21, oldmask);    // disable IRQs
-    _dos_setvect(irq + 8, oldisr);   // restore vector
+    // TODO: disable interrupts from the printer port
+    RestoreIRQ(&parport_interrupt);
 }
 

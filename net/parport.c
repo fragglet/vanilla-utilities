@@ -117,14 +117,6 @@ unsigned int NextPacket(uint8_t *result_buf, unsigned int max_len)
     return 0;
 }
 
-void InitISR(void)
-{
-    HookIRQ(&parport_interrupt, ReceiveISR, irq);
-
-    // enable interrupts from the printer port
-    OUTPUT(portbase + 2, INPUT(portbase + 2) | 0x10);
-}
-
 void ParallelRegisterFlags(void)
 {
     BoolFlag("-lpt2", &lpt2, "(or -lpt3) use LPTx instead of LPT1");
@@ -182,12 +174,17 @@ void InitPort(void)
     // find the irq and i/o address of the port
     GetPort();
 
-    InitISR();
+    HookIRQ(&parport_interrupt, ReceiveISR, irq);
+
+    // enable interrupts from the printer port
+    OUTPUT(portbase + 2, INPUT(portbase + 2) | 0x10);
 }
 
 void ShutdownPort(void)
 {
-    // TODO: disable interrupts from the printer port
+    // disable interrupts from the printer port
+    OUTPUT(portbase + 2, INPUT(portbase + 2) & ~0x10);
+
     RestoreIRQ(&parport_interrupt);
 }
 

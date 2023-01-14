@@ -114,6 +114,7 @@ struct irq_hook
 {
     unsigned int irq;
     interrupt_handler_t old_isr;
+    char env_string[14];
     unsigned int was_masked :1;
     unsigned int chained    :1;
 };

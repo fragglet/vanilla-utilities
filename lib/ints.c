@@ -1,5 +1,7 @@
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <bios.h>
 #include <assert.h>
 
@@ -71,16 +73,45 @@ void RestoreInterrupt(struct interrupt_hook *state)
 #define PIC_COMMAND_PORT  0x20
 #define PIC_DATA_PORT     0x21
 
+static int CheckChainedIRQ(unsigned int irq)
+{
+    char name[14];
+    char *value;
+
+    sprintf(name, "CHAIN_IRQ%d", irq);
+    value = getenv(name);
+    return value != NULL && !strcmp(value, "1");
+}
+
+static void SetChainedIRQ(struct irq_hook *state, int enable)
+{
+    sprintf(state->env_string, "CHAIN_IRQ%d=%s", state->irq,
+            enable ? "1" : "");
+    putenv(state->env_string);
+}
+
 void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
              unsigned int irq)
 {
     assert(irq < 8);
 
+    // Usually, for efficiency, we want the hardware all to ourselves and
+    // deliberately don't chain to call whatever interrupt handler was
+    // there before us. However, we want to play nicely with other copies
+    // of the same binary that are sharing the same interrupt (eg. two
+    // SERSETUPs on COM1 and COM3). So the first time that we hook the
+    // interrupt we set a special environment variable. Other instances
+    // then detect this and set chaining mode.
+    state->irq = irq;
+    state->chained = CheckChainedIRQ(irq);
+    if (!state->chained)
+    {
+        SetChainedIRQ(state, 1);
+    }
+
     _disable();
 
-    state->irq = irq;
     state->was_masked = (INPUT(PIC_DATA_PORT) & (1 << irq)) != 0;
-    state->chained = 0;  // TODO
     state->old_isr = _dos_getvect(8 + irq);
     _dos_setvect(8 + irq, isr);
 
@@ -102,6 +133,13 @@ void RestoreIRQ(struct irq_hook *state)
     }
 
     _enable();
+
+    // We can't delete an environment variable but we can set it to zero.
+    // We only do this if we previously set the variable ourselves.
+    if (!state->chained)
+    {
+        SetChainedIRQ(state, 0);
+    }
 }
 
 void SetIRQMask(struct irq_hook *irq)

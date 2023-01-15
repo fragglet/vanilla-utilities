@@ -47,6 +47,7 @@ dosbox_with_conf() {
 	$DOSBOX_COMMON_OPTIONS
 	$config_options
 	[autoexec]
+	set ENTROPY=$RANDOM
 	mount c ${TOPLEVEL_DIR}
 	mount t ${TEST_DIR}
 	c:

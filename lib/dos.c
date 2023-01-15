@@ -8,7 +8,12 @@
 long GetEntropy(void)
 {
     long result;
+    char *entropy = getenv("ENTROPY");
     _bios_timeofday(_TIME_GETCLOCK, &result);
+    if (entropy != NULL)
+    {
+        result ^= atoi(entropy);
+    }
     return result;
 }
 

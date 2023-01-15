@@ -33,8 +33,7 @@ dosbox_shutdown() {
 
 trap dosbox_shutdown INT EXIT
 
-dosbox_with_conf() {
-	local config_options="$1"
+start_dosbox() {
 	local dosbox_conf=$TEST_DIR/dosbox-$dosbox_index.conf
 	local logfile=$TEST_DIR/dosbox-$dosbox_index.log
 	local batfile=$TEST_DIR/CMDS_$dosbox_index.BAT
@@ -45,7 +44,6 @@ dosbox_with_conf() {
 	# Generate config file
 	cat >$dosbox_conf <<END
 	$DOSBOX_COMMON_OPTIONS
-	$config_options
 	[autoexec]
 	set ENTROPY=$RANDOM
 	mount c ${TOPLEVEL_DIR}

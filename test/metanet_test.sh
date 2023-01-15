@@ -32,7 +32,7 @@ set -eu
 . test/common.sh
 
 # Node A (IPX server, accepts dial-in from D)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem listenport:4001
   ipx true
   ipxnet startserver 4000
@@ -42,7 +42,7 @@ END
 sleep 1
 
 # Node B (Dedicated forwarding node, IPX client, accepts dial-in from E)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem listenport:4002
   ipx true
   ipxnet connect localhost 4000
@@ -52,7 +52,7 @@ END
 sleep 1
 
 # Node C (IPX client, accepts connection from F)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem listenport:4003
   ipx true
   ipxnet connect localhost 4000
@@ -62,7 +62,7 @@ END
 sleep 1
 
 # Node D (dial-in to A, accept call from G)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   serial2 modem listenport:4004
   sersetup -dial localhost:4001 sersetup -com2 -answer metanet fakedoom -out MNTEST_D.TXT -secret 10004
@@ -71,7 +71,7 @@ END
 sleep 1
 
 # Node E (dial-in to B)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   sersetup -dial localhost:4002 metanet fakedoom -out MNTEST_E.TXT -secret 10005
 END
@@ -79,7 +79,7 @@ END
 sleep 1
 
 # Node F (dial-in to C, accept call from H and I)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   serial2 modem listenport:4005
   serial3 modem listenport:4006
@@ -89,7 +89,7 @@ END
 sleep 1
 
 # Node G (dial-in to D)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   sersetup -dial localhost:4004 metanet fakedoom -out MNTEST_G.TXT -secret 10007
 END
@@ -97,7 +97,7 @@ END
 sleep 1
 
 # Node H (dial-in to F)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   sersetup -dial localhost:4005 metanet fakedoom -out MNTEST_H.TXT -secret 10008
 END
@@ -105,7 +105,7 @@ END
 sleep 3
 
 # Node I (dial-in to F)
-dosbox_with_conf "" <<END
+start_dosbox <<END
   serial1 modem
   sersetup -dial localhost:4006 metanet fakedoom -out MNTEST_I.TXT -secret 10009
 END

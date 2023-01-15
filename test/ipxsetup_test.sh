@@ -9,7 +9,7 @@ set -eu
 start_dosbox <<END
   ipx true
   ipxnet startserver $TEST_PORT
-  ipxsetup -nodes 8 fakedoom -out t:SERVER.TXT -secret 1000
+  ipxsetup -dup 3 -nodes 8 fakedoom -out t:SERVER.TXT -secret 1000
 END
 
 sleep 1
@@ -30,6 +30,7 @@ for i in $(seq 7); do
     diff -u $TEST_DIR/SERVER.TXT $TEST_DIR/CLIENT$i.TXT
 done
 
+grep -q "dup=3" $TEST_DIR/SERVER.TXT
 for i in $(seq 0 7); do
     grep -qw secret=$((1000 + i)) $TEST_DIR/SERVER.TXT
 done

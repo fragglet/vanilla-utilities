@@ -110,6 +110,8 @@ static void RunNetworkTest(void)
     } while (clock() < start_time + 5 * CLOCKS_PER_SEC
           || got_nodes != (1 << doomcom->numnodes) - 1);
 
+    fprintf(log, "dup=%d extratics=%d\n", doomcom->ticdup,
+            doomcom->extratics);
     for (i = 0; i < doomcom->numplayers; ++i)
     {
         fprintf(log, "Player %d: secret=%d\n", i + 1, secrets[i]);

@@ -4,15 +4,15 @@
 # forwarding network based on other Doom networking drivers. The test
 # builds a deliberately-complicated forwarding network that looks like
 # this:
-#              -------------------
-#             | A      (B)      C | - IPX 4000
-#              -------------------
-#               ^       ^       ^
-#           4001|   4002|   4003|
-#               D       E       F <---- I
-#               ^               ^  4006
-#           4004|           4005|
-#               G               H
+#              ------------------------
+#             | A      (B)           C | - IPX 4000
+#              ------------------------
+#               ^       ^            ^
+#           4001|   4002|        4003|
+#               D       E   I ----> (F) <---- J
+#               ^            4006    ^   4007
+#           4004|                4005|
+#               G                    H
 #
 # There is a three-node IPX LAN and the rest of the connections are
 # dial-up serial links (the number next to each arrow is the port
@@ -21,9 +21,9 @@
 # Things that are tested here:
 #  * This is an eight player game (+ one dedicated forwarding node);
 #    you could theoretically run a Hexen game over this.
-#  * Nodes can use at least three underlying drivers (F). Ideally
-#    this should be higher.
-#  * There is one node running in forwarding mode (B).
+#  * Nodes can use at least four underlying drivers (F).
+#  * There are two nodes running in forwarding mode (B), and they
+#    quit automatically when there is no more work to be done.
 #  * There is at least one four-hop route through the network
 #    (G-D-A-C-F-I). 
 
@@ -78,12 +78,13 @@ END
 
 sleep 1
 
-# Node F (dial-in to C, accept call from H and I)
+# Node F (dial-in to C, accept call from H, I and J)
 start_dosbox <<END
   serial1 modem
   serial2 modem listenport:4005
   serial3 modem listenport:4006
-  sersetup -dial localhost:4003 sersetup -com2 -answer sersetup -com3 -answer metanet fakedoom -out MNTEST_F.TXT -secret 10006
+  serial4 modem listenport:4007
+  sersetup -dial localhost:4003 sersetup -com2 -answer sersetup -com3 -answer sersetup -com4 -answer metanet -forward
 END
 
 sleep 1
@@ -110,13 +111,21 @@ start_dosbox <<END
   sersetup -dial localhost:4006 metanet fakedoom -out MNTEST_I.TXT -secret 10009
 END
 
+sleep 3
+
+# Node J (dial-in to J)
+start_dosbox <<END
+  serial1 modem
+  sersetup -dial localhost:4007 metanet fakedoom -out MNTEST_J.TXT -secret 10010
+END
+
 wait_dosboxes
 
 # Each node has a unique secret. Check the test output for node A to confirm
 # that all the secrets are present in it.
 result=0
 
-for secret in 10001 10003 10004 10005 10006 10007 10008 10009; do
+for secret in 10001 10003 10004 10005 10007 10008 10009 10010; do
     if ! grep -q "secret=$secret" MNTEST_A.TXT; then
         echo "Secret $secret missing from test output" 2>&1
         result=1
@@ -124,7 +133,7 @@ for secret in 10001 10003 10004 10005 10006 10007 10008 10009; do
 done
 
 # Test outputs for all nodes should be identical.
-for node in C D E F G H I; do
+for node in C D E G H I J; do
     filename=MNTEST_${node}.TXT
     if diff MNTEST_A.TXT $filename 2>&1; then
         rm -f $filename

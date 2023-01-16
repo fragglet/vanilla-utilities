@@ -982,6 +982,10 @@ static void SendQuit(void)
             NetSendPacket(dc);
         }
     }
+
+    // We leave at least a second for quit packets to be transmitted
+    // before we exit.
+    sleep(1);
 }
 
 int main(int argc, char *argv[])

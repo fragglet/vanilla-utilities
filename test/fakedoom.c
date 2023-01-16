@@ -67,7 +67,7 @@ static void SendTestPackets(void)
 static void RunNetworkTest(void)
 {
     struct test_packet far *pkt = (void far *) doomcom->data;
-    clock_t now, start_time, last_send = 0;
+    clock_t now, end_time, last_send = 0;
     int secrets[MAXPLAYERS];
     int i, got_nodes;
 
@@ -76,7 +76,7 @@ static void RunNetworkTest(void)
     secrets[doomcom->consoleplayer] = net_secret;
     got_nodes = 1 << 0;
 
-    start_time = clock();
+    end_time = 0;
 
     do
     {
@@ -106,9 +106,12 @@ static void RunNetworkTest(void)
         }
         secrets[pkt->consoleplayer] = pkt->secret;
         got_nodes |= 1 << doomcom->remotenode;
-
-    } while (clock() < start_time + 5 * CLOCKS_PER_SEC
-          || got_nodes != (1 << doomcom->numnodes) - 1);
+        if (got_nodes == (1 << doomcom->numnodes) - 1 && end_time == 0)
+        {
+            LogMessage("All nodes found. Waiting before quit.");
+            end_time = clock() + 5 * CLOCKS_PER_SEC;
+        }
+    } while (end_time == 0 || clock() < end_time);
 
     fprintf(log, "dup=%d extratics=%d\n", doomcom->ticdup,
             doomcom->extratics);

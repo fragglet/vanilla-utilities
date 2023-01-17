@@ -12,6 +12,15 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
+struct modem_response_state {
+    const char *expected_response;
+    char buf[80];
+    int buf_len;
+    int complete;
+};
+
+static struct modem_response_state modem_response_state;
+
 extern que_t inque, outque;
 
 void JumpStart(void);
@@ -21,8 +30,6 @@ static doomcom_t doomcom;
 static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
-
-void ModemCommand(char *str);
 
 void WriteBuffer(char *buffer, unsigned int count)
 {
@@ -43,6 +50,69 @@ void WriteBuffer(char *buffer, unsigned int count)
     }
 }
 
+static void ModemCommand(char *str)
+{
+    LogMessage("Modem command: %s", str);
+    WriteBuffer(str, strlen(str));
+    WriteBuffer("\r", 1);
+}
+
+// Modem response code, that waits until a particular answer is received
+// from the modem in response to a command (eg. OK, RING, CONNECT).
+
+static void StartModemResponse(struct modem_response_state *state,
+                               const char *resp)
+{
+    state->expected_response = resp;
+    state->buf_len = 0;
+    state->complete = 0;
+}
+
+static void PollModemResponse(struct modem_response_state *state)
+{
+    int c;
+
+    do
+    {
+        for (;;)
+        {
+            c = ReadByte();
+            if (c == -1)
+            {
+                // No more bytes to process.
+                return;
+            }
+            if (c == '\n' || state->buf_len == sizeof(state->buf) - 1)
+            {
+                state->buf[state->buf_len] = '\0';
+                break;
+            }
+            if (c >= ' ')
+            {
+                state->buf[state->buf_len] = c;
+                ++state->buf_len;
+            }
+        }
+
+        LogMessage("Modem response: %s", state->buf);
+        state->complete = !strncmp(state->buf, state->expected_response,
+                                   strlen(state->expected_response));
+        state->buf_len = 0;
+    } while (!state->complete);
+}
+
+// Blocking version that waits until the reply is received.
+static void ModemResponse(char *resp)
+{
+    StartModemResponse(&modem_response_state, resp);
+    while (!modem_response_state.complete)
+    {
+        CheckAbort("Modem response");
+        PollModemResponse(&modem_response_state);
+    }
+}
+
+
 #define MAXPACKET	512
 #define	FRAMECHAR	0x70
 
@@ -53,7 +123,7 @@ static int newpacket;
 
 int ReadPacket(void)
 {
-    int c;
+   int c;
 
     // if the buffer has overflowed, throw everything out
     if (inque.head - inque.tail > QUESIZE - 4)
@@ -151,45 +221,6 @@ static void NetCallback(void)
             doomcom.remotenode = -1;
         }
     }
-}
-
-void ModemCommand(char *str)
-{
-    LogMessage("Modem command: %s", str);
-    WriteBuffer(str, strlen(str));
-    WriteBuffer("\r", 1);
-}
-
-// Wait for OK, RING, CONNECT, etc
-void ModemResponse(char *resp)
-{
-    static char response[80];
-    int c;
-    int respptr;
-
-    do
-    {
-        respptr = 0;
-        do
-        {
-            CheckAbort("Modem response");
-            c = ReadByte();
-            if (c == -1)
-                continue;
-            if (c == '\n' || respptr == 79)
-            {
-                response[respptr] = 0;
-                LogMessage("Modem response: %s", response);
-                break;
-            }
-            if (c >= ' ')
-            {
-                response[respptr] = c;
-                respptr++;
-            }
-        } while (1);
-
-    } while (strncmp(response, resp, strlen(resp)));
 }
 
 static void HangupModem(void)

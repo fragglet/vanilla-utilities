@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "lib/inttypes.h"
 
@@ -13,41 +14,49 @@
 #include "net/doomnet.h"
 #include "net/serarb.h"
 
+static struct {
+    doomcom_t *doomcom;
+    void (*net_cmd)(void);
+    char localid[7];
+    clock_t last_send_time;
+    int localstage;
+    int new_protocol;
+} arb;
+
 static int force_player1 = 0, force_player2 = 0;
 
-static int DoGetPacket(struct arbitration_state *arb)
+static int DoGetPacket(void)
 {
-    arb->doomcom->command = CMD_GET;
-    arb->net_cmd();
-    return arb->doomcom->remotenode != -1;
+    arb.doomcom->command = CMD_GET;
+    arb.net_cmd();
+    return arb.doomcom->remotenode != -1;
 }
 
-static void DoSendPacket(struct arbitration_state *arb,
-                         uint8_t *data, int data_len)
+static void DoSendPacket(uint8_t *data, int data_len)
 {
-    arb->doomcom->command = CMD_SEND;
-    arb->doomcom->remotenode = 1;
-    arb->doomcom->datalength = data_len;
-    memcpy(arb->doomcom->data, data, data_len);
-    arb->net_cmd();
+    arb.doomcom->command = CMD_SEND;
+    arb.doomcom->remotenode = 1;
+    arb.doomcom->datalength = data_len;
+    memcpy(arb.doomcom->data, data, data_len);
+    arb.net_cmd();
 }
 
-static void ProcessPackets(struct arbitration_state *arb)
+static void ProcessPackets(void)
 {
     char remoteid[7];
     int remoteplayer, remotestage;
-    uint8_t *packet = arb->doomcom->data;
+    uint8_t *packet = arb.doomcom->data;
 
-    while (DoGetPacket(arb))
+    while (DoGetPacket())
     {
-        packet[arb->doomcom->datalength] = '\0';
+        packet[arb.doomcom->datalength] = '\0';
 
         if (sscanf(packet, "ID%6c_%d", remoteid, &remotestage) == 2)
         {
-            arb->new_protocol = 1;
-            arb->doomcom->consoleplayer =
-                memcmp(arb->localid, remoteid, 6) > 0;
-            if (!memcmp(arb->localid, remoteid, 6))
+            arb.new_protocol = 1;
+            arb.doomcom->consoleplayer =
+                memcmp(arb.localid, remoteid, 6) > 0;
+            if (!memcmp(arb.localid, remoteid, 6))
             {
                 // TODO: Don't use Error() here because this can occur inside
                 // the interrupt handler in background answer mode.
@@ -56,7 +65,7 @@ static void ProcessPackets(struct arbitration_state *arb)
         }
         else if (sscanf(packet, "PLAY%d_%d", &remoteplayer, &remotestage) == 2)
         {
-            arb->new_protocol = 0;
+            arb.new_protocol = 0;
 
             // The original sersetup code would swap the player number when
             // detecting a conflict; however, this is not an algorithm that
@@ -65,7 +74,7 @@ static void ProcessPackets(struct arbitration_state *arb)
             // can use this asymmetry as a way of resolving the deadlock:
             // we stick to our guns and do not change player, safe in the
             // knowledge that the other side will adapt to us.
-            if (remoteplayer == arb->doomcom->consoleplayer)
+            if (remoteplayer == arb.doomcom->consoleplayer)
             {
                 remotestage = 0;
             }
@@ -76,8 +85,8 @@ static void ProcessPackets(struct arbitration_state *arb)
         }
 
         // We got a packet successfully. Trigger a response with new state.
-        arb->localstage = remotestage + 1;
-        arb->last_send_time = 0;
+        arb.localstage = remotestage + 1;
+        arb.last_send_time = 0;
     }
 }
 
@@ -101,85 +110,76 @@ static void MakeLocalID(char *buf)
     sprintf(buf, "%.6ld", id);
 }
 
-static void InitArbitration(struct arbitration_state *arb)
+static void InitArbitration(void)
 {
-    arb->localstage = 0;
-    arb->new_protocol = 1;
-    arb->last_send_time = 0;
+    arb.localstage = 0;
+    arb.new_protocol = 1;
+    arb.last_send_time = 0;
 
     // allow override of automatic player ordering
     if (force_player1)
     {
-        arb->doomcom->consoleplayer = 0;
+        arb.doomcom->consoleplayer = 0;
     }
     else if (force_player2)
     {
-        arb->doomcom->consoleplayer = 1;
+        arb.doomcom->consoleplayer = 1;
     }
 
-    MakeLocalID(arb->localid);
+    MakeLocalID(arb.localid);
 }
 
-void StartArbitratePlayers(struct arbitration_state *arb, doomcom_t *dc,
-                           void (*net_cmd)(void))
+void StartArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void))
 {
-    arb->doomcom = dc;
-    arb->net_cmd = net_cmd;
-    InitArbitration(arb);
+    arb.doomcom = dc;
+    arb.net_cmd = net_cmd;
+    InitArbitration();
 
     LogMessage("Attempting to connect across link.");
 }
 
-int ArbitrationComplete(struct arbitration_state *arb)
-{
-    int complete = arb->localstage >= 2;
-
-    // Once complete, flush out any extras
-    while (complete && DoGetPacket(arb))
-    {
-    }
-
-    return complete;
-}
-
-void PollArbitratePlayers(struct arbitration_state *arb)
+int PollArbitratePlayers(void)
 {
     clock_t now;
     char str[20];
 
-    if (ArbitrationComplete(arb))
+    if (arb.localstage >= 2)
     {
-        return;
+        // Once complete, flush out any extras
+        while (DoGetPacket())
+        {
+        }
+
+        return 1;
     }
 
-    ProcessPackets(arb);
+    ProcessPackets();
 
     now = clock();
-    if (now - arb->last_send_time >= CLOCKS_PER_SEC)
+    if (now - arb.last_send_time >= CLOCKS_PER_SEC)
     {
-        arb->last_send_time = now;
-        if (arb->new_protocol)
+        arb.last_send_time = now;
+        if (arb.new_protocol)
         {
-            sprintf(str, "ID%6s_%d", arb->localid, arb->localstage);
+            sprintf(str, "ID%6s_%d", arb.localid, arb.localstage);
         }
         else
         {
-            sprintf(str, "PLAY%i_%i", arb->doomcom->consoleplayer, arb->localstage);
+            sprintf(str, "PLAY%i_%i", arb.doomcom->consoleplayer, arb.localstage);
         }
-        DoSendPacket(arb, str, strlen(str));
+        DoSendPacket(str, strlen(str));
     }
+
+    return 0;
 }
 
 // Figure out who is player 0 and 1
 void ArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void))
 {
-    struct arbitration_state arb;
-
-    StartArbitratePlayers(&arb, dc, net_cmd);
-    while (!ArbitrationComplete(&arb))
+    StartArbitratePlayers(dc, net_cmd);
+    while (!PollArbitratePlayers())
     {
         CheckAbort("Connection");
-        PollArbitratePlayers(&arb);
     }
 }
 

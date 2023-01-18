@@ -12,14 +12,12 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
-struct modem_response_state {
+static struct {
     const char *expected_response;
     char buf[80];
     int buf_len;
     int complete;
-};
-
-static struct modem_response_state modem_response_state;
+} modemresp;
 
 extern que_t inque, outque;
 
@@ -60,19 +58,18 @@ static void ModemCommand(char *str)
 // Modem response code, that waits until a particular answer is received
 // from the modem in response to a command (eg. OK, RING, CONNECT).
 
-static void StartModemResponse(struct modem_response_state *state,
-                               const char *resp)
+static void StartModemResponse(const char *resp)
 {
-    state->expected_response = resp;
-    state->buf_len = 0;
-    state->complete = 0;
+    modemresp.expected_response = resp;
+    modemresp.buf_len = 0;
+    modemresp.complete = 0;
 }
 
-static void PollModemResponse(struct modem_response_state *state)
+static int PollModemResponse(void)
 {
     int c;
 
-    do
+    while (!modemresp.complete)
     {
         for (;;)
         {
@@ -80,35 +77,37 @@ static void PollModemResponse(struct modem_response_state *state)
             if (c == -1)
             {
                 // No more bytes to process.
-                return;
+                return 0;
             }
-            if (c == '\n' || state->buf_len == sizeof(state->buf) - 1)
+            if (c == '\n' || modemresp.buf_len == sizeof(modemresp.buf) - 1)
             {
-                state->buf[state->buf_len] = '\0';
+                modemresp.buf[modemresp.buf_len] = '\0';
                 break;
             }
             if (c >= ' ')
             {
-                state->buf[state->buf_len] = c;
-                ++state->buf_len;
+                modemresp.buf[modemresp.buf_len] = c;
+                ++modemresp.buf_len;
             }
         }
 
-        LogMessage("Modem response: %s", state->buf);
-        state->complete = !strncmp(state->buf, state->expected_response,
-                                   strlen(state->expected_response));
-        state->buf_len = 0;
-    } while (!state->complete);
+        LogMessage("Modem response: %s", modemresp.buf);
+        modemresp.complete =
+            !strncmp(modemresp.buf, modemresp.expected_response,
+                     strlen(modemresp.expected_response));
+        modemresp.buf_len = 0;
+    }
+
+    return 1;
 }
 
 // Blocking version that waits until the reply is received.
 static void ModemResponse(char *resp)
 {
-    StartModemResponse(&modem_response_state, resp);
-    while (!modem_response_state.complete)
+    StartModemResponse(resp);
+    while (!PollModemResponse())
     {
         CheckAbort("Modem response");
-        PollModemResponse(&modem_response_state);
     }
 }
 

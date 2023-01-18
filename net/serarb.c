@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "lib/inttypes.h"
 
@@ -15,15 +14,6 @@
 #include "net/serarb.h"
 
 static int force_player1 = 0, force_player2 = 0;
-
-struct arbitration_state {
-    doomcom_t *doomcom;
-    void (*net_cmd)(void);
-    char localid[7];
-    clock_t last_send_time;
-    int localstage;
-    int new_protocol;
-};
 
 static int DoGetPacket(struct arbitration_state *arb)
 {
@@ -59,6 +49,8 @@ static void ProcessPackets(struct arbitration_state *arb)
                 memcmp(arb->localid, remoteid, 6) > 0;
             if (!memcmp(arb->localid, remoteid, 6))
             {
+                // TODO: Don't use Error() here because this can occur inside
+                // the interrupt handler in background answer mode.
                 Error("Duplicate ID string received");
             }
         }
@@ -128,43 +120,66 @@ static void InitArbitration(struct arbitration_state *arb)
     MakeLocalID(arb->localid);
 }
 
+void StartArbitratePlayers(struct arbitration_state *arb, doomcom_t *dc,
+                           void (*net_cmd)(void))
+{
+    arb->doomcom = dc;
+    arb->net_cmd = net_cmd;
+    InitArbitration(arb);
+
+    LogMessage("Attempting to connect across link.");
+}
+
+int ArbitrationComplete(struct arbitration_state *arb)
+{
+    int complete = arb->localstage >= 2;
+
+    // Once complete, flush out any extras
+    while (complete && DoGetPacket(arb))
+    {
+    }
+
+    return complete;
+}
+
+void PollArbitratePlayers(struct arbitration_state *arb)
+{
+    clock_t now;
+    char str[20];
+
+    if (ArbitrationComplete(arb))
+    {
+        return;
+    }
+
+    ProcessPackets(arb);
+
+    now = clock();
+    if (now - arb->last_send_time >= CLOCKS_PER_SEC)
+    {
+        arb->last_send_time = now;
+        if (arb->new_protocol)
+        {
+            sprintf(str, "ID%6s_%d", arb->localid, arb->localstage);
+        }
+        else
+        {
+            sprintf(str, "PLAY%i_%i", arb->doomcom->consoleplayer, arb->localstage);
+        }
+        DoSendPacket(arb, str, strlen(str));
+    }
+}
+
 // Figure out who is player 0 and 1
 void ArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void))
 {
     struct arbitration_state arb;
-    clock_t now;
-    char str[20];
 
-    arb.doomcom = dc;
-    arb.net_cmd = net_cmd;
-    InitArbitration(&arb);
-
-    LogMessage("Attempting to connect across link.");
-
-    do
+    StartArbitratePlayers(&arb, dc, net_cmd);
+    while (!ArbitrationComplete(&arb))
     {
         CheckAbort("Connection");
-        ProcessPackets(&arb);
-
-        now = clock();
-        if (now - arb.last_send_time >= CLOCKS_PER_SEC)
-        {
-            arb.last_send_time = now;
-            if (arb.new_protocol)
-            {
-                sprintf(str, "ID%6s_%d", arb.localid, arb.localstage);
-            }
-            else
-            {
-                sprintf(str, "PLAY%i_%i", dc->consoleplayer, arb.localstage);
-            }
-            DoSendPacket(&arb, str, strlen(str));
-        }
-    } while (arb.localstage < 2);
-
-    // flush out any extras
-    while (DoGetPacket(&arb))
-    {
+        PollArbitratePlayers(&arb);
     }
 }
 

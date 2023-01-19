@@ -78,32 +78,30 @@ END
 
 sleep 1
 
-# Node F (dial-in to C, accept call from H, I and J)
-start_dosbox <<END
-  serial1 modem
-  serial2 modem listenport:4005
-  serial3 modem listenport:4006
-  serial4 modem listenport:4007
-  sersetup -dial localhost:4003 sersetup -com2 -answer sersetup -com3 -answer sersetup -com4 -answer metanet -forward
-END
-
-sleep 1
-
 # Node G (dial-in to D)
 start_dosbox <<END
   serial1 modem
   sersetup -dial localhost:4004 metanet fakedoom -out MNTEST_G.TXT -secret 10007
 END
 
-sleep 1
-
-# Node H (dial-in to F)
+# Node F (dial-in to C, accept call from H, I and J)
+# Note we use the SERSETUP -bg argument and check we can accept
+# three incoming calls "backwards".
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4005 metanet fakedoom -out MNTEST_H.TXT -secret 10008
+  serial2 modem listenport:4005
+  serial3 modem listenport:4006
+  serial4 modem listenport:4007
+  sersetup -dial localhost:4003 sersetup -com2 -bg -answer sersetup -com3 -bg -answer sersetup -com4 -bg -answer metanet -forward
 END
 
-sleep 3
+sleep 5
+
+# Node J (dial-in to J)
+start_dosbox <<END
+  serial1 modem
+  sersetup -dial localhost:4007 metanet fakedoom -out MNTEST_J.TXT -secret 10010
+END
 
 # Node I (dial-in to F)
 start_dosbox <<END
@@ -111,12 +109,10 @@ start_dosbox <<END
   sersetup -dial localhost:4006 metanet fakedoom -out MNTEST_I.TXT -secret 10009
 END
 
-sleep 3
-
-# Node J (dial-in to J)
+# Node H (dial-in to F)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4007 metanet fakedoom -out MNTEST_J.TXT -secret 10010
+  sersetup -dial localhost:4005 metanet fakedoom -out MNTEST_H.TXT -secret 10008
 END
 
 wait_dosboxes

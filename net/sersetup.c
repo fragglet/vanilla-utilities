@@ -7,6 +7,7 @@
 
 #include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/serarb.h"
@@ -265,8 +266,12 @@ static void ISRCallback(void)
     // connection and player arbitration is complete.
     if (!in_game)
     {
+        // When doing background answering, we switch PSP to make sure
+        // we use SERSETUP's stdout file handle.
+        unsigned int old_psp = SwitchPSP();
         PollEventLoop();
         doomcom.remotenode = -1;
+        RestorePSP(old_psp);
         return;
     }
     NetCallback();
@@ -337,8 +342,8 @@ static void SetBackgroundPlayer(int fallback)
     if (!force_player1 && !force_player2)
     {
         LogMessage("-bg flag requires -player1 or -player2; "
-                   "assuming -player%d", fallback + 1);
-        if (fallback == 0)
+                   "assuming -player%d", fallback);
+        if (fallback == 1)
         {
             force_player1 = 1;
         }
@@ -375,7 +380,7 @@ void Dial(char *dial_no)
     OnModemResponse("CONNECT", Connected);
     if (background_flag)
     {
-        SetBackgroundPlayer(1);
+        SetBackgroundPlayer(2);
     }
     else
     {
@@ -402,7 +407,7 @@ void Answer(void)
 
     if (background_flag)
     {
-        SetBackgroundPlayer(0);
+        SetBackgroundPlayer(1);
     }
     else
     {

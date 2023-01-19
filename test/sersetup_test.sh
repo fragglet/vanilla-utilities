@@ -30,41 +30,62 @@ run_player_tests() {
     start_dialer $2
     wait_dosboxes
 
-    diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT
-    grep -q secret=1000 $TEST_DIR/ANSWER.TXT
-    grep -q secret=2000 $TEST_DIR/ANSWER.TXT
+    if ! diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT ||
+       ! grep -q secret=1000 $TEST_DIR/ANSWER.TXT ||
+       ! grep -q secret=2000 $TEST_DIR/ANSWER.TXT; then
+        echo "Wrong or missing secrets for '$1' '$2' #1: "
+        diff -u /dev/null $TEST_DIR/ANSWER.TXT
+        exit 1
+    fi
 
     # Force player at answer.
-    start_answerer $1 -player1
+    start_answerer $1 -player2
     start_dialer $2
     wait_dosboxes
 
-    diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT
-    grep -q "Player 1: secret=1000" $TEST_DIR/ANSWER.TXT
-    grep -q "Player 2: secret=2000" $TEST_DIR/ANSWER.TXT
-
-    # Force player at dial.
-    start_answerer $1
-    start_dialer $2 -player2
-    wait_dosboxes
-
-    diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT
-    grep -q "Player 1: secret=1000" $TEST_DIR/ANSWER.TXT
-    grep -q "Player 2: secret=2000" $TEST_DIR/ANSWER.TXT
+    if ! diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT ||
+       ! grep -q "Player 1: secret=2000" $TEST_DIR/ANSWER.TXT ||
+       ! grep -q "Player 2: secret=1000" $TEST_DIR/ANSWER.TXT; then
+        echo "Wrong or missing secrets for '$1' '$2' #2: "
+        diff -u /dev/null $TEST_DIR/ANSWER.TXT
+        exit 1
+    fi
 
     # Force player at both works as long as they're consistent.
     start_answerer $1 -player2
     start_dialer $2 -player1
     wait_dosboxes
 
-    diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT
-    grep -q "Player 1: secret=2000" $TEST_DIR/ANSWER.TXT
-    grep -q "Player 2: secret=1000" $TEST_DIR/ANSWER.TXT
+    if ! diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT ||
+       ! grep -q "Player 1: secret=2000" $TEST_DIR/ANSWER.TXT ||
+       ! grep -q "Player 2: secret=1000" $TEST_DIR/ANSWER.TXT; then
+        echo "Wrong or missing secrets for '$1' '$2' #3: "
+        diff -u /dev/null $TEST_DIR/ANSWER.TXT
+        exit 1
+    fi
+}
+
+run_player_tests_non_bg() {
+    # Force player at dial.
+    start_answerer $1
+    start_dialer $2 -player1
+    wait_dosboxes
+
+    if ! diff -u $TEST_DIR/ANSWER.TXT $TEST_DIR/DIAL.TXT ||
+       ! grep -q "Player 1: secret=2000" $TEST_DIR/ANSWER.TXT ||
+       ! grep -q "Player 2: secret=1000" $TEST_DIR/ANSWER.TXT; then
+        echo "Wrong or missing secrets for '$1' '$2' #4: "
+        diff -u /dev/null $TEST_DIR/ANSWER.TXT
+        exit 1
+    fi
 }
 
 run_player_tests "-answer" "-dial localhost:$TEST_PORT1"
-run_player_tests "-bg -answer" "-bg -dial localhost:$TEST_PORT1"
+run_player_tests_non_bg "-answer" "-dial localhost:$TEST_PORT1"
+
+run_player_tests "-bg -answer" "-dial localhost:$TEST_PORT1"
 
 # For testing null modem connections we just use COM2.
 run_player_tests "-com2" "-com2"
+run_player_tests_non_bg "-com2" "-com2"
 

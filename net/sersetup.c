@@ -32,7 +32,9 @@ extern que_t inque, outque;
 void JumpStart(void);
 extern int uart;
 
+static int in_game = 0;
 static doomcom_t doomcom;
+static int background_flag = 0;
 static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
@@ -257,6 +259,19 @@ static void NetCallback(void)
     }
 }
 
+static void ISRCallback(void)
+{
+    // We don't call the actual NetCallback function until
+    // connection and player arbitration is complete.
+    if (!in_game)
+    {
+        PollEventLoop();
+        doomcom.remotenode = -1;
+        return;
+    }
+    NetCallback();
+}
+
 static void HangupModem(void)
 {
     LogMessage("Dropping DTR");
@@ -303,10 +318,44 @@ static void ReadModemCfg(void)
     }
 }
 
+static void ArbitrationComplete(void)
+{
+    in_game = 1;
+}
+
 static void Connected(void)
 {
     StartArbitratePlayers(&doomcom, NetCallback);
-    CallOnSuccess("Connection", PollArbitratePlayers, NULL);
+    CallOnSuccess("Connection", PollArbitratePlayers, ArbitrationComplete);
+}
+
+// In background mode, we must set doomcom.consoleplayer before launching
+// the game. Since we can't know this until player arbitration is complete,
+// we require -player1 or -player2 (and set one of the flags if necessary)
+static void SetBackgroundPlayer(int fallback)
+{
+    if (!force_player1 && !force_player2)
+    {
+        LogMessage("-bg flag requires -player1 or -player2; "
+                   "assuming -player%d", fallback + 1);
+        if (fallback == 0)
+        {
+            force_player1 = 1;
+        }
+        else
+        {
+            force_player2 = 1;
+        }
+    }
+
+    if (force_player1)
+    {
+        doomcom.consoleplayer = 0;
+    }
+    else
+    {
+        doomcom.consoleplayer = 1;
+    }
 }
 
 void Dial(char *dial_no)
@@ -320,10 +369,19 @@ void Dial(char *dial_no)
 
     LogMessage("Dialing...");
     sprintf(cmd, "ATDT%s", dial_no);
-
     ModemCommand(cmd);
-    ModemResponse("CONNECT");
-    doomcom.consoleplayer = 1;
+
+    // We also support background dialing (-bg -dial).
+    OnModemResponse("CONNECT", Connected);
+    if (background_flag)
+    {
+        SetBackgroundPlayer(1);
+    }
+    else
+    {
+        // Usually we block until connection.
+        EventLoop();
+    }
 }
 
 static void RingDetected(void)
@@ -341,9 +399,17 @@ void Answer(void)
     LogMessage("Waiting for ring...");
 
     OnModemResponse("RING", RingDetected);
-    EventLoop();
 
-    doomcom.consoleplayer = 0;
+    if (background_flag)
+    {
+        SetBackgroundPlayer(0);
+    }
+    else
+    {
+        // Without background mode, we block until dial and player
+        // arbitration is complete.
+        EventLoop();
+    }
 }
 
 void main(int argc, char *argv[])
@@ -357,6 +423,7 @@ void main(int argc, char *argv[])
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
     BoolFlag("-answer", &answer, "listen for incoming call");
+    BoolFlag("-bg", &background_flag, "answer calls in the background");
     StringFlag("-dial", &dial_no, "phone#",
                "dial the given phone number");
     StringFlag("-modemcfg", &modem_config_file, "filename",
@@ -391,7 +458,6 @@ void main(int argc, char *argv[])
     if (dial_no != NULL)
     {
         Dial(dial_no);
-        ArbitratePlayers(&doomcom, NetCallback);
     }
     else if (answer)
     {
@@ -401,8 +467,9 @@ void main(int argc, char *argv[])
     {
         // Null modem / direct serial connection
         ArbitratePlayers(&doomcom, NetCallback);
+        in_game = 1;
     }
 
     // launch DOOM
-    NetLaunchDoom(&doomcom, args, NetCallback);
+    NetLaunchDoom(&doomcom, args, ISRCallback);
 }

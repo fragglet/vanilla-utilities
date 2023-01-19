@@ -23,7 +23,7 @@ static struct {
     int new_protocol;
 } arb;
 
-static int force_player1 = 0, force_player2 = 0;
+int force_player1 = 0, force_player2 = 0;
 
 static int DoGetPacket(void)
 {

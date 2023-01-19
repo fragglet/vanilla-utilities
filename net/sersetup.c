@@ -12,7 +12,15 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
-static struct {
+static struct
+{
+    int (*poll_func)(void);
+    void (*callback)(void);
+    const char *check_abort_message;
+} eventloop;
+
+static struct
+{
     const char *expected_response;
     char buf[80];
     int buf_len;
@@ -48,6 +56,35 @@ void WriteBuffer(char *buffer, unsigned int count)
     }
 }
 
+static void PollEventLoop(void)
+{
+    if (eventloop.poll_func() != 0)
+    {
+        eventloop.poll_func = NULL;
+        if (eventloop.callback != NULL)
+        {
+            eventloop.callback();
+        }
+    }
+}
+
+static void EventLoop(void)
+{
+    while (eventloop.poll_func != NULL)
+    {
+        CheckAbort(eventloop.check_abort_message);
+        PollEventLoop();
+    }
+}
+
+static void CallOnSuccess(const char *message, int (*poll_func)(void),
+                          void (*callback)(void))
+{
+    eventloop.check_abort_message = message;
+    eventloop.poll_func = poll_func;
+    eventloop.callback = callback;
+}
+
 static void ModemCommand(char *str)
 {
     LogMessage("Modem command: %s", str);
@@ -57,13 +94,6 @@ static void ModemCommand(char *str)
 
 // Modem response code, that waits until a particular answer is received
 // from the modem in response to a command (eg. OK, RING, CONNECT).
-
-static void StartModemResponse(const char *resp)
-{
-    modemresp.expected_response = resp;
-    modemresp.buf_len = 0;
-    modemresp.complete = 0;
-}
 
 static int PollModemResponse(void)
 {
@@ -101,14 +131,19 @@ static int PollModemResponse(void)
     return 1;
 }
 
+static void OnModemResponse(const char *resp, void (*and_then)(void))
+{
+    modemresp.expected_response = resp;
+    modemresp.buf_len = 0;
+    modemresp.complete = 0;
+    CallOnSuccess("Modem response", PollModemResponse, and_then);
+}
+
 // Blocking version that waits until the reply is received.
 static void ModemResponse(char *resp)
 {
-    StartModemResponse(resp);
-    while (!PollModemResponse())
-    {
-        CheckAbort("Modem response");
-    }
+    OnModemResponse(resp, NULL);
+    EventLoop();
 }
 
 
@@ -268,6 +303,12 @@ static void ReadModemCfg(void)
     }
 }
 
+static void Connected(void)
+{
+    StartArbitratePlayers(&doomcom, NetCallback);
+    CallOnSuccess("Connection", PollArbitratePlayers, NULL);
+}
+
 void Dial(char *dial_no)
 {
     char cmd[80];
@@ -285,6 +326,12 @@ void Dial(char *dial_no)
     doomcom.consoleplayer = 1;
 }
 
+static void RingDetected(void)
+{
+    ModemCommand("ATA");
+    OnModemResponse("CONNECT", Connected);
+}
+
 void Answer(void)
 {
     atexit(HangupModem);
@@ -293,9 +340,8 @@ void Answer(void)
     ModemResponse("OK");
     LogMessage("Waiting for ring...");
 
-    ModemResponse("RING");
-    ModemCommand("ATA");
-    ModemResponse("CONNECT");
+    OnModemResponse("RING", RingDetected);
+    EventLoop();
 
     doomcom.consoleplayer = 0;
 }
@@ -345,13 +391,17 @@ void main(int argc, char *argv[])
     if (dial_no != NULL)
     {
         Dial(dial_no);
+        ArbitratePlayers(&doomcom, NetCallback);
     }
     else if (answer)
     {
         Answer();
     }
-
-    ArbitratePlayers(&doomcom, NetCallback);
+    else
+    {
+        // Null modem / direct serial connection
+        ArbitratePlayers(&doomcom, NetCallback);
+    }
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);

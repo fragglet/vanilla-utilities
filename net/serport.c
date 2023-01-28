@@ -385,7 +385,7 @@ static void interrupt far ISR16550(void)
     }
 }
 
-// Start up the transmition interrupts by sending the first char
+// Start up the transmision interrupts by sending the first char
 void JumpStart(void)
 {
     int c;

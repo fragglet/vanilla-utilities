@@ -11,6 +11,8 @@ IPXSETUP_OBJS = net\ipxsetup.o net\doomnet.o net\ipxnet.o net\ipxcall.o &
                 lib\common.lib
 SERSETUP_OBJS = net\sersetup.o net\doomnet.o net\serport.o net\serarb.o &
                 lib\common.lib
+SIRSETUP_OBJS = net\sirsetup.o net\doomnet.o net\serport.o net\serarb.o &
+                lib\common.lib
 PARSETUP_OBJS = net\parsetup.o net\doomnet.o net\parport.o net\plio.o &
                 net\serarb.o lib\common.lib
 PASSTHRU_OBJS = net\passthru.o net\doomnet.o lib\common.lib
@@ -28,7 +30,7 @@ FAKEDOOM_OBJS = test\fakedoom.o net\doomnet.o ctrl\control.o &
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
-       vcommit.exe vrottcom.exe vsetargs.exe
+       vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe
 
 all: $(EXES)
 
@@ -43,6 +45,8 @@ ipxsetup.exe: $(IPXSETUP_OBJS)
 	wcl -fe=$@ $(IPXSETUP_OBJS)
 sersetup.exe: $(SERSETUP_OBJS)
 	wcl -fe=$@ $(SERSETUP_OBJS)
+sirsetup.exe: $(SIRSETUP_OBJS)
+	wcl -fe=$@ $(SIRSETUP_OBJS)
 parsetup.exe: $(PARSETUP_OBJS)
 	wcl -fe=$@ $(PARSETUP_OBJS)
 metanet.exe: $(METANET_OBJS)
@@ -82,6 +86,7 @@ clean:
 	del $(PASSTHRU_OBJS)
 	del $(REPLAY_OBJS)
 	del $(SERSETUP_OBJS)
+	del $(SIRSETUP_OBJS)
 	del $(SOLO_NET_OBJS)
 	del $(STATDUMP_OBJS)
 	del $(VROTTCOM_OBJS)

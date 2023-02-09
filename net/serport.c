@@ -11,21 +11,21 @@
 #include "net/doomnet.h"
 #include "net/serport.h"
 
-void JumpStart(void);
-
 static void interrupt far ISR8250(void);
 static void interrupt far ISR16550(void);
+
+uint8_t serial_tx_buffer[SERIAL_TX_BUFFER_LEN];
+static unsigned int serial_tx_index, serial_tx_bytes;
+static int transmitting = 0;
 
 static union REGS regs;
 static struct SREGS sregs;
 
 static struct irq_hook uart_interrupt;
 
-que_t inque, outque;
-
 int uart;                       // io address
 static enum { UART_8250, UART_16550 } uart_type;
-int irq;
+static int irq;
 
 static int modem_status = -1;
 static int line_status = -1;
@@ -274,29 +274,23 @@ void ShutdownPort(void)
     int86(0x14, &regs, &regs);
 }
 
-int ReadByte(void)
+static inline int RefillTXBuffer(void)
 {
-    int c;
-
-    if (inque.tail >= inque.head)
-    {
-        return -1;
-    }
-    c = inque.data[inque.tail & (QUESIZE - 1)];
-    inque.tail++;
-    return c;
+    serial_tx_bytes = SerialMoreTXData();
+    serial_tx_index = 0;
+    return serial_tx_bytes != 0;
 }
 
-void WriteByte(int c)
+static inline void TransmitNextByte(void)
 {
-    outque.data[outque.head & (QUESIZE - 1)] = c;
-    outque.head++;
+    int c = serial_tx_buffer[serial_tx_index];
+    ++serial_tx_index;
+    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+    transmitting = 1;
 }
 
 static void interrupt far ISR8250(void)
 {
-    int c;
-
     while (1)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
@@ -313,19 +307,20 @@ static void interrupt far ISR8250(void)
 
             case IIR_TX_HOLDING_REGISTER_INTERRUPT:
                 // transmit
-                if (outque.tail < outque.head)
+                while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_THRE)
                 {
-                    c = outque.data[outque.tail & (QUESIZE - 1)];
-                    outque.tail++;
-                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                    if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
+                    {
+                        transmitting = 0;
+                        break;
+                    }
+                    TransmitNextByte();
                 }
                 break;
 
             case IIR_RX_DATA_READY_INTERRUPT:
                 // receive
-                c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                inque.data[inque.head & (QUESIZE - 1)] = c;
-                inque.head++;
+                SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER));
                 break;
 
             default:
@@ -333,15 +328,23 @@ static void interrupt far ISR8250(void)
                 EndOfIRQ(&uart_interrupt);
                 return;
         }
+    }
+}
+
+void PollSerialReceive(void)
+{
+    while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY)
+    {
+        SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER));
     }
 }
 
 static void interrupt far ISR16550(void)
 {
-    int c;
+    int c, done = 0;
     int count;
 
-    while (1)
+    while (!done)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
         {
@@ -357,43 +360,41 @@ static void interrupt far ISR16550(void)
 
             case IIR_TX_HOLDING_REGISTER_INTERRUPT:
                 // transmit
-                count = 16;
-                while (outque.tail < outque.head && count--)
+                if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
                 {
-                    c = outque.data[outque.tail & (QUESIZE - 1)];
-                    outque.tail++;
-                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                    transmitting = 0;
+                    break;
+                }
+                while (serial_tx_index < serial_tx_bytes)
+                {
+                    TransmitNextByte();
                 }
                 break;
 
             case IIR_RX_DATA_READY_INTERRUPT:
                 // receive
-                do
-                {
-                    c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                    inque.data[inque.head & (QUESIZE - 1)] = c;
-                    inque.head++;
-                } while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
-
+                PollSerialReceive();
                 break;
 
             default:
-                // done
-                EndOfIRQ(&uart_interrupt);
-                return;
+                done = 1;
+                break;
         }
     }
+
+    EndOfIRQ(&uart_interrupt);
 }
 
 // Start up the transmission interrupts by sending the first char
 void JumpStart(void)
 {
-    int c;
-
-    if (outque.tail < outque.head)
+    if (transmitting)
     {
-        c = outque.data[outque.tail & (QUESIZE - 1)];
-        outque.tail++;
-        OUTPUT(uart, c);
+        return;
+    }
+    if (serial_tx_index < serial_tx_bytes || RefillTXBuffer())
+    {
+        TransmitNextByte();
     }
 }
+

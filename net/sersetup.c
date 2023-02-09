@@ -13,6 +13,13 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
+#define	QUESIZE	2048
+
+typedef struct {
+    long head, tail;            // bytes are put on head and pulled from tail
+    uint8_t data[QUESIZE];
+} que_t;
+
 static struct
 {
     int (*poll_func)(void);
@@ -28,7 +35,7 @@ static struct
     int complete;
 } modemresp;
 
-extern que_t inque, outque;
+static que_t inque, outque;
 
 void JumpStart(void);
 extern int uart;
@@ -40,23 +47,57 @@ static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
 
+void SerialByteReceived(uint8_t c)
+{
+    inque.data[inque.head & (QUESIZE - 1)] = c;
+    inque.head++;
+}
+
+unsigned int SerialMoreTXData(void)
+{
+    unsigned int result = 0;
+
+    result = 0;
+    while (outque.tail < outque.head && result < SERIAL_TX_BUFFER_LEN)
+    {
+        serial_tx_buffer[result] = outque.data[outque.tail & (QUESIZE - 1)];
+        ++outque.tail;
+        ++result;
+    }
+
+    return result;
+}
+
+static int ReadByte(void)
+{
+    int c;
+
+    if (inque.tail >= inque.head)
+    {
+        return -1;
+    }
+    c = inque.data[inque.tail & (QUESIZE - 1)];
+    inque.tail++;
+    return c;
+}
+
 void WriteBuffer(char *buffer, unsigned int count)
 {
+    unsigned int i;
+
     // if this would overrun the buffer, throw everything else out
     if (outque.head - outque.tail + count > QUESIZE)
     {
         outque.tail = outque.head;
     }
 
-    while (count--)
+    for (i = 0; i < count; i++)
     {
-        WriteByte(*buffer++);
+        outque.data[outque.head & (QUESIZE - 1)] = buffer[i];
+        outque.head++;
     }
 
-    if (INPUT(uart + LINE_STATUS_REGISTER) & 0x40)
-    {
-        JumpStart();
-    }
+    JumpStart();
 }
 
 static void PollEventLoop(void)

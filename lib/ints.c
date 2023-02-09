@@ -166,7 +166,7 @@ void EndOfIRQ(struct irq_hook *irq)
     }
     else
     {
-        OUTPUT(PIC_COMMAND_PORT, 0x20);
+        OUTPUT(PIC_COMMAND_PORT, 0x60 + irq->irq);
     }
 }
 

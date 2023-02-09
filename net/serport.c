@@ -383,13 +383,13 @@ static void interrupt far ISR16550(void)
 
             case IIR_TX_HOLDING_REGISTER_INTERRUPT:
                 // transmit
-                if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
+                for (count = 0; count < 16; count++)
                 {
-                    transmitting = 0;
-                    break;
-                }
-                while (serial_tx_index < serial_tx_bytes)
-                {
+                    if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
+                    {
+                        transmitting = 0;
+                        break;
+                    }
                     TransmitNextByte();
                 }
                 break;

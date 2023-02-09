@@ -47,10 +47,17 @@ static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
 
-void SerialByteReceived(uint8_t c)
+int SerialByteReceived(uint8_t c)
 {
+    // Don't overflow the input queue. If we run out of space, we need to
+    // temporarily pause receives.
+    if (((inque.head + 1) & (QUESIZE - 1)) == (inque.tail & (QUESIZE - 1)))
+    {
+        return 0;
+    }
     inque.data[inque.head & (QUESIZE - 1)] = c;
     inque.head++;
+    return 1;
 }
 
 unsigned int SerialMoreTXData(void)
@@ -78,6 +85,7 @@ static int ReadByte(void)
     }
     c = inque.data[inque.tail & (QUESIZE - 1)];
     inque.tail++;
+    ResumeReceive();
     return c;
 }
 

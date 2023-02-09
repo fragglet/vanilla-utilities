@@ -16,7 +16,7 @@ static void interrupt far ISR16550(void);
 
 uint8_t serial_tx_buffer[SERIAL_TX_BUFFER_LEN];
 static unsigned int serial_tx_index, serial_tx_bytes;
-static int transmitting = 0;
+static int transmitting = 0, receiving = 1;
 
 static union REGS regs;
 static struct SREGS sregs;
@@ -289,6 +289,22 @@ static inline void TransmitNextByte(void)
     transmitting = 1;
 }
 
+// DisableReceive is called when SerialByteReceived returns failure,
+// which indicates there is no more buffer space to store data. This may
+// indicate an overload situation, or simply that the GetPacket function is
+// not being regularly called by DOOM (which happens during the startup
+// process). Either way, it is useless to invoke the ISR until buffer space
+// has been freed up, so we rewrite the IER to disable rx notifications.
+static inline void DisableReceive(void)
+{
+    if (receiving)
+    {
+        receiving = 0;
+        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
+               IER_TX_HOLDING_REGISTER_EMPTY);
+    }
+}
+
 static void interrupt far ISR8250(void)
 {
     while (1)
@@ -320,7 +336,10 @@ static void interrupt far ISR8250(void)
 
             case IIR_RX_DATA_READY_INTERRUPT:
                 // receive
-                SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER));
+                if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
+                {
+                    DisableReceive();
+                }
                 break;
 
             default:
@@ -335,7 +354,11 @@ void PollSerialReceive(void)
 {
     while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY)
     {
-        SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER));
+        if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
+        {
+            DisableReceive();
+            break;
+        }
     }
 }
 
@@ -395,6 +418,20 @@ void JumpStart(void)
     if (serial_tx_index < serial_tx_bytes || RefillTXBuffer())
     {
         TransmitNextByte();
+    }
+}
+
+// Invoked when new rx buffer space has been made available; if we previously
+// turned off receive, we can now rewrite the IER to turn rx notifications
+// back on again.
+void ResumeReceive(void)
+{
+    if (!receiving)
+    {
+        receiving = 1;
+        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
+               IER_RX_DATA_READY + IER_TX_HOLDING_REGISTER_EMPTY);
+        PollSerialReceive();
     }
 }
 

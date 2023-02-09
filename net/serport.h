@@ -62,8 +62,10 @@ void InitPort(long baudrate);
 void ShutdownPort(void);
 
 // SerialByteReceived is called every time a new byte is received from
-// the serial port.
-void SerialByteReceived(uint8_t c);
+// the serial port. If it returns zero, no more data will be delivered
+// until ResumeReceive is called. This may lead to data being lost, but
+// should be done if there is no more buffer space left to store data.
+int SerialByteReceived(uint8_t c);
 
 // SerialMoreTXData fills this buffer.
 #define SERIAL_TX_BUFFER_LEN  16
@@ -76,4 +78,8 @@ unsigned int SerialMoreTXData(void);
 
 // JumpStart restarts transmit if transmit had previously stopped.
 void JumpStart(void);
+
+// ResumeReceive is called to restart receive, if SerialByteReceived
+// previously returned zero.
+void ResumeReceive(void);
 

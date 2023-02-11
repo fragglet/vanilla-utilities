@@ -89,3 +89,7 @@ run_player_tests "-bg -answer" "-dial localhost:$TEST_PORT1"
 run_player_tests "-com2" "-com2"
 run_player_tests_non_bg "-com2" "-com2"
 
+# Run tests again forcing 8250 UART (uses different code paths).
+run_player_tests "-8250 -com2" "-8250 -com2"
+run_player_tests_non_bg "-8250 -com2" "-8250 -com2"
+

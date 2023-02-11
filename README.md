@@ -24,6 +24,8 @@ straightforward.
 and serial/modem drivers originally included with Doom.
 * **parsetup** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
+* **sirsetup** - driver for running over a half-duplex serial infrared (SIR)
+link (aka IrDA), as commonly found on many late '90s laptops.
 * **metanet** - networking driver that combines other networking drivers
 into a packet forwarding network. This allows you, for example, to build a
 a four player game from daisy-chaining null-modem cables.

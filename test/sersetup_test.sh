@@ -9,8 +9,8 @@ set -eu
 
 start_answerer() {
     start_dosbox <<END
-      serial1 modem listenport:$TEST_PORT1
-      serial2 nullmodem port:$TEST_PORT2
+      config -set serial serial1 modem listenport:$TEST_PORT1
+      config -set serial serial2 nullmodem port:$TEST_PORT2
       sersetup $@ fakedoom -out t:ANSWER.TXT -secret 1000
 END
     sleep 1
@@ -18,8 +18,8 @@ END
 
 start_dialer() {
     start_dosbox <<END
-      serial1 modem
-      serial2 nullmodem server:localhost port:$TEST_PORT2
+      config -set serial serial1 modem
+      config -set serial serial2 nullmodem server:localhost port:$TEST_PORT2
       sersetup $@ fakedoom -out t:DIAL.TXT -secret 2000
 END
 }

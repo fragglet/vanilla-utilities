@@ -7,7 +7,7 @@ set -eu
 . test/common.sh
 
 start_dosbox <<END
-  ipx true
+  config -set ipx true
   ipxnet startserver $TEST_PORT
   ipxsetup -player 5 -dup 3 -nodes 8 fakedoom -out t:SERVER.TXT -secret 1000
 END
@@ -16,7 +16,7 @@ sleep 1
 
 for i in $(seq 7); do
     start_dosbox <<END
-      ipx true
+      config -set ipx true
       ipxnet connect localhost $TEST_PORT
       ipxsetup -nodes 8 fakedoom -out t:CLIENT$i.TXT -secret $((1000 + i))
 END

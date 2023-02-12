@@ -15,6 +15,13 @@
 #include "lib/dos.h"
 #include "lib/log.h"
 #include "net/llcall.h"
+#include "net/winsock.h"
+
+// Windows type names:
+typedef unsigned long DWORD;
+typedef unsigned short WORD;
+typedef void *LPVOID;
+typedef void *LPSOCK_INFO;
 
 #define VXD_ID_VXDLDR    0x0027
 #define VXD_ID_WSOCK     0x003e
@@ -65,6 +72,54 @@ static void VXDLDR_UnloadDevice(char *device)
     {
         Error("Error unloading VxD '%s': ax=0x%x", device, ll_regs.x.ax);
     }
+}
+
+static int WinsockCall(int function, void far *ptr)
+{
+    ll_funcptr = wsock2_entry;
+    ll_regs.x.ax = function;
+    ll_regs.x.es = FP_SEG(ptr);
+    ll_regs.x.bx = FP_OFF(ptr);
+    LowLevelCall();
+    return ll_regs.x.ax;
+}
+
+Socket WS_socket(int domain, int type, int protocol)
+{
+    static DWORD handle_counter = 999900UL;
+    int err;
+    struct {
+        DWORD       AddressFamily;
+        DWORD       SocketType;
+        DWORD       Protocol;
+        LPSOCK_INFO NewSocket;
+        DWORD       NewSocketHandle;
+    } params;
+
+    params.AddressFamily = domain;
+    params.SocketType = type;
+    params.Protocol = protocol;
+    params.NewSocket = NULL;
+    params.NewSocketHandle = handle_counter;
+    ++handle_counter;
+
+    err = WinsockCall(0x110, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+    return (Socket) params.NewSocket;
+}
+
+int WS_close(Socket socket)
+{
+    struct {
+        LPSOCK_INFO Socket;
+    } params;
+
+    params.Socket = (void *) socket;
+
+    return WinsockCall(0x102, &params);
 }
 
 static void WinsockShutdown(void)

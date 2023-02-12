@@ -14,10 +14,10 @@
 
 // Socket handles are actually pointers rather than file handles like they
 // are on most Unix systems; a long can always store a pointer.
-typedef long Socket;
+typedef long SOCKET;
 
 void WinsockInit(void);
 
-Socket WS_socket(int domain, int type, int protocol);
-int WS_close(Socket socket);
+SOCKET WS_socket(int domain, int type, int protocol);
+int WS_close(SOCKET socket);
 

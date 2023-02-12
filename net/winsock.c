@@ -20,8 +20,6 @@
 // Windows type names:
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
-typedef void *LPVOID;
-typedef void *LPSOCK_INFO;
 
 #define VXD_ID_VXDLDR    0x0027
 #define VXD_ID_WSOCK     0x003e
@@ -84,22 +82,22 @@ static int WinsockCall(int function, void far *ptr)
     return ll_regs.x.ax;
 }
 
-Socket WS_socket(int domain, int type, int protocol)
+SOCKET WS_socket(int domain, int type, int protocol)
 {
     static DWORD handle_counter = 999900UL;
     int err;
     struct {
-        DWORD       AddressFamily;
-        DWORD       SocketType;
-        DWORD       Protocol;
-        LPSOCK_INFO NewSocket;
-        DWORD       NewSocketHandle;
+        DWORD   AddressFamily;
+        DWORD   SocketType;
+        DWORD   Protocol;
+        SOCKET  NewSocket;
+        DWORD   NewSocketHandle;
     } params;
 
     params.AddressFamily = domain;
     params.SocketType = type;
     params.Protocol = protocol;
-    params.NewSocket = NULL;
+    params.NewSocket = 0;
     params.NewSocketHandle = handle_counter;
     ++handle_counter;
 
@@ -108,16 +106,16 @@ Socket WS_socket(int domain, int type, int protocol)
     {
         return err;
     }
-    return (Socket) params.NewSocket;
+    return params.NewSocket;
 }
 
-int WS_close(Socket socket)
+int WS_close(SOCKET socket)
 {
     struct {
-        LPSOCK_INFO Socket;
+        SOCKET Socket;
     } params;
 
-    params.Socket = (void *) socket;
+    params.Socket = socket;
 
     return WinsockCall(0x102, &params);
 }

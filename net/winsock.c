@@ -9,13 +9,17 @@
 //   Windows VxD backdoor APIs.
 // * The book "Unauthorized Windows 95", Andrew Schulman. ISBN 978-1568841694
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include "lib/dos.h"
 #include "lib/log.h"
 #include "net/llcall.h"
 #include "net/winsock.h"
+
+#define SOCKADDR_SIZE 16 /* bytes = sizeof struct sockaddr */
 
 // Windows type names:
 typedef unsigned long DWORD;
@@ -118,6 +122,83 @@ int WS_close(SOCKET socket)
     params.Socket = socket;
 
     return WinsockCall(0x102, &params);
+}
+
+ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
+                  const struct sockaddr_in *to)
+{
+    int err;
+    struct {
+        const void far *Buffer;
+        const void far *Address;
+        SOCKET          Socket;
+        DWORD           BufferLength;
+        DWORD           Flags;
+        DWORD           AddressLength;
+        DWORD           BytesSent;
+        void far       *ApcRoutine;
+        DWORD           ApcContext;
+        DWORD           Timeout;
+    } params;
+
+    params.Buffer = msg;
+    params.Address = to;
+    params.Socket = socket;
+    params.BufferLength = len;
+    params.Flags = flags;
+    params.AddressLength = SOCKADDR_SIZE;
+    params.BytesSent = 0;
+    params.ApcRoutine = NULL;
+    params.ApcContext = 0;
+    params.Timeout = ~0;
+
+    err = WinsockCall(0x10d, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    return params.BytesSent;
+}
+
+ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
+                    struct sockaddr_in *from)
+{
+    static uint8_t frombuf[SOCKADDR_SIZE];
+    int err;
+    struct {
+        void far  *Buffer;
+        void far  *Address;
+        SOCKET     Socket;
+        DWORD      BufferLength;
+        DWORD      Flags;
+        DWORD      AddressLength;
+        DWORD      BytesReceived;
+        void far  *ApcRoutine;
+        DWORD      ApcContext;
+        DWORD      Timeout;
+    } params;
+
+    params.Buffer = buf;
+    params.Address = frombuf;
+    params.Socket = socket;
+    params.BufferLength = len;
+    params.Flags = flags;
+    params.AddressLength = SOCKADDR_SIZE;
+    params.BytesReceived = 0;
+    params.ApcRoutine = NULL;
+    params.ApcContext = 0;
+    params.Timeout = -1;
+
+    err = WinsockCall(0x109, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    memcpy(from, frombuf, sizeof(struct sockaddr_in));
+
+    return params.BytesReceived;
 }
 
 static void WinsockShutdown(void)

@@ -201,6 +201,20 @@ ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
     return params.BytesReceived;
 }
 
+unsigned long WS_htonl(unsigned long val)
+{
+    return ((val & 0xff000000) >> 24)
+         | ((val & 0x00ff0000) >> 8)
+         | ((val & 0x0000ff00) << 8)
+         | ((val & 0x000000ff) << 24);
+}
+
+unsigned short WS_htons(unsigned short val)
+{
+    return ((val & 0x00ff) << 8)
+         | ((val & 0xff00) >> 8);
+}
+
 static void WinsockShutdown(void)
 {
     VXDLDR_UnloadDevice("WSOCK2.DLL");

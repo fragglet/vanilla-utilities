@@ -41,7 +41,7 @@ typedef void __stdcall far (*vxd_entrypoint)();
 static int winsock2 = 1;
 
 static vxd_entrypoint vxdldr_entry;
-static vxd_entrypoint wsock2_entry;
+static vxd_entrypoint winsock_entry;
 
 static void VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 {
@@ -81,7 +81,7 @@ static int VXDLDR_UnloadDevice(char *device)
 
 static int WinsockCall(int function, void far *ptr)
 {
-    ll_funcptr = wsock2_entry;
+    ll_funcptr = winsock_entry;
     ll_regs.x.ax = function;
     ll_regs.x.es = FP_SEG(ptr);
     ll_regs.x.bx = FP_OFF(ptr);
@@ -380,13 +380,13 @@ void WinsockInit(void)
     if (VXDLDR_LoadDevice("WSOCK2.VXD"))
     {
         winsock2 = 1;
-        VxdGetEntryPoint(&wsock2_entry, VXD_ID_WSOCK2);
+        VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2);
     }
     else if (VXDLDR_LoadDevice("WSOCK.VXD"))  // TODO: And WSOCK.386?
     {
         LogMessage("Winsock1 mode. If this works (or doesn't), let me know!");
         winsock2 = 0;
-        VxdGetEntryPoint(&wsock2_entry, VXD_ID_WSOCK);
+        VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK);
     }
     else
     {

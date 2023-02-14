@@ -20,6 +20,12 @@
 #include "net/llcall.h"
 #include "net/winsock.h"
 
+#define WSOCK_CLOSESOCKET_CMD       0x0102
+#define WSOCK_GETPEERNAME_CMD       0x0104
+#define WSOCK_RECV_CMD              0x0109
+#define WSOCK_SEND_CMD              0x010d
+#define WSOCK_SOCKET_CMD            0x0110
+
 #define SOCKADDR_SIZE 16 /* bytes = sizeof struct sockaddr */
 
 // Windows type names:
@@ -31,6 +37,8 @@ typedef unsigned short WORD;
 #define VXD_ID_WSOCK2    0x3b0a
 
 typedef void __stdcall far (*vxd_entrypoint)();
+
+static int winsock2 = 1;
 
 static vxd_entrypoint vxdldr_entry;
 static vxd_entrypoint wsock2_entry;
@@ -106,7 +114,7 @@ SOCKET WS_socket(int domain, int type, int protocol)
     params.NewSocketHandle = handle_counter;
     ++handle_counter;
 
-    err = WinsockCall(0x110, &params);
+    err = WinsockCall(WSOCK_SOCKET_CMD, &params);
     if (err != 0)
     {
         return err;
@@ -122,7 +130,7 @@ int WS_close(SOCKET socket)
 
     params.Socket = socket;
 
-    return WinsockCall(0x102, &params);
+    return WinsockCall(WSOCK_CLOSESOCKET_CMD, &params);
 }
 
 static DWORD MapFlatPointer(const void far *msg)
@@ -141,7 +149,7 @@ static DWORD MapFlatPointer(const void far *msg)
     params.Address = msg;
     params.AddressLength = 0;
 
-    WinsockCall(0x104, &params);
+    WinsockCall(WSOCK_GETPEERNAME_CMD, &params);
 
     return (DWORD) params.Address;
 }
@@ -173,7 +181,7 @@ static ssize_t WS_sendto1(SOCKET socket, const void *msg, size_t len, int flags,
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
 
-    err = WinsockCall(0x10d, &params);
+    err = WinsockCall(WSOCK_SEND_CMD, &params);
     if (err != 0)
     {
         return err;
@@ -187,8 +195,9 @@ struct WSABuffer {
     DWORD Address;
 };
 
-ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
-                  const struct sockaddr_in *to)
+// Winsock2 version.
+static ssize_t WS_sendto2(SOCKET socket, const void *msg, size_t len, int flags,
+                          const struct sockaddr_in *to)
 {
     struct WSABuffer buffer;
     DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
@@ -209,7 +218,7 @@ ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
 
     // wsock2.vxd translates the params.Buffers pointer (below) into a flat
     // address when invoked, but does not translate the address inside the
-    // WSABuffer that we point to. We therefore have to do this for it.
+    // WSABuffer that we point to. We therefore have to translate for it.
     buffer.Address = MapFlatPointer(msg);
     buffer.Length = len;
 
@@ -223,13 +232,26 @@ ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
     params.AddressLength = SOCKADDR_SIZE;
     params.AddrLenPtr = &unused;  // MapFlatPointer()?
 
-    err = WinsockCall(0x10d, &params);
+    err = WinsockCall(WSOCK_SEND_CMD, &params);
     if (err != 0)
     {
         return err;
     }
 
     return params.BytesSent;
+}
+
+ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
+                  const struct sockaddr_in *to)
+{
+    if (winsock2)
+    {
+        return WS_sendto2(socket, msg, len, flags, to);
+    }
+    else
+    {
+        return WS_sendto1(socket, msg, len, flags, to);
+    }
 }
 
 // Winsock1 version of recvfrom().
@@ -260,7 +282,7 @@ static ssize_t WS_recvfrom1(SOCKET socket, void *buf, size_t len, int flags,
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
 
-    err = WinsockCall(0x109, &params);
+    err = WinsockCall(WSOCK_RECV_CMD, &params);
     if (err != 0)
     {
         return err;
@@ -271,8 +293,8 @@ static ssize_t WS_recvfrom1(SOCKET socket, void *buf, size_t len, int flags,
     return params.BytesReceived;
 }
 
-ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
-                    struct sockaddr_in *from)
+static ssize_t WS_recvfrom2(SOCKET socket, void *buf, size_t len, int flags,
+                            struct sockaddr_in *from)
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     struct WSABuffer buffer;
@@ -293,7 +315,7 @@ ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
         DWORD     Overlapped;
     } params;
 
-    // See comment in WS_sendto above.
+    // See comment in WS_sendto2 above.
     buffer.Address = MapFlatPointer(buf);
     buffer.Length = len;
 
@@ -307,7 +329,7 @@ ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
     params.AddressLength = SOCKADDR_SIZE;
     params.AddrLenPtr = &unused;
 
-    err = WinsockCall(0x109, &params);
+    err = WinsockCall(WSOCK_RECV_CMD, &params);
     if (err != 0)
     {
         return err;
@@ -316,6 +338,19 @@ ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
     memcpy(from, frombuf, sizeof(struct sockaddr_in));
 
     return params.BytesReceived;
+}
+
+ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
+                    struct sockaddr_in *from)
+{
+    if (winsock2)
+    {
+        return WS_recvfrom2(socket, buf, len, flags, from);
+    }
+    else
+    {
+        return WS_recvfrom1(socket, buf, len, flags, from);
+    }
 }
 
 unsigned long WS_htonl(unsigned long val)

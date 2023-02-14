@@ -104,13 +104,17 @@ SOCKET WS_socket(int domain, int type, int protocol)
         DWORD   SocketType;
         DWORD   Protocol;
         SOCKET  NewSocket;
-        DWORD   NewSocketHandle;
+        DWORD   NewSocketHandle;  // ___  ^ Winsock1 only uses these
+        DWORD   ProtocolCatalogID;
+        DWORD   GroupID;
+        DWORD   Flags;
     } params;
+
+    memset(&params, 0, sizeof(params));
 
     params.AddressFamily = domain;
     params.SocketType = type;
     params.Protocol = protocol;
-    params.NewSocket = 0;
     params.NewSocketHandle = handle_counter;
     ++handle_counter;
 

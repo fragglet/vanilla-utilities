@@ -3,8 +3,9 @@
 // * WSOCK.VXD pseudo-documentation (Richard Dawe)
 //   <https://www.richdawe.be/archive/dl/wsockvxd.htm>
 // * DJGPP libsocket, particularly the src/wsock directory (ls080s.zip).
-// * Berczi Gabor's Winsock2 Pascal code (ws2dos.zip). VERY good
-//   explanation of the bugs in WSOCK2.VXD.
+// * Berczi Gabor's Winsock2 Pascal code (ws2dos.zip). VERY good explanation
+//   of the bugs in WSOCK2.VXD, and the code is essential as a working example
+//   of Winsock2 code.
 // * Ralf Brown's Interrupt List, which has some documentation for the
 //   Windows VxD backdoor APIs.
 // * The book "Unauthorized Windows 95", Andrew Schulman. ISBN 978-1568841694
@@ -124,13 +125,35 @@ int WS_close(SOCKET socket)
     return WinsockCall(0x102, &params);
 }
 
-ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
-                  const struct sockaddr_in *to)
+static DWORD MapFlatPointer(const void far *msg)
+{
+    struct {
+        const void far *Address;
+        SOCKET          Socket;
+        DWORD           AddressLength;
+    } params;
+
+    // Trick found inside ws2dos code:
+    // We invoke the getpeername() VxD call, which will do the translation
+    // to a flat address for us. The operation always results in an error
+    // since params.Socket=0, but it does the translation for us.
+    params.Socket = 0;
+    params.Address = msg;
+    params.AddressLength = 0;
+
+    WinsockCall(0x104, &params);
+
+    return (DWORD) params.Address;
+}
+
+// Winsock1 version of sendto().
+static ssize_t WS_sendto1(SOCKET socket, const void *msg, size_t len, int flags,
+                          const struct sockaddr_in *to)
 {
     int err;
     struct {
         const void far *Buffer;
-        const void far *Address;
+        const void far *Address;      // ___ ^ Addresses translated by VxD
         SOCKET          Socket;
         DWORD           BufferLength;
         DWORD           Flags;
@@ -141,16 +164,14 @@ ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
         DWORD           Timeout;
     } params;
 
+    memset(&params, 0, sizeof(params));
+
     params.Buffer = msg;
     params.Address = to;
     params.Socket = socket;
     params.BufferLength = len;
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
-    params.BytesSent = 0;
-    params.ApcRoutine = NULL;
-    params.ApcContext = 0;
-    params.Timeout = ~0;
 
     err = WinsockCall(0x10d, &params);
     if (err != 0)
@@ -161,14 +182,65 @@ ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
     return params.BytesSent;
 }
 
-ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
-                    struct sockaddr_in *from)
+struct WSABuffer {
+    DWORD Length;
+    DWORD Address;
+};
+
+ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
+                  const struct sockaddr_in *to)
+{
+    struct WSABuffer buffer;
+    DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
+    int err;
+    struct {
+        struct WSABuffer far *Buffers;
+        const void far *Address;     // ___ ^ Addresses translaed by VxD
+        SOCKET          Socket;
+        DWORD           BufferCount;
+        void far       *AddrLenPtr; //?
+        DWORD           Flags;
+        DWORD           AddressLength;
+        DWORD           BytesSent;
+        void far       *ApcRoutine;
+        DWORD           ApcContext;
+        DWORD           Unknown[3];
+    } params;
+
+    // wsock2.vxd translates the params.Buffers pointer (below) into a flat
+    // address when invoked, but does not translate the address inside the
+    // WSABuffer that we point to. We therefore have to do this for it.
+    buffer.Address = MapFlatPointer(msg);
+    buffer.Length = len;
+
+    memset(&params, 0, sizeof(params));
+
+    params.Buffers = &buffer;
+    params.Address = to;
+    params.Socket = socket;
+    params.BufferCount = 1;
+    params.Flags = flags;
+    params.AddressLength = SOCKADDR_SIZE;
+    params.AddrLenPtr = &unused;  // MapFlatPointer()?
+
+    err = WinsockCall(0x10d, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    return params.BytesSent;
+}
+
+// Winsock1 version of recvfrom().
+static ssize_t WS_recvfrom1(SOCKET socket, void *buf, size_t len, int flags,
+                            struct sockaddr_in *from)
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     int err;
     struct {
         void far  *Buffer;
-        void far  *Address;
+        void far  *Address;      // ___ ^ Addresses translated by VxD
         SOCKET     Socket;
         DWORD      BufferLength;
         DWORD      Flags;
@@ -179,16 +251,61 @@ ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
         DWORD      Timeout;
     } params;
 
+    memset(&params, 0, sizeof(params));
+
     params.Buffer = buf;
     params.Address = frombuf;
     params.Socket = socket;
     params.BufferLength = len;
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
-    params.BytesReceived = 0;
-    params.ApcRoutine = NULL;
-    params.ApcContext = 0;
-    params.Timeout = -1;
+
+    err = WinsockCall(0x109, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    memcpy(from, frombuf, sizeof(struct sockaddr_in));
+
+    return params.BytesReceived;
+}
+
+ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
+                    struct sockaddr_in *from)
+{
+    static uint8_t frombuf[SOCKADDR_SIZE];
+    struct WSABuffer buffer;
+    DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
+    int err;
+    struct {
+        struct WSABuffer far *Buffers;
+        void far *Address;
+        void far *AddrLenPtr;   // ___ ^ Addresses translated by VxD
+        SOCKET    Socket;
+        DWORD     BufferCount;
+        DWORD     AddressLength;
+        DWORD     Flags;
+        DWORD     BytesReceived;
+        void far *ApcRoutine;
+        DWORD     ApcContext;
+        DWORD     Unknown[2];
+        DWORD     Overlapped;
+    } params;
+
+    // See comment in WS_sendto above.
+    buffer.Address = MapFlatPointer(buf);
+    buffer.Length = len;
+
+    memset(&params, 0, sizeof(params));
+
+    params.Buffers = &buffer;
+    params.Address = frombuf;
+    params.Socket = socket;
+    params.BufferCount = 1;
+    params.Flags = flags;
+    params.AddressLength = SOCKADDR_SIZE;
+    params.AddrLenPtr = &unused;
 
     err = WinsockCall(0x109, &params);
     if (err != 0)

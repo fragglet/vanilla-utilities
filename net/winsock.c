@@ -59,30 +59,24 @@ static void VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
     *entrypoint = MK_FP(sregs.es, outregs.x.di);
 }
 
-static void VXDLDR_LoadDevice(char *device)
+static int VXDLDR_LoadDevice(char *device)
 {
     ll_funcptr = vxdldr_entry;
     ll_regs.x.ax = 0x0001;
     // DS is already equal to FP_SEG(device) (non-far ptr)
     ll_regs.x.dx = FP_OFF(device);
     LowLevelCall();
-    if (ll_regs.x.ax != 0)
-    {
-        Error("Error loading VxD '%s': ax=0x%x", device, ll_regs.x.ax);
-    }
+    return ll_regs.x.ax == 0;
 }
 
-static void VXDLDR_UnloadDevice(char *device)
+static int VXDLDR_UnloadDevice(char *device)
 {
     ll_funcptr = vxdldr_entry;
     ll_regs.x.ax = 0x0002;
     // DS is already equal to FP_SEG(device) (non-far ptr)
     ll_regs.x.dx = FP_OFF(device);
     LowLevelCall();
-    if (ll_regs.x.ax != 0)
-    {
-        Error("Error unloading VxD '%s': ax=0x%x", device, ll_regs.x.ax);
-    }
+    return ll_regs.x.ax == 0;
 }
 
 static int WinsockCall(int function, void far *ptr)
@@ -373,7 +367,8 @@ unsigned short WS_htons(unsigned short val)
 
 static void WinsockShutdown(void)
 {
-    VXDLDR_UnloadDevice("WSOCK2.DLL");
+    VXDLDR_UnloadDevice("WSOCK.VXD");
+    VXDLDR_UnloadDevice("WSOCK2.VXD");
 }
 
 void WinsockInit(void)
@@ -382,10 +377,21 @@ void WinsockInit(void)
 
     VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR);
 
-    // TODO: Winsock1 (WSOCK.DLL); WfW (WSOCK.386) ...
-    VXDLDR_LoadDevice("WSOCK2.DLL");
-
-    VxdGetEntryPoint(&wsock2_entry, VXD_ID_WSOCK2);
+    if (VXDLDR_LoadDevice("WSOCK2.VXD"))
+    {
+        winsock2 = 1;
+        VxdGetEntryPoint(&wsock2_entry, VXD_ID_WSOCK2);
+    }
+    else if (VXDLDR_LoadDevice("WSOCK.VXD"))  // TODO: And WSOCK.386?
+    {
+        LogMessage("Winsock1 mode. If this works (or doesn't), let me know!");
+        winsock2 = 0;
+        VxdGetEntryPoint(&wsock2_entry, VXD_ID_WSOCK);
+    }
+    else
+    {
+        Error("Failed to load either WSOCK.VXD or WSOCK2.VXD.");
+    }
 
     // TODO: Check the API really works
     // TODO: Hotpatch to work around Winsock2 bug

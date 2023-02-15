@@ -50,7 +50,7 @@ static void VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 
     inregs.x.ax = 0x1684;
     inregs.x.bx = id;
-    int86x(0x20, &inregs, &outregs, &sregs);
+    int86x(0x2f, &inregs, &outregs, &sregs);
 
     if (sregs.es == 0 && outregs.x.di == 0)
     {

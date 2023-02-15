@@ -23,6 +23,11 @@ _ll_funcptr    dd          0
 ; Function that just invokes interrupt for "old" interrupt-based IPX API.
 public _OldIPXCall
 _OldIPXCall:
+    push bx
+    push cx
+    push dx
+    push es
+    push si
     mov ax, _ll_regs.llr_ax
     mov bx, _ll_regs.llr_bx
     mov cx, _ll_regs.llr_cx

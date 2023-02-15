@@ -20,6 +20,7 @@
 #include "net/llcall.h"
 #include "net/winsock.h"
 
+#define WSOCK_BIND_CMD              0x0101
 #define WSOCK_CLOSESOCKET_CMD       0x0102
 #define WSOCK_GETPEERNAME_CMD       0x0104
 #define WSOCK_RECV_CMD              0x0109
@@ -150,6 +151,25 @@ static DWORD MapFlatPointer(const void far *msg)
     WinsockCall(WSOCK_GETPEERNAME_CMD, &params);
 
     return (DWORD) params.Address;
+}
+
+int WS_bind(SOCKET socket, struct sockaddr_in *addr)
+{
+    struct {
+        const void far *Address;
+        SOCKET    Socket;
+        DWORD     AddressLength;
+        void far *ApcRoutine;
+        DWORD     ApcContext;
+        DWORD     ConnFamily;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+
+    params.Address = addr;
+    params.AddressLength = SOCKADDR_SIZE;
+
+    return WinsockCall(WSOCK_BIND_CMD, &params);
 }
 
 // Winsock1 version of sendto().

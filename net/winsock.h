@@ -12,6 +12,9 @@
 #define IPPROTO_TCP     6
 #define IPPROTO_UDP     17
 
+#define INADDR_ANY        0x00000000UL
+#define INADDR_BROADCAST  0xffffffffUL
+
 struct in_addr {
     unsigned long s_addr;
 };
@@ -30,6 +33,8 @@ void WinsockInit(void);
 
 SOCKET WS_socket(int domain, int type, int protocol);
 int WS_close(SOCKET socket);
+
+int WS_bind(SOCKET socket, struct sockaddr_in *addr);
 
 ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
                   const struct sockaddr_in *to);

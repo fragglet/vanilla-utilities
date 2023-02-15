@@ -102,6 +102,36 @@ void ErrorPrintUsage(const char *fmt, ...)
     exit(1);
 }
 
+static void DosIdle(void)
+{
+    static int dos_major_version = 0;
+    union REGS inregs, outregs;
+
+    // Invoke DOS idle interrupt:
+    int86(0x28, &inregs, &outregs);
+
+    if (dos_major_version == 0)
+    {
+        inregs.h.ah = 0x30;   // GET DOS VERSION
+        inregs.h.al = 0;
+        outregs.h.al = 0;
+        int86(0x21, &inregs, &outregs);
+        dos_major_version = outregs.h.al;
+    }
+
+    // Release current virtual machine timeslice.
+    // Note that this is also supported under older DOS & Windows versions,
+    // but we only call it on Win9x ("DOS 7") because,
+    // " When called very often without intermediate screen output under MS
+    //   Windows 3.x, the VM will go into an idle-state and will not receive
+    //   the next slice before 8 seconds have elapsed. "
+    if (dos_major_version >= 7)
+    {
+        inregs.x.ax = 0x1680;
+        int86(0x2f, &inregs, &outregs);
+    }
+}
+
 void CheckAbort(const char *operation)
 {
     while (_bios_keybrd(_KEYBRD_READY))
@@ -111,5 +141,7 @@ void CheckAbort(const char *operation)
             Error("%s aborted.", operation);
         }
     }
+
+    DosIdle();
 }
 

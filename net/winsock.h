@@ -34,12 +34,12 @@ void WinsockInit(void);
 SOCKET WS_socket(int domain, int type, int protocol);
 int WS_close(SOCKET socket);
 
-int WS_bind(SOCKET socket, struct sockaddr_in *addr);
+int WS_bind(SOCKET socket, struct sockaddr_in far *addr);
 
-ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
-                  const struct sockaddr_in *to);
-ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
-                    struct sockaddr_in *from);
+ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
+                  const struct sockaddr_in far *to);
+ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
+                    struct sockaddr_in far *from);
 
 unsigned long WS_htonl(unsigned long val);
 #define WS_ntohl WS_htonl

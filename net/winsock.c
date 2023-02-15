@@ -153,7 +153,7 @@ static DWORD MapFlatPointer(const void far *msg)
     return (DWORD) params.Address;
 }
 
-int WS_bind(SOCKET socket, struct sockaddr_in *addr)
+int WS_bind(SOCKET socket, struct sockaddr_in far *addr)
 {
     struct {
         const void far *Address;
@@ -174,8 +174,8 @@ int WS_bind(SOCKET socket, struct sockaddr_in *addr)
 }
 
 // Winsock1 version of sendto().
-static ssize_t WS_sendto1(SOCKET socket, const void *msg, size_t len, int flags,
-                          const struct sockaddr_in *to)
+static ssize_t WS_sendto1(SOCKET socket, const void far *msg, size_t len,
+                          int flags, const struct sockaddr_in far *to)
 {
     int err;
     struct {
@@ -215,8 +215,8 @@ struct WSABuffer {
 };
 
 // Winsock2 version.
-static ssize_t WS_sendto2(SOCKET socket, const void *msg, size_t len, int flags,
-                          const struct sockaddr_in *to)
+static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
+                          int flags, const struct sockaddr_in far *to)
 {
     struct WSABuffer buffer;
     DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
@@ -260,8 +260,8 @@ static ssize_t WS_sendto2(SOCKET socket, const void *msg, size_t len, int flags,
     return params.BytesSent;
 }
 
-ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
-                  const struct sockaddr_in *to)
+ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
+                  const struct sockaddr_in far *to)
 {
     if (winsock2)
     {
@@ -274,8 +274,8 @@ ssize_t WS_sendto(SOCKET socket, const void *msg, size_t len, int flags,
 }
 
 // Winsock1 version of recvfrom().
-static ssize_t WS_recvfrom1(SOCKET socket, void *buf, size_t len, int flags,
-                            struct sockaddr_in *from)
+static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
+                            struct sockaddr_in far *from)
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     int err;
@@ -307,13 +307,13 @@ static ssize_t WS_recvfrom1(SOCKET socket, void *buf, size_t len, int flags,
         return err;
     }
 
-    memcpy(from, frombuf, sizeof(struct sockaddr_in));
+    far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
 
     return params.BytesReceived;
 }
 
-static ssize_t WS_recvfrom2(SOCKET socket, void *buf, size_t len, int flags,
-                            struct sockaddr_in *from)
+static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
+                            struct sockaddr_in far *from)
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     struct WSABuffer buffer;
@@ -354,13 +354,13 @@ static ssize_t WS_recvfrom2(SOCKET socket, void *buf, size_t len, int flags,
         return err;
     }
 
-    memcpy(from, frombuf, sizeof(struct sockaddr_in));
+    far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
 
     return params.BytesReceived;
 }
 
-ssize_t WS_recvfrom(SOCKET socket, void *buf, size_t len, int flags,
-                    struct sockaddr_in *from)
+ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
+                    struct sockaddr_in far *from)
 {
     if (winsock2)
     {

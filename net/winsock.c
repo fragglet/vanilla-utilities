@@ -166,6 +166,7 @@ int WS_bind(SOCKET socket, struct sockaddr_in *addr)
 
     memset(&params, 0, sizeof(params));
 
+    params.Socket = socket;
     params.Address = addr;
     params.AddressLength = SOCKADDR_SIZE;
 

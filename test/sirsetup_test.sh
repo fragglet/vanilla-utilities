@@ -36,7 +36,7 @@ run_player_tests() {
     fi
 
     # Force player at answer.
-    start_node1 $1 -node2
+    start_node1 $1 -player2
     start_node2 $2
     wait_dosboxes
 
@@ -49,8 +49,8 @@ run_player_tests() {
     fi
 
     # Force player at both works as long as they're consistent.
-    start_node1 $1 -node2
-    start_node2 $2 -node1
+    start_node1 $1 -player2
+    start_node2 $2 -player1
     wait_dosboxes
 
     if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||
@@ -63,7 +63,7 @@ run_player_tests() {
 
     # Force player at dial.
     start_node1 $1
-    start_node2 $2 -node1
+    start_node2 $2 -player1
     wait_dosboxes
 
     if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||

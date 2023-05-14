@@ -57,17 +57,29 @@
 #define DIVISOR_LATCH_LOW                    0x00
 #define DIVISOR_LATCH_HIGH                   0x01
 
-#define	QUESIZE	2048
-
-typedef struct {
-    long head, tail;            // bytes are put on head and pulled from tail
-    uint8_t data[QUESIZE];
-} que_t;
-
 void SerialRegisterFlags(void);
 void InitPort(long baudrate);
 void ShutdownPort(void);
 
-int ReadByte(void);
-void WriteByte(int c);
+// SerialByteReceived is called every time a new byte is received from
+// the serial port. If it returns zero, no more data will be delivered
+// until ResumeReceive is called. This may lead to data being lost, but
+// should be done if there is no more buffer space left to store data.
+int SerialByteReceived(uint8_t c);
+
+// SerialMoreTXData fills this buffer.
+#define SERIAL_TX_BUFFER_LEN  16
+extern uint8_t serial_tx_buffer[SERIAL_TX_BUFFER_LEN];
+
+// SerialMoreTXData to refill the transmit buffer when it's empty.
+// Returns the number of bytes placed into the buffer, or zero to mean
+// "stop transmitting".
+unsigned int SerialMoreTXData(void);
+
+// JumpStart restarts transmit if transmit had previously stopped.
+void JumpStart(void);
+
+// ResumeReceive is called to restart receive, if SerialByteReceived
+// previously returned zero.
+void ResumeReceive(void);
 

@@ -1,5 +1,5 @@
 
-union ipx_regs {
+union ll_regs {
     struct {
         uint16_t ax, bx, cx, dx;
         uint16_t es, si;
@@ -9,8 +9,8 @@ union ipx_regs {
     } h;
 };
 
-extern union ipx_regs ipx_regs;
-extern void far (*ipx_entrypoint)();
+extern union ll_regs ll_regs;
+extern void __stdcall far (*ll_funcptr)();
 
-extern void __stdcall NewIPXCall(void);
+extern void __stdcall LowLevelCall(void);
 

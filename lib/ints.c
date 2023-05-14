@@ -1,7 +1,11 @@
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <bios.h>
+#include <assert.h>
 
+#include "lib/dos.h"
 #include "lib/ints.h"
 #include "lib/log.h"
 
@@ -64,6 +68,106 @@ void RestoreInterrupt(struct interrupt_hook *state)
     }
     _dos_setvect(state->interrupt_num, state->old_isr);
     state->interrupt_num = 0;
+}
+
+#define PIC_COMMAND_PORT  0x20
+#define PIC_DATA_PORT     0x21
+
+static int CheckChainedIRQ(unsigned int irq)
+{
+    char name[14];
+    char *value;
+
+    sprintf(name, "CHAIN_IRQ%d", irq);
+    value = getenv(name);
+    return value != NULL && !strcmp(value, "1");
+}
+
+static void SetChainedIRQ(struct irq_hook *state, int enable)
+{
+    sprintf(state->env_string, "CHAIN_IRQ%d=%s", state->irq,
+            enable ? "1" : "");
+    putenv(state->env_string);
+}
+
+void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
+             unsigned int irq)
+{
+    assert(irq < 8);
+
+    // Usually, for efficiency, we want the hardware all to ourselves and
+    // deliberately don't chain to call whatever interrupt handler was
+    // there before us. However, we want to play nicely with other copies
+    // of the same binary that are sharing the same interrupt (eg. two
+    // SERSETUPs on COM1 and COM3). So the first time that we hook the
+    // interrupt we set a special environment variable. Other instances
+    // then detect this and set chaining mode.
+    // Doing this also ensures that we send the EOI message to the PIC only
+    // once (see EndOfIRQ below).
+    state->irq = irq;
+    state->chained = CheckChainedIRQ(irq);
+    if (!state->chained)
+    {
+        SetChainedIRQ(state, 1);
+    }
+
+    _disable();
+
+    state->was_masked = (INPUT(PIC_DATA_PORT) & (1 << irq)) != 0;
+    state->old_isr = _dos_getvect(8 + irq);
+    _dos_setvect(8 + irq, isr);
+
+    ClearIRQMask(state);
+
+    _enable();
+}
+
+void RestoreIRQ(struct irq_hook *state)
+{
+    _disable();
+
+    SetIRQMask(state);
+    _dos_setvect(8 + state->irq, state->old_isr);
+
+    if (!state->was_masked)
+    {
+        ClearIRQMask(state);
+    }
+
+    _enable();
+
+    // We can't delete an environment variable but we can set it to zero.
+    // We only do this if we previously set the variable ourselves.
+    if (!state->chained)
+    {
+        SetChainedIRQ(state, 0);
+    }
+}
+
+void SetIRQMask(struct irq_hook *irq)
+{
+    OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) | (1 << irq->irq));
+}
+
+void ClearIRQMask(struct irq_hook *irq)
+{
+    OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) & ~(1 << irq->irq));
+}
+
+void EndOfIRQ(struct irq_hook *irq)
+{
+    // In chained mode we call the original ISR and it sends the EOI
+    // to the PIC. Otherwise we send it ourselves. It is important that
+    // the interrupt is only acknowledged once, otherwise we can end up
+    // acknowledging the wrong interrupt.
+    if (irq->chained)
+    {
+        _chain_intr(irq->old_isr);
+    }
+    else
+    {
+        OUTPUT(PIC_COMMAND_PORT, 0x60 + irq->irq);
+    }
 }
 
 #define DOS_INTERRUPT_API  0x21

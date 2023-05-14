@@ -1,7 +1,7 @@
 
-void SetLogDistinguisher(char *name);
-void LogMessage(char *fmt, ...);
-void Error(char *error, ...);
-void ErrorPrintUsage(char *fmt, ...);
-void CheckAbort(char *operation);
+void SetLogDistinguisher(const char *name);
+void LogMessage(const char *fmt, ...);
+void Error(const char *error, ...);
+void ErrorPrintUsage(const char *fmt, ...);
+void CheckAbort(const char *operation);
 

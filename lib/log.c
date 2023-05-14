@@ -42,13 +42,13 @@ static void SetLogName(void)
     }
 }
 
-void SetLogDistinguisher(char *name)
+void SetLogDistinguisher(const char *name)
 {
     strncpy(distinguisher, name, sizeof(distinguisher));
     distinguisher[sizeof(distinguisher) - 1] = '\0';
 }
 
-static void LogVarargs(char *fmt, va_list args)
+static void LogVarargs(const char *fmt, va_list args)
 {
     if (strlen(progname) == 0)
     {
@@ -67,7 +67,7 @@ static void LogVarargs(char *fmt, va_list args)
     fprintf(log, "\n");
 }
 
-void LogMessage(char *fmt, ...)
+void LogMessage(const char *fmt, ...)
 {
     va_list args;
 
@@ -77,7 +77,7 @@ void LogMessage(char *fmt, ...)
 }
 
 // Aborts the program with an abnormal program termination.
-void Error(char *fmt, ...)
+void Error(const char *fmt, ...)
 {
     va_list args;
 
@@ -89,7 +89,7 @@ void Error(char *fmt, ...)
 }
 
 // Aborts the program with an error due to wrong command line arguments.
-void ErrorPrintUsage(char *fmt, ...)
+void ErrorPrintUsage(const char *fmt, ...)
 {
     va_list args;
 
@@ -102,7 +102,7 @@ void ErrorPrintUsage(char *fmt, ...)
     exit(1);
 }
 
-void CheckAbort(char *operation)
+void CheckAbort(const char *operation)
 {
     while (_bios_keybrd(_KEYBRD_READY))
     {

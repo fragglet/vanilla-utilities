@@ -7,41 +7,197 @@
 
 #include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/serarb.h"
 #include "net/serport.h"
 
-extern que_t inque, outque;
+#define	QUESIZE	2048
+
+typedef struct {
+    long head, tail;            // bytes are put on head and pulled from tail
+    uint8_t data[QUESIZE];
+} que_t;
+
+static struct
+{
+    int (*poll_func)(void);
+    void (*callback)(void);
+    const char *check_abort_message;
+} eventloop;
+
+static struct
+{
+    const char *expected_response;
+    char buf[80];
+    int buf_len;
+    int complete;
+} modemresp;
+
+static que_t inque, outque;
 
 void JumpStart(void);
 extern int uart;
 
+static int in_game = 0;
 static doomcom_t doomcom;
+static int background_flag = 0;
 static char *modem_config_file = "modem.cfg";
 static char startup[256], shutdown[256];
 static long baudrate = 9600;
 
-void ModemCommand(char *str);
+int SerialByteReceived(uint8_t c)
+{
+    // Don't overflow the input queue. If we run out of space, we need to
+    // temporarily pause receives.
+    if (((inque.head + 1) & (QUESIZE - 1)) == (inque.tail & (QUESIZE - 1)))
+    {
+        return 0;
+    }
+    inque.data[inque.head & (QUESIZE - 1)] = c;
+    inque.head++;
+    return 1;
+}
+
+unsigned int SerialMoreTXData(void)
+{
+    unsigned int result = 0;
+
+    result = 0;
+    while (outque.tail < outque.head && result < SERIAL_TX_BUFFER_LEN)
+    {
+        serial_tx_buffer[result] = outque.data[outque.tail & (QUESIZE - 1)];
+        ++outque.tail;
+        ++result;
+    }
+
+    return result;
+}
+
+static int ReadByte(void)
+{
+    int c;
+
+    if (inque.tail >= inque.head)
+    {
+        return -1;
+    }
+    c = inque.data[inque.tail & (QUESIZE - 1)];
+    inque.tail++;
+    ResumeReceive();
+    return c;
+}
 
 void WriteBuffer(char *buffer, unsigned int count)
 {
+    unsigned int i;
+
     // if this would overrun the buffer, throw everything else out
     if (outque.head - outque.tail + count > QUESIZE)
     {
         outque.tail = outque.head;
     }
 
-    while (count--)
+    for (i = 0; i < count; i++)
     {
-        WriteByte(*buffer++);
+        outque.data[outque.head & (QUESIZE - 1)] = buffer[i];
+        outque.head++;
     }
 
-    if (INPUT(uart + LINE_STATUS_REGISTER) & 0x40)
+    JumpStart();
+}
+
+static void PollEventLoop(void)
+{
+    if (eventloop.poll_func() != 0)
     {
-        JumpStart();
+        eventloop.poll_func = NULL;
+        if (eventloop.callback != NULL)
+        {
+            eventloop.callback();
+        }
     }
 }
+
+static void EventLoop(void)
+{
+    while (eventloop.poll_func != NULL)
+    {
+        CheckAbort(eventloop.check_abort_message);
+        PollEventLoop();
+    }
+}
+
+static void CallOnSuccess(const char *message, int (*poll_func)(void),
+                          void (*callback)(void))
+{
+    eventloop.check_abort_message = message;
+    eventloop.poll_func = poll_func;
+    eventloop.callback = callback;
+}
+
+static void ModemCommand(char *str)
+{
+    LogMessage("Modem command: %s", str);
+    WriteBuffer(str, strlen(str));
+    WriteBuffer("\r", 1);
+}
+
+// Modem response code, that waits until a particular answer is received
+// from the modem in response to a command (eg. OK, RING, CONNECT).
+
+static int PollModemResponse(void)
+{
+    int c;
+
+    while (!modemresp.complete)
+    {
+        for (;;)
+        {
+            c = ReadByte();
+            if (c == -1)
+            {
+                // No more bytes to process.
+                return 0;
+            }
+            if (c == '\n' || modemresp.buf_len == sizeof(modemresp.buf) - 1)
+            {
+                modemresp.buf[modemresp.buf_len] = '\0';
+                break;
+            }
+            if (c >= ' ')
+            {
+                modemresp.buf[modemresp.buf_len] = c;
+                ++modemresp.buf_len;
+            }
+        }
+
+        LogMessage("Modem response: %s", modemresp.buf);
+        modemresp.complete =
+            !strncmp(modemresp.buf, modemresp.expected_response,
+                     strlen(modemresp.expected_response));
+        modemresp.buf_len = 0;
+    }
+
+    return 1;
+}
+
+static void OnModemResponse(const char *resp, void (*and_then)(void))
+{
+    modemresp.expected_response = resp;
+    modemresp.buf_len = 0;
+    modemresp.complete = 0;
+    CallOnSuccess("Modem response", PollModemResponse, and_then);
+}
+
+// Blocking version that waits until the reply is received.
+static void ModemResponse(char *resp)
+{
+    OnModemResponse(resp, NULL);
+    EventLoop();
+}
+
 
 #define MAXPACKET	512
 #define	FRAMECHAR	0x70
@@ -53,7 +209,7 @@ static int newpacket;
 
 int ReadPacket(void)
 {
-    int c;
+   int c;
 
     // if the buffer has overflowed, throw everything out
     if (inque.head - inque.tail > QUESIZE - 4)
@@ -153,43 +309,21 @@ static void NetCallback(void)
     }
 }
 
-void ModemCommand(char *str)
+static void ISRCallback(void)
 {
-    LogMessage("Modem command: %s", str);
-    WriteBuffer(str, strlen(str));
-    WriteBuffer("\r", 1);
-}
-
-// Wait for OK, RING, CONNECT, etc
-void ModemResponse(char *resp)
-{
-    static char response[80];
-    int c;
-    int respptr;
-
-    do
+    // We don't call the actual NetCallback function until
+    // connection and player arbitration is complete.
+    if (!in_game)
     {
-        respptr = 0;
-        do
-        {
-            CheckAbort("Modem response");
-            c = ReadByte();
-            if (c == -1)
-                continue;
-            if (c == '\n' || respptr == 79)
-            {
-                response[respptr] = 0;
-                LogMessage("Modem response: %s", response);
-                break;
-            }
-            if (c >= ' ')
-            {
-                response[respptr] = c;
-                respptr++;
-            }
-        } while (1);
-
-    } while (strncmp(response, resp, strlen(resp)));
+        // When doing background answering, we switch PSP to make sure
+        // we use SERSETUP's stdout file handle.
+        unsigned int old_psp = SwitchPSP();
+        PollEventLoop();
+        doomcom.remotenode = -1;
+        RestorePSP(old_psp);
+        return;
+    }
+    NetCallback();
 }
 
 static void HangupModem(void)
@@ -238,6 +372,46 @@ static void ReadModemCfg(void)
     }
 }
 
+static void ArbitrationComplete(void)
+{
+    in_game = 1;
+}
+
+static void Connected(void)
+{
+    StartArbitratePlayers(&doomcom, NetCallback);
+    CallOnSuccess("Connection", PollArbitratePlayers, ArbitrationComplete);
+}
+
+// In background mode, we must set doomcom.consoleplayer before launching
+// the game. Since we can't know this until player arbitration is complete,
+// we require -player1 or -player2 (and set one of the flags if necessary)
+static void SetBackgroundPlayer(int fallback)
+{
+    if (!force_player1 && !force_player2)
+    {
+        LogMessage("-bg flag requires -player1 or -player2; "
+                   "assuming -player%d", fallback);
+        if (fallback == 1)
+        {
+            force_player1 = 1;
+        }
+        else
+        {
+            force_player2 = 1;
+        }
+    }
+
+    if (force_player1)
+    {
+        doomcom.consoleplayer = 0;
+    }
+    else
+    {
+        doomcom.consoleplayer = 1;
+    }
+}
+
 void Dial(char *dial_no)
 {
     char cmd[80];
@@ -249,10 +423,25 @@ void Dial(char *dial_no)
 
     LogMessage("Dialing...");
     sprintf(cmd, "ATDT%s", dial_no);
-
     ModemCommand(cmd);
-    ModemResponse("CONNECT");
-    doomcom.consoleplayer = 1;
+
+    // We also support background dialing (-bg -dial).
+    OnModemResponse("CONNECT", Connected);
+    if (background_flag)
+    {
+        SetBackgroundPlayer(2);
+    }
+    else
+    {
+        // Usually we block until connection.
+        EventLoop();
+    }
+}
+
+static void RingDetected(void)
+{
+    ModemCommand("ATA");
+    OnModemResponse("CONNECT", Connected);
 }
 
 void Answer(void)
@@ -263,11 +452,18 @@ void Answer(void)
     ModemResponse("OK");
     LogMessage("Waiting for ring...");
 
-    ModemResponse("RING");
-    ModemCommand("ATA");
-    ModemResponse("CONNECT");
+    OnModemResponse("RING", RingDetected);
 
-    doomcom.consoleplayer = 0;
+    if (background_flag)
+    {
+        SetBackgroundPlayer(1);
+    }
+    else
+    {
+        // Without background mode, we block until dial and player
+        // arbitration is complete.
+        EventLoop();
+    }
 }
 
 void main(int argc, char *argv[])
@@ -281,6 +477,7 @@ void main(int argc, char *argv[])
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
     BoolFlag("-answer", &answer, "listen for incoming call");
+    BoolFlag("-bg", &background_flag, "answer calls in the background");
     StringFlag("-dial", &dial_no, "phone#",
                "dial the given phone number");
     StringFlag("-modemcfg", &modem_config_file, "filename",
@@ -320,9 +517,13 @@ void main(int argc, char *argv[])
     {
         Answer();
     }
-
-    ArbitratePlayers(&doomcom, NetCallback);
+    else
+    {
+        // Null modem / direct serial connection
+        ArbitratePlayers(&doomcom, NetCallback);
+        in_game = 1;
+    }
 
     // launch DOOM
-    NetLaunchDoom(&doomcom, args, NetCallback);
+    NetLaunchDoom(&doomcom, args, ISRCallback);
 }

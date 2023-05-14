@@ -35,23 +35,13 @@
 #define MAXPACKET	512
 
 static doomcom_t doomcom;
-unsigned newpkt = 0;
+
+extern unsigned int errors_wrong_checksum;
+extern unsigned int errors_packet_overwritten;
+extern unsigned int errors_timeout;
 
 extern int __stdcall PLIOWritePacket(void);
-extern uint8_t pktbuf[];
 extern unsigned recv_count;
-extern unsigned errcnt;
-
-int ReadPacket(void)
-{
-    if (newpkt)
-    {
-        newpkt = 0;
-        return 1;            // true - got a good packet
-    }
-
-    return 0;                // false - no packet available
-}
 
 int WritePacket(uint8_t *data, unsigned len)
 {
@@ -72,11 +62,10 @@ static void NetCallback(void)
     }
     else if (doomcom.command == CMD_GET)
     {
-        if (ReadPacket() && recv_count <= sizeof(doomcom.data))
+        doomcom.datalength = NextPacket(doomcom.data, sizeof(doomcom.data));
+        if (doomcom.datalength > 0)
         {
             doomcom.remotenode = 1;
-            doomcom.datalength = recv_count;
-            memcpy(doomcom.data, pktbuf, recv_count);
         }
         else
         {
@@ -87,10 +76,14 @@ static void NetCallback(void)
 
 void main(int argc, char *argv[])
 {
+    int printstats = 0;
     char **args;
+
+    srand(GetEntropy());
 
     SetHelpText("Doom parallel port network device driver",
                 "%s doom2.exe -warp 15 -skill 3");
+    BoolFlag("-printstats", &printstats, NULL);
     RegisterArbitrationFlags();
     ParallelRegisterFlags();
     NetRegisterFlags();
@@ -116,5 +109,12 @@ void main(int argc, char *argv[])
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);
+
+    if (printstats)
+    {
+        printf("timeouts: %d overwritten: %d wrong checksum: %d",
+               errors_timeout, errors_packet_overwritten,
+               errors_wrong_checksum);
+    }
 }
 

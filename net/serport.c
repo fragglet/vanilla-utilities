@@ -6,29 +6,29 @@
 
 #include "lib/dos.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/serport.h"
 
-void JumpStart(void);
-
 static void interrupt far ISR8250(void);
 static void interrupt far ISR16550(void);
+
+uint8_t serial_tx_buffer[SERIAL_TX_BUFFER_LEN];
+static unsigned int serial_tx_index, serial_tx_bytes;
+static int transmitting = 0, receiving = 1;
 
 static union REGS regs;
 static struct SREGS sregs;
 
-que_t inque, outque;
+static struct irq_hook uart_interrupt;
 
 int uart;                       // io address
 static enum { UART_8250, UART_16550 } uart_type;
-int irq;
+static int irq;
 
 static int modem_status = -1;
 static int line_status = -1;
-
-static void (interrupt far *oldirqvect) (void);
-static int irqintnum;
 
 static int comport;
 
@@ -224,33 +224,33 @@ void InitPort(long baudrate)
         }
     } while (!(u & 1));
 
-    // hook the irq vector
-    irqintnum = irq + 8;
-
-    oldirqvect = _dos_getvect(irqintnum);
+    // hook the IRQ vector
     if (uart_type == UART_16550)
     {
-        _dos_setvect(irqintnum, ISR16550);
+        HookIRQ(&uart_interrupt, ISR16550, irq);
         LogMessage("UART = 16550");
     }
     else
     {
-        _dos_setvect(irqintnum, ISR8250);
+        HookIRQ(&uart_interrupt, ISR8250, irq);
         LogMessage("UART = 8250");
     }
-
-    OUTPUT(0x20 + 1, INPUT(0x20 + 1) & ~(1 << irq));
-
-    _disable();
 
     // enable RX and TX interrupts at the uart
     OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
            IER_RX_DATA_READY + IER_TX_HOLDING_REGISTER_EMPTY);
 
-    // enable interrupts through the interrupt controller
+    // This was in the original SERSETUP source code and was a bit of a
+    // mystery, but I think I figured it out. This is setting OCW2 in the
+    // PIC to invoke the "Set Priority" command. Specifically, this sets a
+    // specific rotation where channel 2 is the bottom priority. Why?
+    // Well, if IRQ2 is the bottom priority, then IRQs 3 and 4 become the
+    // top priority, and those are the IRQs used by the COM1 and COM2
+    // UARTs. So this potentially gives a little bit of priority boost to
+    // the ISR. 
+    // Note the original comment attached to this line, "enable interrupts
+    // through the interrupt controller", is entirely misleading.
     OUTPUT(0x20, 0xc2);
-
-    _enable();
 }
 
 void ShutdownPort(void)
@@ -266,9 +266,7 @@ void ShutdownPort(void)
         INPUT(uart + RECEIVE_BUFFER_REGISTER);
     }
 
-    OUTPUT(0x20 + 1, INPUT(0x20 + 1) | (1 << irq));
-
-    _dos_setvect(irqintnum, oldirqvect);
+    RestoreIRQ(&uart_interrupt);
 
     // init com port settings to defaults
     regs.x.ax = 0xf3;           //f3= 9600 n 8 1
@@ -276,29 +274,39 @@ void ShutdownPort(void)
     int86(0x14, &regs, &regs);
 }
 
-int ReadByte(void)
+static inline int RefillTXBuffer(void)
 {
-    int c;
-
-    if (inque.tail >= inque.head)
-    {
-        return -1;
-    }
-    c = inque.data[inque.tail & (QUESIZE - 1)];
-    inque.tail++;
-    return c;
+    serial_tx_bytes = SerialMoreTXData();
+    serial_tx_index = 0;
+    return serial_tx_bytes != 0;
 }
 
-void WriteByte(int c)
+static inline void TransmitNextByte(void)
 {
-    outque.data[outque.head & (QUESIZE - 1)] = c;
-    outque.head++;
+    int c = serial_tx_buffer[serial_tx_index];
+    ++serial_tx_index;
+    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+    transmitting = 1;
+}
+
+// DisableReceive is called when SerialByteReceived returns failure,
+// which indicates there is no more buffer space to store data. This may
+// indicate an overload situation, or simply that the GetPacket function is
+// not being regularly called by DOOM (which happens during the startup
+// process). Either way, it is useless to invoke the ISR until buffer space
+// has been freed up, so we rewrite the IER to disable rx notifications.
+static inline void DisableReceive(void)
+{
+    if (receiving)
+    {
+        receiving = 0;
+        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
+               IER_TX_HOLDING_REGISTER_EMPTY);
+    }
 }
 
 static void interrupt far ISR8250(void)
 {
-    int c;
-
     while (1)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
@@ -315,35 +323,51 @@ static void interrupt far ISR8250(void)
 
             case IIR_TX_HOLDING_REGISTER_INTERRUPT:
                 // transmit
-                if (outque.tail < outque.head)
+                while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_THRE)
                 {
-                    c = outque.data[outque.tail & (QUESIZE - 1)];
-                    outque.tail++;
-                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                    if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
+                    {
+                        transmitting = 0;
+                        break;
+                    }
+                    TransmitNextByte();
                 }
                 break;
 
             case IIR_RX_DATA_READY_INTERRUPT:
                 // receive
-                c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                inque.data[inque.head & (QUESIZE - 1)] = c;
-                inque.head++;
+                if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
+                {
+                    DisableReceive();
+                }
                 break;
 
             default:
                 // done
-                OUTPUT(0x20, 0x20);
+                EndOfIRQ(&uart_interrupt);
                 return;
+        }
+    }
+}
+
+void PollSerialReceive(void)
+{
+    while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY)
+    {
+        if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
+        {
+            DisableReceive();
+            break;
         }
     }
 }
 
 static void interrupt far ISR16550(void)
 {
-    int c;
+    int c, done = 0;
     int count;
 
-    while (1)
+    while (!done)
     {
         switch (INPUT(uart + INTERRUPT_ID_REGISTER) & 7)
         {
@@ -359,43 +383,55 @@ static void interrupt far ISR16550(void)
 
             case IIR_TX_HOLDING_REGISTER_INTERRUPT:
                 // transmit
-                count = 16;
-                while (outque.tail < outque.head && count--)
+                for (count = 0; count < 16; count++)
                 {
-                    c = outque.data[outque.tail & (QUESIZE - 1)];
-                    outque.tail++;
-                    OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
+                    if (serial_tx_index >= serial_tx_bytes && !RefillTXBuffer())
+                    {
+                        transmitting = 0;
+                        break;
+                    }
+                    TransmitNextByte();
                 }
                 break;
 
             case IIR_RX_DATA_READY_INTERRUPT:
                 // receive
-                do
-                {
-                    c = INPUT(uart + RECEIVE_BUFFER_REGISTER);
-                    inque.data[inque.head & (QUESIZE - 1)] = c;
-                    inque.head++;
-                } while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY);
-
+                PollSerialReceive();
                 break;
 
             default:
-                // done
-                OUTPUT(0x20, 0x20);
-                return;
+                done = 1;
+                break;
         }
     }
+
+    EndOfIRQ(&uart_interrupt);
 }
 
-// Start up the transmition interrupts by sending the first char
+// Start up the transmission interrupts by sending the first char
 void JumpStart(void)
 {
-    int c;
-
-    if (outque.tail < outque.head)
+    if (transmitting)
     {
-        c = outque.data[outque.tail & (QUESIZE - 1)];
-        outque.tail++;
-        OUTPUT(uart, c);
+        return;
+    }
+    if (serial_tx_index < serial_tx_bytes || RefillTXBuffer())
+    {
+        TransmitNextByte();
     }
 }
+
+// Invoked when new rx buffer space has been made available; if we previously
+// turned off receive, we can now rewrite the IER to turn rx notifications
+// back on again.
+void ResumeReceive(void)
+{
+    if (!receiving)
+    {
+        receiving = 1;
+        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
+               IER_RX_DATA_READY + IER_TX_HOLDING_REGISTER_EMPTY);
+        PollSerialReceive();
+    }
+}
+

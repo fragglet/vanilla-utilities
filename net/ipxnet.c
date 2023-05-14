@@ -12,8 +12,8 @@
 #include "lib/log.h"
 
 #include "net/doomnet.h"
-#include "net/ipxcall.h"
 #include "net/ipxnet.h"
+#include "net/llcall.h"
 
 #define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */
 
@@ -36,45 +36,45 @@ long ipx_remotetime;
 
 int OpenSocket(short socketNumber)
 {
-    ipx_regs.x.bx = 0;
-    ipx_regs.h.al = 0;              // longevity
-    ipx_regs.x.dx = socketNumber;
+    ll_regs.x.bx = 0;
+    ll_regs.h.al = 0;              // longevity
+    ll_regs.x.dx = socketNumber;
     ipx_call();
-    if (ipx_regs.h.al != 0)
+    if (ll_regs.h.al != 0)
     {
-        Error("OpenSocket: 0x%x", ipx_regs.h.al);
+        Error("OpenSocket: 0x%x", ll_regs.h.al);
     }
-    return ipx_regs.x.dx;
+    return ll_regs.x.dx;
 }
 
 void CloseSocket(short socketNumber)
 {
-    ipx_regs.x.bx = 1;
-    ipx_regs.x.dx = socketNumber;
+    ll_regs.x.bx = 1;
+    ll_regs.x.dx = socketNumber;
     ipx_call();
 }
 
 void ListenForPacket(ECB *ecb)
 {
-    ipx_regs.x.si = FP_OFF(ecb);
-    ipx_regs.x.es = FP_SEG(ecb);
-    ipx_regs.x.bx = 4;
+    ll_regs.x.si = FP_OFF(ecb);
+    ll_regs.x.es = FP_SEG(ecb);
+    ll_regs.x.bx = 4;
     ipx_call();
-    if (ipx_regs.h.al != 0)
+    if (ll_regs.h.al != 0)
     {
-        Error("ListenForPacket: 0x%x", ipx_regs.h.al);
+        Error("ListenForPacket: 0x%x", ll_regs.h.al);
     }
 }
 
 void GetLocalAddress(void)
 {
-    ipx_regs.x.si = FP_OFF(&localaddr);
-    ipx_regs.x.es = FP_SEG(&localaddr);
-    ipx_regs.x.bx = 9;
+    ll_regs.x.si = FP_OFF(&localaddr);
+    ll_regs.x.es = FP_SEG(&localaddr);
+    ll_regs.x.bx = 9;
     ipx_call();
-    if (ipx_regs.h.al != 0)
+    if (ll_regs.h.al != 0)
     {
-        Error("Get inet addr: 0x%x", ipx_regs.h.al);
+        Error("Get inet addr: 0x%x", ll_regs.h.al);
     }
 }
 
@@ -187,19 +187,19 @@ void SendPacket(int destination)
     packets[0].ecb.f2Size = doomcom.datalength + 4;
 
     // send the packet
-    ipx_regs.x.si = FP_OFF(&packets[0]);
-    ipx_regs.x.es = FP_SEG(&packets[0]);
-    ipx_regs.x.bx = 3;
+    ll_regs.x.si = FP_OFF(&packets[0]);
+    ll_regs.x.es = FP_SEG(&packets[0]);
+    ll_regs.x.bx = 3;
     ipx_call();
-    if (ipx_regs.h.al != 0)
+    if (ll_regs.h.al != 0)
     {
-        Error("SendPacket: 0x%x", ipx_regs.h.al);
+        Error("SendPacket: 0x%x", ll_regs.h.al);
     }
 
     while (packets[0].ecb.InUseFlag != 0)
     {
         // IPX Relinquish Control - polled drivers MUST have this here!
-        ipx_regs.x.bx = 10;
+        ll_regs.x.bx = 10;
         ipx_call();
     }
 }

@@ -8,7 +8,7 @@ REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj \
                 lib\common.lib
 IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj \
-                net\ipxcall.obj lib\common.lib
+                net\llcall.obj lib\common.lib
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
                 net\serarb.obj lib\common.lib
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \

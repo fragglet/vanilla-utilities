@@ -101,6 +101,12 @@ void SetConfig(char **args, int nargs)
     size_t total_len = 1;
     int i;
 
+    // As a special case, a single argument of "-" clears all args.
+    if (nargs == 1 && !strcmp(args[0], "-"))
+    {
+        nargs = 0;
+    }
+
     for (i = 0; i < nargs; i++)
     {
         total_len += strlen(args[i]) + 1;
@@ -129,16 +135,18 @@ void PrintHelpText(char *cmdname)
         "Usage:\n"
         "    %s filename.exe         - Show current baked-in arguments.\n"
         "    %s filename.exe <args>  - Set baked-in arguments.\n"
+        "    %s filename.exe -       - Clear baked-in arguments.\n"
         "\n"
         "Examples:\n"
-        "    %s vcommit.exe duke3d.exe     - Always run duke3d.exe\n"
-        "    %s vrottcom.exe rott.exe      - Always run rott.exe\n"
-        "    %s sersetup.exe doom2.exe     - Always run doom2.exe\n"
+        "    %s vcommit.exe duke3d.exe     :: Always run duke3d.exe\n"
+        "    %s vrottcom.exe rott.exe      :: Always run rott.exe\n"
+        "    %s sersetup.exe doom2.exe     :: Always run doom2.exe\n"
         "\n"
-        "    COPY ipxsetup.exe 3player.exe  - Make a copy of ipxsetup.exe that\n"
-        "    %s 3player.exe -nodes 3        - always starts a 3-player game.\n"
+        "    :: Make a copy of ipxsetup that always starts a 3-player game:\n"
+        "    COPY ipxsetup.exe 3player.exe\n"
+        "    %s 3player.exe -nodes 3\n"
         "\n",
-        cmdname, cmdname, cmdname, cmdname, cmdname, cmdname
+        cmdname, cmdname, cmdname, cmdname, cmdname, cmdname, cmdname
     );
 }
 

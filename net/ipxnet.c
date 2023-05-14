@@ -96,8 +96,8 @@ static void InitIPX(void)
         Error("IPX not detected");
     }
 
-    ipx_call = NewIPXCall;
-    ipx_entrypoint = MK_FP(sregs.es, regs.x.di);
+    ipx_call = LowLevelCall;
+    ll_funcptr = MK_FP(sregs.es, regs.x.di);
 }
 
 void InitNetwork(void)

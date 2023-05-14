@@ -12,6 +12,5 @@ union ll_regs {
 extern union ll_regs ll_regs;
 extern void __stdcall far (*ll_funcptr)();
 
-extern void __stdcall OldIPXCall(void);
 extern void __stdcall LowLevelCall(void);
 

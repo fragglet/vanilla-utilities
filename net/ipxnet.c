@@ -87,36 +87,17 @@ static void InitIPX(void)
 {
     union REGS regs;
     struct SREGS sregs;
-    static const localaddr_t dummy_addr = {
-        {0x3c, 0x61, 0x96, 0x5f},
-        {0x0f, 0xa3, 0xca, 0xd6, 0x2f, 0x56},
-    };
 
     // First, try to use the newer, redirector-based API:
     regs.x.ax = 0x7a00;
     int86x(0x2f, &regs, &regs, &sregs);
-    if (regs.h.al == 0xff)
+    if (regs.h.al != 0xff)
     {
-        ipx_call = LowLevelCall;
-        ll_funcptr = MK_FP(sregs.es, regs.x.di);
-        return;
+        Error("IPX not detected");
     }
 
-    // Try to detect the older, interrupt-based API. We issue a GetLocalAddress
-    // API call and check if the buffer gets overwritten.
-    memcpy(&localaddr, &dummy_addr, sizeof(localaddr_t));
-    ll_regs.x.bx = 9;
-    ll_regs.x.si = FP_OFF(&localaddr);
-    ll_regs.x.es = FP_SEG(&localaddr);
-    OldIPXCall();
-    if (memcmp(&localaddr, &dummy_addr, sizeof(localaddr_t)) != 0)
-    {
-        ipx_call = OldIPXCall;
-        LogMessage("Note: falling back to older, interrupt-based IPX API");
-        return;
-    }
-
-    Error("IPX not detected");
+    ipx_call = NewIPXCall;
+    ipx_entrypoint = MK_FP(sregs.es, regs.x.di);
 }
 
 void InitNetwork(void)

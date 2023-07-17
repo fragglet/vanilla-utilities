@@ -15,4 +15,5 @@ jobs:
       run: sudo apt -q install dosbox
     - name: build
       run: ./build/watbuild.sh
-
+    - name: test
+      run: ./test/runtests.sh

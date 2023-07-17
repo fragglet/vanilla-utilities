@@ -33,6 +33,7 @@ EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe
 
 all: $(EXES)
+tests: fakedoom.exe
 
 lib\common.lib: lib\flag.o lib\log.o lib\dos.o lib\ints.o
 	del $@

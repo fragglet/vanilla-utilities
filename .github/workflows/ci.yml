@@ -3,8 +3,7 @@ name: Continuous Integration
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  watcom_build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,3 +24,17 @@ jobs:
       with:
         path: "artifacts"
         name: vutils
+
+  turboc_build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: sudo apt -q install dosbox
+    - name: build
+      run: |
+        ./build/tcbuild.sh
+    # We do not yet run tests on the TurboC .exes.

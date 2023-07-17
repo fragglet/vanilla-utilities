@@ -246,7 +246,6 @@ static void SendPacket(void)
 
 static void GetPacket(void)
 {
-    clock_t start;
     struct packet *pkt;
 
     if (inque.head == inque.tail)

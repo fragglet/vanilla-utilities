@@ -3,7 +3,8 @@
 # To invoke: wmake -f makefile.wat
 
 SOURCE_DIRS = ctrl;lib;net;stat;adapters;test
-CFLAGS = -I.
+CFLAGS = -I. -q
+LDFLAGS = -q
 
 REPLAY_OBJS = ctrl\replay.o ctrl\control.o lib\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.o ctrl\control.o ctrl\joystick.o lib\common.lib
@@ -37,35 +38,35 @@ tests: fakedoom.exe
 
 lib\common.lib: lib\flag.o lib\log.o lib\dos.o lib\ints.o
 	del $@
-	wlib $@ +lib\flag.o +lib\log.o +lib\dos.o +lib\ints.o
+	wlib -q $@ +lib\flag.o +lib\log.o +lib\dos.o +lib\ints.o
 replay.exe: $(REPLAY_OBJS)
-	wcl -fe=$@ $(REPLAY_OBJS)
+	wcl -q -fe=$@ $(REPLAY_OBJS)
 analogjs.exe: $(ANALOGJS_OBJS)
-	wcl -fe=$@ $(ANALOGJS_OBJS)
+	wcl -q -fe=$@ $(ANALOGJS_OBJS)
 ipxsetup.exe: $(IPXSETUP_OBJS)
-	wcl -fe=$@ $(IPXSETUP_OBJS)
+	wcl -q -fe=$@ $(IPXSETUP_OBJS)
 sersetup.exe: $(SERSETUP_OBJS)
-	wcl -fe=$@ $(SERSETUP_OBJS)
+	wcl -q -fe=$@ $(SERSETUP_OBJS)
 sirsetup.exe: $(SIRSETUP_OBJS)
-	wcl -fe=$@ $(SIRSETUP_OBJS)
+	wcl -q -fe=$@ $(SIRSETUP_OBJS)
 parsetup.exe: $(PARSETUP_OBJS)
-	wcl -fe=$@ $(PARSETUP_OBJS)
+	wcl -q -fe=$@ $(PARSETUP_OBJS)
 metanet.exe: $(METANET_OBJS)
-	wcl -fe=$@ $(METANET_OBJS)
+	wcl -q -fe=$@ $(METANET_OBJS)
 passthru.exe: $(PASSTHRU_OBJS)
-	wcl -fe=$@ $(PASSTHRU_OBJS)
+	wcl -q -fe=$@ $(PASSTHRU_OBJS)
 statdump.exe: $(STATDUMP_OBJS)
-	wcl -fe=$@ $(STATDUMP_OBJS)
+	wcl -q -fe=$@ $(STATDUMP_OBJS)
 solo-net.exe: $(SOLO_NET_OBJS)
-	wcl -fe=$@ $(SOLO_NET_OBJS)
+	wcl -q -fe=$@ $(SOLO_NET_OBJS)
 vcommit.exe: $(VCOMMIT_OBJS)
-	wcl -fe=$@ $(VCOMMIT_OBJS)
+	wcl -q -fe=$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
-	wcl -fe=$@ $(VROTTCOM_OBJS)
+	wcl -q -fe=$@ $(VROTTCOM_OBJS)
 vsetargs.exe: $(VSETARGS_OBJS)
-	wcl -fe=$@ $(VSETARGS_OBJS)
+	wcl -q -fe=$@ $(VSETARGS_OBJS)
 fakedoom.exe: $(FAKEDOOM_OBJS)
-	wcl -fe=$@ $(FAKEDOOM_OBJS)
+	wcl -q -fe=$@ $(FAKEDOOM_OBJS)
 
 .EXTENSIONS:
 .EXTENSIONS: .exe .o .asm .c
@@ -76,7 +77,7 @@ fakedoom.exe: $(FAKEDOOM_OBJS)
 .c.o:
 	wcc $(CFLAGS) -fo$@ $<
 .asm.o:
-	wasm -fo=$@ $<
+	wasm -q -fo=$@ $<
 
 clean:
 	del $(EXES)

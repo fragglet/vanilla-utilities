@@ -40,7 +40,9 @@ demos can be "continued" by recording a new demo from an old one.
 * **statdump** - external statistics driver that can write a text summary.
 * **vcommit** - adapter that converts a Doom network driver into a 3D Realms
 *COMMIT* driver, as used for *Duke Nukem 3D*, *Blood*, *Shadow Warrior*
-and various other games.
+and various other games. This means that all of the above network drivers
+can also be used with those games.
+[Example video](https://www.youtube.com/watch?v=qqdv999nMQc).
 * **vrottcom** - adapter that converts a Doom network driver into a *Rise
-of the Triad* ROTTCOM driver.
-
+of the Triad* ROTTCOM driver. This means that all of the above network
+drivers can also be used with ROTT.

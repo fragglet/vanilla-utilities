@@ -68,6 +68,11 @@ vsetargs.exe: $(VSETARGS_OBJS)
 fakedoom.exe: $(FAKEDOOM_OBJS)
 	wcl -q -fe=$@ $(FAKEDOOM_OBJS)
 
+# TODO: Not yet included in EXES until we have a working UDP/IP version
+# of IPXSETUP.
+ws2patch.exe: net\ws2patch.c
+	wcl386 $(CFLAGS) -fe=$@ $< -l=dos32a
+
 .EXTENSIONS:
 .EXTENSIONS: .exe .o .asm .c
 

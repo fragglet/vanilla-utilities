@@ -402,6 +402,7 @@ void WinsockInit(void)
     {
         winsock2 = 1;
         VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2);
+        // TODO: Check the bugfix has been applied with WS2PATCH
     }
     else if (VXDLDR_LoadDevice("WSOCK.VXD"))  // TODO: And WSOCK.386?
     {
@@ -415,7 +416,6 @@ void WinsockInit(void)
     }
 
     // TODO: Check the API really works
-    // TODO: Hotpatch to work around Winsock2 bug
     atexit(WinsockShutdown);
 }
 

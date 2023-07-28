@@ -62,7 +62,7 @@ ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
                   const struct sockaddr_in far *to);
 ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
                     struct sockaddr_in far *from);
-int WS_ioctlsocket(SOCKET socket, int cmd, void far *value);
+int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
 
 unsigned long WS_htonl(unsigned long val);
 #define WS_ntohl WS_htonl

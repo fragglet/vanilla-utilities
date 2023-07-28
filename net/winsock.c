@@ -373,7 +373,7 @@ ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
     }
 }
 
-static int WS_ioctlsocket1(SOCKET socket, int cmd, void far *value)
+static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
 {
     int err;
     struct {
@@ -404,7 +404,7 @@ static int WS_ioctlsocket1(SOCKET socket, int cmd, void far *value)
     return 0;
 }
 
-static int WS_ioctlsocket2(SOCKET socket, int cmd, void far *value)
+static int WS_ioctlsocket2(SOCKET socket, unsigned long cmd, void far *value)
 {
     struct {
         SOCKET    Socket;
@@ -423,7 +423,7 @@ static int WS_ioctlsocket2(SOCKET socket, int cmd, void far *value)
     return WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
 }
 
-int WS_ioctlsocket(SOCKET socket, int cmd, void far *value)
+int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
 {
     if (winsock2)
     {

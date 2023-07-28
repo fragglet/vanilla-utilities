@@ -221,7 +221,7 @@ int main()
     addr = FindByteSequence(MK_FP(sel, KERNEL_MEM_START),
                             'V', "xMM     ", 8) - 12;
 
-    printf("Found the VxD chain head at %lu, looking for WSOCK2 VxD...\n",
+    printf("Found the VxD chain head at %08x, looking for WSOCK2 VxD...\n",
            (unsigned long) addr);
     ddb = FindVxD(sel, (struct ddb far *) addr, VXD_ID_WSOCK2);
     if (ddb == NULL)
@@ -235,14 +235,14 @@ int main()
 
     // We use ddb->pm_proc as a pointer into the WSOCK2.VXD code to
     // start looking for the table.
-    printf("Found WSOCK2 VxD at %lu, searching for buggy table.\n",
+    printf("Found WSOCK2 VxD at %08x, searching for buggy table.\n",
            (unsigned long) ddb);
     printf("If the program crashes, the table may be patched already.\n");
     //Hexdump(MK_FP(sel, ddb->pm_proc));
     addr = FindByteSequence(MK_FP(sel, ddb->pm_proc), WRONG_FIRST_BYTE,
                             wrong, sizeof(wrong));
 
-    printf("Found buggy table at %lu, applying patch...\n",
+    printf("Found buggy table at %08x, applying patch...\n",
            (unsigned long) addr);
     _fmemcpy(addr + 1, right + 1, sizeof(right) - 1);
 

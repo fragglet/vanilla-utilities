@@ -15,6 +15,28 @@
 #define INADDR_ANY        0x00000000UL
 #define INADDR_BROADCAST  0xffffffffUL
 
+#define WSABASEERR      10000
+#define WSAEWOULDBLOCK  (WSABASEERR + 35)
+#define WSAEOPNOTSUPP   (WSABASEERR + 45)
+
+#define IOCPARM_MASK    0x7fUL          // parameters must be < 128 bytes
+#define IOC_VOID        0x20000000UL    // no parameters
+#define IOC_OUT         0x40000000UL    // copy out parameters
+#define IOC_IN          0x80000000UL    // copy in parameters
+#define IOC_INOUT       (IOC_IN|IOC_OUT)
+#define _IO(x,y)        (IOC_VOID|((x)<<8)|(y))
+#define _IOR(x,y,t)     (IOC_OUT|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
+#define _IOW(x,y,t)     (IOC_IN|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
+
+// ioctls:
+#define FIONREAD    _IOR('f', 127, int)    // get # bytes to read
+#define FIONBIO     _IOW('f', 126, int)    // set/clear non-blocking i/o
+#define SIOCSHIWAT  _IOW('s',  0, int)     // set high watermark
+#define SIOCGHIWAT  _IOR('s',  1, int)     // get high watermark
+#define SIOCSLOWAT  _IOW('s',  2, int)     // set low watermark
+#define SIOCGLOWAT  _IOR('s',  3, int)     // get low watermark
+#define SIOCATMARK  _IOR('s',  7, int)     // at oob mark?
+
 struct in_addr {
     unsigned long s_addr;
 };
@@ -40,6 +62,7 @@ ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
                   const struct sockaddr_in far *to);
 ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
                     struct sockaddr_in far *from);
+int WS_ioctlsocket(SOCKET socket, int cmd, void far *value);
 
 unsigned long WS_htonl(unsigned long val);
 #define WS_ntohl WS_htonl

@@ -23,6 +23,7 @@
 #define WSOCK_BIND_CMD              0x0101
 #define WSOCK_CLOSESOCKET_CMD       0x0102
 #define WSOCK_GETPEERNAME_CMD       0x0104
+#define WSOCK_IOCTLSOCKET_CMD       0x0107
 #define WSOCK_RECV_CMD              0x0109
 #define WSOCK_SEND_CMD              0x010d
 #define WSOCK_SOCKET_CMD            0x0110
@@ -223,7 +224,7 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
     int err;
     struct {
         struct WSABuffer far *Buffers;
-        const void far *Address;     // ___ ^ Addresses translaed by VxD
+        const void far *Address;     // ___ ^ Addresses translated by VxD
         SOCKET          Socket;
         DWORD           BufferCount;
         void far       *AddrLenPtr; //?
@@ -369,6 +370,68 @@ ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
     else
     {
         return WS_recvfrom1(socket, buf, len, flags, from);
+    }
+}
+
+static int WS_ioctlsocket1(SOCKET socket, int cmd, void far *value)
+{
+    int err;
+    struct {
+        SOCKET  Socket;
+        DWORD   Command;
+        DWORD   Param;
+    } params;
+
+    if (cmd != FIONBIO && cmd != FIONREAD && cmd != SIOCATMARK)
+    {
+        return WSAEOPNOTSUPP;
+    }
+
+    memset(&params, 0, sizeof(params));
+
+    params.Socket = socket;
+    params.Command = cmd;
+    params.Param = *((DWORD *) value);
+
+    err = WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
+    if (err != 0)
+    {
+        return err;
+    }
+
+    *((DWORD *) value) = params.Param;
+
+    return 0;
+}
+
+static int WS_ioctlsocket2(SOCKET socket, int cmd, void far *value)
+{
+    struct {
+        SOCKET    Socket;
+        DWORD     Command;
+        DWORD     ParamPointer;
+        DWORD     Unknown[8];
+        void far *Pointer;  // ?
+    } params;
+
+    memset(&params, 0, sizeof(params));
+
+    params.Socket = socket;
+    params.Command = cmd;
+    params.ParamPointer = MapFlatPointer(value);
+
+    return WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
+}
+
+int WS_ioctlsocket(SOCKET socket, int cmd, void far *value)
+{
+    if (winsock2)
+    {
+        return WS_ioctlsocket2(socket, cmd, value);
+    }
+    else
+    {
+        return WS_ioctlsocket1(socket, cmd, value);
     }
 }
 

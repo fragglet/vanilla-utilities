@@ -250,7 +250,6 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
     params.BufferCount = 1;
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
-    params.AddrLenPtr = &unused;  // MapFlatPointer()?
 
     err = WinsockCall(WSOCK_SEND_CMD, &params);
     if (err != 0)

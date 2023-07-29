@@ -29,13 +29,13 @@
 #define _IOW(x,y,t)     (IOC_IN|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
 
 // ioctls:
-#define FIONREAD    _IOR('f', 127, int)    // get # bytes to read
-#define FIONBIO     _IOW('f', 126, int)    // set/clear non-blocking i/o
-#define SIOCSHIWAT  _IOW('s',  0, int)     // set high watermark
-#define SIOCGHIWAT  _IOR('s',  1, int)     // get high watermark
-#define SIOCSLOWAT  _IOW('s',  2, int)     // set low watermark
-#define SIOCGLOWAT  _IOR('s',  3, int)     // get low watermark
-#define SIOCATMARK  _IOR('s',  7, int)     // at oob mark?
+#define FIONREAD    _IOR('f', 127, long)    // get # bytes to read
+#define FIONBIO     _IOW('f', 126, long)    // set/clear non-blocking i/o
+#define SIOCSHIWAT  _IOW('s',  0, long)     // set high watermark
+#define SIOCGHIWAT  _IOR('s',  1, long)     // get high watermark
+#define SIOCSLOWAT  _IOW('s',  2, long)     // set low watermark
+#define SIOCGLOWAT  _IOR('s',  3, long)     // get low watermark
+#define SIOCATMARK  _IOR('s',  7, long)     // at oob mark?
 
 struct in_addr {
     unsigned long s_addr;

@@ -68,3 +68,5 @@ unsigned long WS_htonl(unsigned long val);
 #define WS_ntohl WS_htonl
 unsigned short WS_htons(unsigned short val);
 #define WS_ntohs WS_htons
+
+extern unsigned long WS_LastError;

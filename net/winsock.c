@@ -40,6 +40,7 @@ typedef unsigned short WORD;
 
 typedef void __stdcall far (*vxd_entrypoint)();
 
+unsigned long WS_LastError;
 static int winsock2 = 1;
 
 static vxd_entrypoint vxdldr_entry;
@@ -88,13 +89,13 @@ static int WinsockCall(int function, void far *ptr)
     ll_regs.x.es = FP_SEG(ptr);
     ll_regs.x.bx = FP_OFF(ptr);
     LowLevelCall();
-    return ll_regs.x.ax;
+    WS_LastError = ll_regs.x.ax;
+    return WS_LastError == 0 ? 0 : -1;
 }
 
 SOCKET WS_socket(int domain, int type, int protocol)
 {
     static DWORD handle_counter = 999900UL;
-    int err;
     struct {
         DWORD   AddressFamily;
         DWORD   SocketType;
@@ -114,10 +115,9 @@ SOCKET WS_socket(int domain, int type, int protocol)
     params.NewSocketHandle = handle_counter;
     ++handle_counter;
 
-    err = WinsockCall(WSOCK_SOCKET_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_SOCKET_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
     return params.NewSocket;
 }
@@ -178,7 +178,6 @@ int WS_bind(SOCKET socket, struct sockaddr_in far *addr)
 static ssize_t WS_sendto1(SOCKET socket, const void far *msg, size_t len,
                           int flags, const struct sockaddr_in far *to)
 {
-    int err;
     struct {
         const void far *Buffer;
         const void far *Address;      // ___ ^ Addresses translated by VxD
@@ -201,10 +200,9 @@ static ssize_t WS_sendto1(SOCKET socket, const void far *msg, size_t len,
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
 
-    err = WinsockCall(WSOCK_SEND_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_SEND_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
 
     return params.BytesSent;
@@ -220,8 +218,6 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
                           int flags, const struct sockaddr_in far *to)
 {
     struct WSABuffer buffer;
-    DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
-    int err;
     struct {
         struct WSABuffer far *Buffers;
         const void far *Address;     // ___ ^ Addresses translated by VxD
@@ -251,10 +247,9 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
 
-    err = WinsockCall(WSOCK_SEND_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_SEND_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
 
     return params.BytesSent;
@@ -278,7 +273,6 @@ static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
                             struct sockaddr_in far *from)
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
-    int err;
     struct {
         void far  *Buffer;
         void far  *Address;      // ___ ^ Addresses translated by VxD
@@ -301,10 +295,9 @@ static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
     params.Flags = flags;
     params.AddressLength = SOCKADDR_SIZE;
 
-    err = WinsockCall(WSOCK_RECV_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_RECV_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
 
     far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
@@ -318,7 +311,6 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
     static uint8_t frombuf[SOCKADDR_SIZE];
     struct WSABuffer buffer;
     DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
-    int err;
     struct {
         struct WSABuffer far *Buffers;
         void far *Address;
@@ -348,10 +340,9 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
     params.AddressLength = SOCKADDR_SIZE;
     params.AddrLenPtr = &unused;
 
-    err = WinsockCall(WSOCK_RECV_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_RECV_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
 
     far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
@@ -374,7 +365,6 @@ ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
 
 static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
 {
-    int err;
     struct {
         SOCKET  Socket;
         DWORD   Command;
@@ -392,10 +382,9 @@ static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
     params.Command = cmd;
     params.Param = *((DWORD *) value);
 
-    err = WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
-    if (err != 0)
+    if (WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params) < 0)
     {
-        return err;
+        return -1;
     }
 
     *((DWORD *) value) = params.Param;

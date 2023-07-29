@@ -122,7 +122,7 @@ SOCKET WS_socket(int domain, int type, int protocol)
     return params.NewSocket;
 }
 
-int WS_close(SOCKET socket)
+int WS_closesocket(SOCKET socket)
 {
     struct {
         SOCKET Socket;

@@ -54,7 +54,7 @@ typedef long SOCKET;
 void WinsockInit(void);
 
 SOCKET WS_socket(int domain, int type, int protocol);
-int WS_close(SOCKET socket);
+int WS_closesocket(SOCKET socket);
 
 int WS_bind(SOCKET socket, struct sockaddr_in far *addr);
 

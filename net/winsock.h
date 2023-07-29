@@ -37,6 +37,18 @@
 #define SIOCGLOWAT  _IOR('s',  3, long)     // get low watermark
 #define SIOCATMARK  _IOR('s',  7, long)     // at oob mark?
 
+#define WS_htonl(x) \
+    ((((x) & 0xff000000UL) >> 24) \
+   | (((x) & 0x00ff0000UL) >> 8) \
+   | (((x) & 0x0000ff00UL) << 8) \
+   | (((x) & 0x000000ffUL) << 24))
+
+#define WS_htons(x) \
+    (((x) & 0xff00) | (((x) & 0x00ff) << 8))
+
+#define WS_ntohl(x) WS_htonl(x)
+#define WS_ntohs(x) WS_htons(x)
+
 struct in_addr {
     unsigned long s_addr;
 };
@@ -63,10 +75,5 @@ ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
 ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
                     struct sockaddr_in far *from);
 int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
-
-unsigned long WS_htonl(unsigned long val);
-#define WS_ntohl WS_htonl
-unsigned short WS_htons(unsigned short val);
-#define WS_ntohs WS_htons
 
 extern unsigned long WS_LastError;

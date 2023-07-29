@@ -406,12 +406,17 @@ static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
 
 static int WS_ioctlsocket2(SOCKET socket, unsigned long cmd, void far *value)
 {
+    // To make sense of this, take a look at the documentation for WSPIoctl().
     struct {
         SOCKET    Socket;
         DWORD     Command;
         DWORD     ParamPointer;
-        DWORD     Unknown[8];
-        void far *Pointer;  // ?
+        DWORD     Unknown1;      // lpvOutBuffer?
+        DWORD     Unknown2;      // lpcbBytesReturned?
+        DWORD     ParamBufLen;
+        // This looks like it may be: cbOutBuffer, lpOverlapped,
+        // lpCompletionRoutine, lpThreadId...
+        DWORD     Unknown3[6];
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -419,6 +424,7 @@ static int WS_ioctlsocket2(SOCKET socket, unsigned long cmd, void far *value)
     params.Socket = socket;
     params.Command = cmd;
     params.ParamPointer = MapFlatPointer(value);
+    params.ParamBufLen = sizeof(DWORD);
 
     return WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
 }

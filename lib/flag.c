@@ -26,6 +26,7 @@ static const struct baked_in_config baked_in_config = {
 enum flag_type {
     FLAG_BOOL,
     FLAG_STRING,
+    FLAG_UNSIGNED_INT,
     FLAG_INT,
     FLAG_API_POINTER,
 };
@@ -78,6 +79,15 @@ void IntFlag(const char *name, int *ptr,
     f->type = FLAG_INT;
     f->param_name = param_name;
     f->value.i = ptr;
+}
+
+void UnsignedIntFlag(const char *name, unsigned int *ptr,
+                     const char *param_name, const char *help_text)
+{
+    struct flag *f = NewFlag(name, help_text);
+    f->type = FLAG_UNSIGNED_INT;
+    f->param_name = param_name;
+    f->value.i = (int *) ptr;
 }
 
 void StringFlag(const char *name, char **ptr,
@@ -179,18 +189,23 @@ static struct flag *MustFindFlagForName(const char *name)
     return result;
 }
 
-static int MustParseInt(const char *flag_name, char *val)
+static int MustParseInt(const char *flag_name, char *val, long min, long max)
 {
+    char *endptr;
     long result;
 
     errno = 0;
     // Zero base means 0x hex or 0 oct prefixes are supported:
-    result = strtol(val, NULL, 0);
-    if (result == 0 && (errno != 0 || result < INT_MIN || result > INT_MAX))
+    result = strtol(val, &endptr, 0);
+    if ((result == 0 && errno != 0) || endptr == val || *endptr != '\0')
     {
         ErrorPrintUsage("Invalid value for flag '%s': '%s'.", flag_name, val);
     }
-
+    if (result < min || result > max)
+    {
+        ErrorPrintUsage("Value out of range for flag '%s': %li not "
+                        "in range %li - %li.", flag_name, result, min, max);
+    }
     return (int) result;
 }
 
@@ -488,7 +503,12 @@ static char **DoParseArgs(int argc, char **argv)
                 break;
 
             case FLAG_INT:
-                *f->value.i = MustParseInt(f->name, argv[i + 1]);
+                *f->value.i = MustParseInt(f->name, argv[i + 1],
+                                           INT_MIN, INT_MAX);
+                break;
+
+            case FLAG_UNSIGNED_INT:
+                *f->value.i = MustParseInt(f->name, argv[i + 1], 0, UINT_MAX);
                 break;
 
             case FLAG_STRING:

@@ -5,6 +5,8 @@ void SetHelpText(char *program_description, char *example_cmd);
 void BoolFlag(const char *name, int *ptr, const char *help_text);
 void IntFlag(const char *name, int *ptr,
              const char *param_name, const char *help_text);
+void UnsignedIntFlag(const char *name, unsigned int *ptr,
+                     const char *param_name, const char *help_text);
 void StringFlag(const char *name, char **ptr,
              const char *param_name, const char *help_text);
 void APIPointerFlag(const char *name, api_pointer_callback_t callback);

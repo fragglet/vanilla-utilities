@@ -451,9 +451,44 @@ static void WinsockShutdown(void)
     VXDLDR_UnloadDevice("WSOCK2.VXD");
 }
 
+static void CheckWindowsVersion(void)
+{
+    union REGS inregs, outregs;
+
+    inregs.x.ax = 0x160a;
+    int86(0x2f, &inregs, &outregs);
+
+    // Must be Windows 4.x (9x).
+    if (outregs.x.ax != 0 || outregs.x.cx != 3 ||  outregs.h.bh != 4)
+    {
+        Error("This program only works under Windows 9x.");
+    }
+
+    // Can't be NT. Check for DOS 7 (NT pretends to be DOS 5).
+    inregs.h.ah = 0x30;
+    inregs.h.al = 1;
+    int86(0x21, &inregs, &outregs);
+
+    switch (outregs.h.al)
+    {
+        case 5:
+            Error("This program doesn't work under Windows NT, "
+                  "only Windows 9x.");
+        case 8:
+            LogMessage("This hasn't been tested under Windows ME. "
+                       "Let me know if it works.");
+        case 7:
+            // 95 or 98
+            break;
+
+        default:
+            LogMessage("DOS %d?!?", outregs.h.al);
+    }
+}
+
 void WinsockInit(void)
 {
-    // TODO: Sanity check what version of Windows we're running under
+    CheckWindowsVersion();
 
     VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR);
 

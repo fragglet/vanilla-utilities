@@ -449,7 +449,6 @@ void WinsockInit(void)
     }
     else if (VXDLDR_LoadDevice("WSOCK.VXD"))  // TODO: And WSOCK.386?
     {
-        LogMessage("Winsock1 mode. If this works (or doesn't), let me know!");
         winsock2 = 0;
         VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK);
     }

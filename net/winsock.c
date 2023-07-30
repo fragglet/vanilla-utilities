@@ -458,7 +458,31 @@ void WinsockInit(void)
         Error("Failed to load either WSOCK.VXD or WSOCK2.VXD.");
     }
 
-    // TODO: Check the API really works
     atexit(WinsockShutdown);
+
+    // With Winsock2 we need to check the API really works.
+    // It is the recvfrom() and sendto() calls that are broken; unless the
+    // VxD is patched, the socket argument gets mistakenly treated as a memory
+    // address and becomes an invalid socket handle, hence WSAENOTSOCK.
+    if (winsock2)
+    {
+        struct sockaddr_in nowhere = {AF_INET, 0, {WS_htonl(INADDR_LOOPBACK)}};
+        SOCKET s;
+        char buf[1];
+        int err;
+
+        s = WS_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        // TODO: Check socket created ok
+
+        if (WS_sendto(s, buf, 0, 0, &nowhere) < 0
+         && WS_LastError == WSAENOTSOCK)
+        {
+            WS_closesocket(s);
+            Error("You have Winsock2 installed but its VxD bug has not been "
+                  "patched.\nRun WS2PATCH.EXE and then try again.");
+        }
+
+        WS_closesocket(s);
+    }
 }
 

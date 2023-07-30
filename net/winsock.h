@@ -13,10 +13,12 @@
 #define IPPROTO_UDP     17
 
 #define INADDR_ANY        0x00000000UL
+#define INADDR_LOOPBACK   0x7f000001UL  // 127.0.0.1
 #define INADDR_BROADCAST  0xffffffffUL
 
 #define WSABASEERR      10000
 #define WSAEWOULDBLOCK  (WSABASEERR + 35)
+#define WSAENOTSOCK     (WSABASEERR + 38)
 #define WSAEOPNOTSUPP   (WSABASEERR + 45)
 
 #define IOCPARM_MASK    0x7fUL          // parameters must be < 128 bytes

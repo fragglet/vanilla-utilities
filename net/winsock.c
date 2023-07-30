@@ -429,6 +429,22 @@ int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
     }
 }
 
+int WS_inet_aton(const char *cp, struct in_addr *inp)
+{
+    int a, b, c, d;
+
+    if (sscanf(cp, "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
+    {
+        return 0;
+    }
+
+    inp->s_addr = (((unsigned long) a) << 24)
+                | (((unsigned long) b) << 16)
+                | (((unsigned long) c) << 8)
+                | ((unsigned long) d);
+    return 1;
+}
+
 static void WinsockShutdown(void)
 {
     VXDLDR_UnloadDevice("WSOCK.VXD");

@@ -78,4 +78,6 @@ ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
                     struct sockaddr_in far *from);
 int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
 
+int WS_inet_aton(const char *cp, struct in_addr *inp);
+
 extern unsigned long WS_LastError;

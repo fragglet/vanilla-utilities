@@ -15,7 +15,11 @@
 #include "net/ipxnet.h"
 #include "net/llcall.h"
 
-#define DOOM_DEFAULT_PORT 0x869c /* 0x869c is the official DOOM socket */
+// 0x869c is the official DOOM socket as registered with Novell back in the
+// '90s. But the original IPXSETUP used a signed 16-bit integer for the port
+// variable, causing an integer overflow. As a result, the actual default
+// port number is one higher.
+#define DOOM_DEFAULT_PORT 0x869d
 
 extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
@@ -26,13 +30,13 @@ nodeaddr_t remoteaddr;            // set by each GetPacket
 
 static localaddr_t localaddr;            // set at startup
 
-static int port_flag = (int) DOOM_DEFAULT_PORT;
+static unsigned int port_flag = DOOM_DEFAULT_PORT;
 static int socketid;
 
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
 
-int OpenSocket(short socketNumber)
+int OpenSocket(unsigned short socketNumber)
 {
     ll_regs.x.bx = 0;
     ll_regs.h.al = 0;              // longevity
@@ -78,7 +82,8 @@ void GetLocalAddress(void)
 
 void IPXRegisterFlags(void)
 {
-    IntFlag("-port", &port_flag, "port", "use alternate IPX port number");
+    UnsignedIntFlag("-port", &port_flag, "port",
+                    "use alternate IPX port number");
 }
 
 static void InitIPX(void)
@@ -105,12 +110,12 @@ void InitNetwork(void)
 
     // allocate a socket for sending and receiving
     socketid = OpenSocket((port_flag >> 8) + ((port_flag & 255) << 8));
-    if (port_flag != (int) DOOM_DEFAULT_PORT)
+    if (port_flag != DOOM_DEFAULT_PORT)
     {
         char portnum[10];
         sprintf(portnum, "0x%x", port_flag);
         SetLogDistinguisher(portnum);
-        LogMessage("Using alternate port %i for network", port_flag);
+        LogMessage("Using alternate port %u for network", port_flag);
     }
 
     GetLocalAddress();

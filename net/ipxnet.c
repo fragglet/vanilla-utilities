@@ -29,8 +29,6 @@ static localaddr_t localaddr;            // set at startup
 static int port_flag = (int) DOOM_DEFAULT_PORT;
 static int socketid;
 
-static void __stdcall (*ipx_call)(void);
-
 long ipx_localtime;                 // for time stamp in packets
 long ipx_remotetime;
 
@@ -39,7 +37,7 @@ int OpenSocket(short socketNumber)
     ll_regs.x.bx = 0;
     ll_regs.h.al = 0;              // longevity
     ll_regs.x.dx = socketNumber;
-    ipx_call();
+    LowLevelCall();
     if (ll_regs.h.al != 0)
     {
         Error("OpenSocket: 0x%x", ll_regs.h.al);
@@ -51,7 +49,7 @@ void CloseSocket(short socketNumber)
 {
     ll_regs.x.bx = 1;
     ll_regs.x.dx = socketNumber;
-    ipx_call();
+    LowLevelCall();
 }
 
 void ListenForPacket(ECB *ecb)
@@ -59,7 +57,7 @@ void ListenForPacket(ECB *ecb)
     ll_regs.x.si = FP_OFF(ecb);
     ll_regs.x.es = FP_SEG(ecb);
     ll_regs.x.bx = 4;
-    ipx_call();
+    LowLevelCall();
     if (ll_regs.h.al != 0)
     {
         Error("ListenForPacket: 0x%x", ll_regs.h.al);
@@ -71,7 +69,7 @@ void GetLocalAddress(void)
     ll_regs.x.si = FP_OFF(&localaddr);
     ll_regs.x.es = FP_SEG(&localaddr);
     ll_regs.x.bx = 9;
-    ipx_call();
+    LowLevelCall();
     if (ll_regs.h.al != 0)
     {
         Error("Get inet addr: 0x%x", ll_regs.h.al);
@@ -96,7 +94,6 @@ static void InitIPX(void)
         Error("IPX not detected");
     }
 
-    ipx_call = LowLevelCall;
     ll_funcptr = MK_FP(sregs.es, regs.x.di);
 }
 
@@ -190,7 +187,7 @@ void SendPacket(int destination)
     ll_regs.x.si = FP_OFF(&packets[0]);
     ll_regs.x.es = FP_SEG(&packets[0]);
     ll_regs.x.bx = 3;
-    ipx_call();
+    LowLevelCall();
     if (ll_regs.h.al != 0)
     {
         Error("SendPacket: 0x%x", ll_regs.h.al);
@@ -200,7 +197,7 @@ void SendPacket(int destination)
     {
         // IPX Relinquish Control - polled drivers MUST have this here!
         ll_regs.x.bx = 10;
-        ipx_call();
+        LowLevelCall();
     }
 }
 

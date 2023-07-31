@@ -46,7 +46,7 @@
    | (((x) & 0x000000ffUL) << 24))
 
 #define WS_htons(x) \
-    (((x) & 0xff00) | (((x) & 0x00ff) << 8))
+    ((((x) & 0xff00) >> 8) | (((x) & 0x00ff) << 8))
 
 #define WS_ntohl(x) WS_htonl(x)
 #define WS_ntohs(x) WS_htons(x)

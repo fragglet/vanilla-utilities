@@ -438,10 +438,11 @@ int WS_inet_aton(const char *cp, struct in_addr *inp)
         return 0;
     }
 
-    inp->s_addr = (((unsigned long) a) << 24)
-                | (((unsigned long) b) << 16)
-                | (((unsigned long) c) << 8)
-                | ((unsigned long) d);
+    // Network byte order.
+    inp->s_addr = (((unsigned long) d) << 24)
+                | (((unsigned long) c) << 16)
+                | (((unsigned long) b) << 8)
+                | ((unsigned long) a);
     return 1;
 }
 

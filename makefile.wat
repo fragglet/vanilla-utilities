@@ -16,6 +16,8 @@ SIRSETUP_OBJS = net\sirsetup.o net\doomnet.o net\serport.o net\serarb.o &
                 lib\common.lib
 PARSETUP_OBJS = net\parsetup.o net\doomnet.o net\parport.o net\plio.o &
                 net\serarb.o lib\common.lib
+UDPSETUP_OBJS = net\udpsetup.o net\doomnet.o net\winsock.o net\llcall.o &
+                lib\common.lib
 PASSTHRU_OBJS = net\passthru.o net\doomnet.o lib\common.lib
 SOLO_NET_OBJS = net\solo-net.o net\doomnet.o lib\common.lib
 METANET_OBJS = net\metanet.o net\doomnet.o lib\common.lib
@@ -31,7 +33,8 @@ FAKEDOOM_OBJS = test\fakedoom.o net\doomnet.o ctrl\control.o &
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
-       vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe
+       vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe &
+       udpsetup.exe
 
 all: $(EXES)
 tests: fakedoom.exe
@@ -51,6 +54,8 @@ sirsetup.exe: $(SIRSETUP_OBJS)
 	wcl -q -fe=$@ $(SIRSETUP_OBJS)
 parsetup.exe: $(PARSETUP_OBJS)
 	wcl -q -fe=$@ $(PARSETUP_OBJS)
+udpsetup.exe: $(UDPSETUP_OBJS)
+	wcl -q -fe=$@ $(UDPSETUP_OBJS)
 metanet.exe: $(METANET_OBJS)
 	wcl -q -fe=$@ $(METANET_OBJS)
 passthru.exe: $(PASSTHRU_OBJS)

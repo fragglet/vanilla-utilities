@@ -277,7 +277,7 @@ static char **ReadResponseFile(char *filename)
     return result;
 }
 
-static int ArgListLength(char **args)
+int ArgListLength(char **args)
 {
     int result = 0;
     int i;

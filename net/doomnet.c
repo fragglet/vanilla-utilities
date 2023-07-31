@@ -88,12 +88,14 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args,
     // Add -net &doomcom
     flataddr = (long) FP_SEG(doomcom) * 16 + FP_OFF(doomcom);
     sprintf(addrstring, "%lu", flataddr);
+    args = DuplicateArgList(args);
     args = AppendArgs(args, "-net", addrstring, NULL);
 
     SquashToResponseFile(args);
     spawnv(P_WAIT, args[0], args);
 
     UnhookDoomVector();
+    free(args);
 }
 
 // NetGetHandle takes the given long value read from the command line

@@ -460,12 +460,14 @@ static void CheckWindowsVersion(void)
     int86(0x2f, &inregs, &outregs);
 
     // Must be Windows 4.x (9x).
+    // TODO: But we should WfW 3.11 with WSOCK.386
     if (outregs.x.ax != 0 || outregs.x.cx != 3 ||  outregs.h.bh != 4)
     {
         Error("This program only works under Windows 9x.");
     }
 
-    // Can't be NT. Check for DOS 7 (NT pretends to be DOS 5).
+    // We don't allow NT. Check for DOS 7 (NT pretends to be DOS 5).
+    // TODO: But we should support WSOCKVDD.
     inregs.h.ah = 0x30;
     inregs.h.al = 1;
     int86(0x21, &inregs, &outregs);

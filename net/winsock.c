@@ -491,7 +491,10 @@ static void CheckWindowsVersion(void)
 
 void WinsockInit(void)
 {
-    CheckWindowsVersion();
+    if (getenv("NO_WINSOCK_CHECKS") == NULL)
+    {
+        CheckWindowsVersion();
+    }
 
     VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR);
 
@@ -517,7 +520,7 @@ void WinsockInit(void)
     // It is the recvfrom() and sendto() calls that are broken; unless the
     // VxD is patched, the socket argument gets mistakenly treated as a memory
     // address and becomes an invalid socket handle, hence WSAENOTSOCK.
-    if (winsock2)
+    if (winsock2 && getenv("NO_WINSOCK_CHECKS") == NULL)
     {
         struct sockaddr_in nowhere = {AF_INET, 0, {WS_htonl(INADDR_LOOPBACK)}};
         SOCKET s;

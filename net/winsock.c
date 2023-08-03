@@ -497,15 +497,14 @@ void WinsockInit(void)
         CheckWindowsVersion();
     }
 
-    if (VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR))
-    {
-        VXDLDR_LoadDevice("WSOCK.VXD");
-        VXDLDR_LoadDevice("WSOCK2.VXD");
-        // TODO: And WSOCK.386?
-    }
-    else
+    if (!VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR))
     {
         LogMessage("Failed to get VxD entrypoint for VXDLDR.");
+    }
+    else if (!VXDLDR_LoadDevice("WSOCK.VXD")
+          && !VXDLDR_LoadDevice("WSOCK2.VXD")) // TODO: And WSOCK.386?
+    {
+        LogMessage("Failed to load either WSOCK or WSOCK2 VxD.");
     }
 
     if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2))

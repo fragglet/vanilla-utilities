@@ -46,7 +46,7 @@ static int winsock2 = 1;
 static vxd_entrypoint vxdldr_entry;
 static vxd_entrypoint winsock_entry;
 
-static void VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
+static int VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 {
     union REGS inregs, outregs;
     struct SREGS sregs;
@@ -57,9 +57,10 @@ static void VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 
     if (sregs.es == 0 && outregs.x.di == 0)
     {
-        Error("Error getting entrypoint for VxD with ID %04x: es:di=null", id);
+        return 0;
     }
     *entrypoint = MK_FP(sregs.es, outregs.x.di);
+    return 1;
 }
 
 static int VXDLDR_LoadDevice(char *device)
@@ -496,22 +497,28 @@ void WinsockInit(void)
         CheckWindowsVersion();
     }
 
-    VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR);
-
-    if (VXDLDR_LoadDevice("WSOCK2.VXD"))
+    if (VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR))
     {
-        winsock2 = 1;
-        VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2);
-        // TODO: Check the bugfix has been applied with WS2PATCH
-    }
-    else if (VXDLDR_LoadDevice("WSOCK.VXD"))  // TODO: And WSOCK.386?
-    {
-        winsock2 = 0;
-        VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK);
+        VXDLDR_LoadDevice("WSOCK.VXD");
+        VXDLDR_LoadDevice("WSOCK2.VXD");
+        // TODO: And WSOCK.386?
     }
     else
     {
-        Error("Failed to load either WSOCK.VXD or WSOCK2.VXD.");
+        LogMessage("Failed to get VxD entrypoint for VXDLDR.");
+    }
+
+    if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2))
+    {
+        winsock2 = 1;
+    }
+    else if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK))
+    {
+        winsock2 = 0;
+    }
+    else
+    {
+        Error("Failed to get VxD entrypoint for either WSOCK or WSOCK2.");
     }
 
     atexit(WinsockShutdown);

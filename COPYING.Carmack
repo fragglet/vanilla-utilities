@@ -1,0 +1,75 @@
+The following is an email conversation I had with John Carmack back in 2005
+where he confirmed that the source code to ipxsetup and sersetup can be
+considered as GPL.
+
+My email address has been replaced with [ME] to prevent it being harvested
+by spammers.
+
+--
+
+Received: by 10.48.43.18 with HTTP; Sat, 23 Jul 2005 19:33:03 -0700 (PDT)
+Message-ID: <301d395f0507231933fc7ca69@mail.gmail.com>
+Date: Sun, 24 Jul 2005 02:33:03 +0000
+From: Simon Howard <[ME]>
+Reply-To: Simon Howard <[ME]>
+To: johnc@idsoftware.com
+Subject: Doom source code
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Delivered-To: [ME]
+
+Hi John,
+
+The Doom source code is under the GPL now and has been for a while.=20
+Can the other Doom-related source (setup, ipxsetup, sersetup) be
+considered GPL as well?
+
+Also, the Doom source on the Id ftp is still the old "Doom source
+license" version.  You might want to get that updated.
+--=20
+Simon Howard
+http://www.soulsphere.org/
+
+
+Received: by 10.48.43.18 with SMTP id q18cs11075nfq;
+        Sat, 23 Jul 2005 22:43:32 -0700 (PDT)
+Received: by 10.36.222.33 with SMTP id u33mr1051936nzg;
+        Sat, 23 Jul 2005 22:43:31 -0700 (PDT)
+Return-Path: <johnc@idsoftware.com>
+Received: from idsoftware.com (predator.idsoftware.com [192.246.40.34])
+        by mx.gmail.com with ESMTP id 34si1981018nza.2005.07.23.22.43.31;
+        Sat, 23 Jul 2005 22:43:31 -0700 (PDT)
+Received-SPF: pass (gmail.com: best guess record for domain of johnc@idsoftware.com designates 192.246.40.34 as permitted sender)
+Received: from [192.246.40.9] (account johnc HELO jcdev.idsoftware.com)
+  by idsoftware.com (CommuniGate Pro SMTP 4.2.7)
+  with ESMTP-TLS id 7761627 for [ME]; Sun, 24 Jul 2005 00:43:31 -0500
+Message-Id: <6.2.1.2.0.20050724004550.044617b8@mail.idsoftware.com>
+X-Mailer: QUALCOMM Windows Eudora Version 6.2.1.2
+Date: Sun, 24 Jul 2005 00:47:10 -0500
+To: Simon Howard <[ME]>
+From: John Carmack <johnc@idsoftware.com>
+Subject: Re: Doom source code
+In-Reply-To: <301d395f0507231933fc7ca69@mail.gmail.com>
+References: <301d395f0507231933fc7ca69@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+
+At 09:33 PM 7/23/2005, you wrote:
+>Hi John,
+>
+>The Doom source code is under the GPL now and has been for a while.
+>Can the other Doom-related source (setup, ipxsetup, sersetup) be
+>considered GPL as well?
+
+Yes, feel free to use them, but I doubt I will ever bother to make an 
+official release.
+
+>Also, the Doom source on the Id ftp is still the old "Doom source
+>license" version.  You might want to get that updated.
+
+Really?  Are you sure they both aren't present?
+
+John Carmack
+

@@ -43,8 +43,8 @@ typedef void __stdcall far (*vxd_entrypoint)();
 unsigned long WS_LastError;
 static int winsock2 = 1;
 
-static vxd_entrypoint vxdldr_entry;
-static vxd_entrypoint winsock_entry;
+static vxd_entrypoint vxdldr_entry = NULL;
+static vxd_entrypoint winsock_entry = NULL;
 
 static int VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 {
@@ -449,8 +449,11 @@ int WS_inet_aton(const char *cp, struct in_addr *inp)
 
 static void WinsockShutdown(void)
 {
-    VXDLDR_UnloadDevice("WSOCK.VXD");
-    VXDLDR_UnloadDevice("WSOCK2.VXD");
+    if (vxdldr_entry != NULL)
+    {
+        VXDLDR_UnloadDevice("WSOCK.VXD");
+        VXDLDR_UnloadDevice("WSOCK2.VXD");
+    }
 }
 
 static void CheckWindowsVersion(void)
@@ -461,10 +464,16 @@ static void CheckWindowsVersion(void)
     int86(0x2f, &inregs, &outregs);
 
     // Must be Windows 4.x (9x).
-    // TODO: But we should WfW 3.11 with WSOCK.386
-    if (outregs.x.ax != 0 || outregs.x.cx != 3 ||  outregs.h.bh != 4)
+    if (outregs.x.ax != 0 || outregs.h.bh < 3 || outregs.x.cx != 3)
     {
-        Error("This program only works under Windows 9x.");
+        Error("This program only works under Windows 9x "
+              "or Windows 3.x enhanced mode.");
+    }
+
+    // If this is Windows 3, the DOS version doesn't matter.
+    if (outregs.h.bh == 3)
+    {
+        return;
     }
 
     // We don't allow NT. Check for DOS 7 (NT pretends to be DOS 5).
@@ -476,8 +485,8 @@ static void CheckWindowsVersion(void)
     switch (outregs.h.al)
     {
         case 5:
-            Error("This program doesn't work under Windows NT, "
-                  "only Windows 9x.");
+            Error("This program doesn't work under Windows NT, only "
+                  "Windows 9x or Windows 3.x enhanced mode.");
         case 8:
             LogMessage("This hasn't been tested under Windows ME. "
                        "Let me know if it works.");
@@ -502,7 +511,8 @@ void WinsockInit(void)
         LogMessage("Failed to get VxD entrypoint for VXDLDR.");
     }
     else if (!VXDLDR_LoadDevice("WSOCK.VXD")
-          && !VXDLDR_LoadDevice("WSOCK2.VXD")) // TODO: And WSOCK.386?
+          && !VXDLDR_LoadDevice("WSOCK.386")
+          && !VXDLDR_LoadDevice("WSOCK2.VXD"))
     {
         LogMessage("Failed to load either WSOCK or WSOCK2 VxD.");
     }

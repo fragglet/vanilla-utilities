@@ -39,17 +39,17 @@
 #define SIOCGLOWAT  _IOR('s',  3, long)     // get low watermark
 #define SIOCATMARK  _IOR('s',  7, long)     // at oob mark?
 
-#define WS_htonl(x) \
+#define htonl(x) \
     ((((x) & 0xff000000UL) >> 24) \
    | (((x) & 0x00ff0000UL) >> 8) \
    | (((x) & 0x0000ff00UL) << 8) \
    | (((x) & 0x000000ffUL) << 24))
 
-#define WS_htons(x) \
+#define htons(x) \
     ((((x) & 0xff00) >> 8) | (((x) & 0x00ff) << 8))
 
-#define WS_ntohl(x) WS_htonl(x)
-#define WS_ntohs(x) WS_htons(x)
+#define ntohl(x) htonl(x)
+#define ntohs(x) htons(x)
 
 struct in_addr {
     unsigned long s_addr;
@@ -67,17 +67,17 @@ typedef long SOCKET;
 
 void WinsockInit(void);
 
-SOCKET WS_socket(int domain, int type, int protocol);
-int WS_closesocket(SOCKET socket);
+SOCKET socket(int domain, int type, int protocol);
+int closesocket(SOCKET socket);
 
-int WS_bind(SOCKET socket, struct sockaddr_in far *addr);
+int bind(SOCKET socket, struct sockaddr_in far *addr);
 
-ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
-                  const struct sockaddr_in far *to);
-ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
-                    struct sockaddr_in far *from);
-int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
+ssize_t sendto(SOCKET socket, const void far *msg, size_t len, int flags,
+               const struct sockaddr_in far *to);
+ssize_t recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
+                 struct sockaddr_in far *from);
+int ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
 
-int WS_inet_aton(const char *cp, struct in_addr *inp);
+int inet_aton(const char *cp, struct in_addr *inp);
 
 extern unsigned long WS_LastError;

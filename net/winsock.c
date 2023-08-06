@@ -40,8 +40,8 @@ typedef unsigned short WORD;
 
 typedef void __stdcall far (*vxd_entrypoint)();
 
+static enum { WINSOCK1, WINSOCK2 } stack;
 unsigned long WS_LastError;
-static int winsock2 = 1;
 
 static vxd_entrypoint vxdldr_entry = NULL;
 static vxd_entrypoint winsock_entry = NULL;
@@ -94,7 +94,7 @@ static int WinsockCall(int function, void far *ptr)
     return WS_LastError == 0 ? 0 : -1;
 }
 
-SOCKET WS_socket(int domain, int type, int protocol)
+static SOCKET WS_socket(int domain, int type, int protocol)
 {
     static DWORD handle_counter = 999900UL;
     struct {
@@ -123,7 +123,7 @@ SOCKET WS_socket(int domain, int type, int protocol)
     return params.NewSocket;
 }
 
-int WS_closesocket(SOCKET socket)
+static int WS_closesocket(SOCKET socket)
 {
     struct {
         SOCKET Socket;
@@ -155,7 +155,7 @@ static DWORD MapFlatPointer(const void far *msg)
     return (DWORD) params.Address;
 }
 
-int WS_bind(SOCKET socket, struct sockaddr_in far *addr)
+static int WS_bind(SOCKET socket, struct sockaddr_in far *addr)
 {
     struct {
         const void far *Address;
@@ -256,19 +256,6 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
     return params.BytesSent;
 }
 
-ssize_t WS_sendto(SOCKET socket, const void far *msg, size_t len, int flags,
-                  const struct sockaddr_in far *to)
-{
-    if (winsock2)
-    {
-        return WS_sendto2(socket, msg, len, flags, to);
-    }
-    else
-    {
-        return WS_sendto1(socket, msg, len, flags, to);
-    }
-}
-
 // Winsock1 version of recvfrom().
 static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
                             struct sockaddr_in far *from)
@@ -351,19 +338,6 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
     return params.BytesReceived;
 }
 
-ssize_t WS_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
-                    struct sockaddr_in far *from)
-{
-    if (winsock2)
-    {
-        return WS_recvfrom2(socket, buf, len, flags, from);
-    }
-    else
-    {
-        return WS_recvfrom1(socket, buf, len, flags, from);
-    }
-}
-
 static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
 {
     struct {
@@ -418,35 +392,6 @@ static int WS_ioctlsocket2(SOCKET socket, unsigned long cmd, void far *value)
     return WinsockCall(WSOCK_IOCTLSOCKET_CMD, &params);
 }
 
-int WS_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
-{
-    if (winsock2)
-    {
-        return WS_ioctlsocket2(socket, cmd, value);
-    }
-    else
-    {
-        return WS_ioctlsocket1(socket, cmd, value);
-    }
-}
-
-int WS_inet_aton(const char *cp, struct in_addr *inp)
-{
-    int a, b, c, d;
-
-    if (sscanf(cp, "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
-    {
-        return 0;
-    }
-
-    // Network byte order.
-    inp->s_addr = (((unsigned long) d) << 24)
-                | (((unsigned long) c) << 16)
-                | (((unsigned long) b) << 8)
-                | ((unsigned long) a);
-    return 1;
-}
-
 static void WinsockShutdown(void)
 {
     if (vxdldr_entry != NULL)
@@ -499,6 +444,100 @@ static void CheckWindowsVersion(void)
     }
 }
 
+SOCKET socket(int domain, int type, int protocol)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+        case WINSOCK2:
+            return WS_socket(domain, type, protocol);
+        default:
+            return -1;
+    }
+}
+
+int closesocket(SOCKET socket)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+        case WINSOCK2:
+            return WS_closesocket(socket);
+        default:
+            return -1;
+    }
+}
+
+int bind(SOCKET socket, struct sockaddr_in far *addr)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+        case WINSOCK2:
+            return WS_bind(socket, addr);
+        default:
+            return -1;
+    }
+}
+
+ssize_t sendto(SOCKET socket, const void far *msg, size_t len, int flags,
+               const struct sockaddr_in far *to)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+            return WS_sendto1(socket, msg, len, flags, to);
+        case WINSOCK2:
+            return WS_sendto2(socket, msg, len, flags, to);
+        default:
+            return -1;
+    }
+}
+
+ssize_t recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
+                 struct sockaddr_in far *from)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+            return WS_recvfrom1(socket, buf, len, flags, from);
+        case WINSOCK2:
+            return WS_recvfrom2(socket, buf, len, flags, from);
+        default:
+            return -1;
+    }
+}
+
+int ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
+{
+    switch (stack)
+    {
+        case WINSOCK1:
+            return WS_ioctlsocket1(socket, cmd, value);
+        case WINSOCK2:
+            return WS_ioctlsocket2(socket, cmd, value);
+        default:
+            return -1;
+    }
+}
+
+int inet_aton(const char *cp, struct in_addr *inp)
+{
+    int a, b, c, d;
+
+    if (sscanf(cp, "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
+    {
+        return 0;
+    }
+
+    // Network byte order.
+    inp->s_addr = (((unsigned long) d) << 24)
+                | (((unsigned long) c) << 16)
+                | (((unsigned long) b) << 8)
+                | ((unsigned long) a);
+    return 1;
+}
+
 void WinsockInit(void)
 {
     if (getenv("NO_WINSOCK_CHECKS") == NULL)
@@ -519,11 +558,11 @@ void WinsockInit(void)
 
     if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2))
     {
-        winsock2 = 1;
+        stack = WINSOCK2;
     }
     else if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK))
     {
-        winsock2 = 0;
+        stack = WINSOCK1;
     }
     else
     {
@@ -536,25 +575,25 @@ void WinsockInit(void)
     // It is the recvfrom() and sendto() calls that are broken; unless the
     // VxD is patched, the socket argument gets mistakenly treated as a memory
     // address and becomes an invalid socket handle, hence WSAENOTSOCK.
-    if (winsock2 && getenv("NO_WINSOCK_CHECKS") == NULL)
+    if (stack == WINSOCK2 && getenv("NO_WINSOCK_CHECKS") == NULL)
     {
-        struct sockaddr_in nowhere = {AF_INET, 0, {WS_htonl(INADDR_LOOPBACK)}};
+        struct sockaddr_in nowhere = {AF_INET, 0, {htonl(INADDR_LOOPBACK)}};
         SOCKET s;
         char buf[1];
         int err;
 
-        s = WS_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         // TODO: Check socket created ok
 
-        if (WS_sendto(s, buf, 0, 0, &nowhere) < 0
+        if (sendto(s, buf, 0, 0, &nowhere) < 0
          && WS_LastError == WSAENOTSOCK)
         {
-            WS_closesocket(s);
+            closesocket(s);
             Error("You have Winsock2 installed but its VxD bug has not been "
                   "patched.\nRun WS2PATCH.EXE and then try again.");
         }
 
-        WS_closesocket(s);
+        closesocket(s);
     }
 }
 

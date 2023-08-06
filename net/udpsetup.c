@@ -33,15 +33,15 @@ static void SendPacket(void)
         return;
     }
 
-    WS_sendto(sock, doomcom.data, doomcom.datalength, 0, &remotehost);
+    sendto(sock, doomcom.data, doomcom.datalength, 0, &remotehost);
 }
 
 static void ReceivePacket(void)
 {
     ssize_t result;
 
-    result = WS_recvfrom(sock, doomcom.data, sizeof(doomcom.data),
-                         0, &remotehost);
+    result = recvfrom(sock, doomcom.data, sizeof(doomcom.data),
+                      0, &remotehost);
     if (result > 0)
     {
         doomcom.remotenode = 1;
@@ -92,7 +92,7 @@ static void InitDoomcom(void)
 
 static void Shutdown(void)
 {
-    if (WS_closesocket(sock) < 0)
+    if (closesocket(sock) < 0)
     {
         LogMessage("close failed: %d", WS_LastError);
     }
@@ -113,25 +113,25 @@ int main(int argc, char *argv[])
     }
 
     bindaddr.sin_family = AF_INET;
-    bindaddr.sin_port = WS_htons(atoi(args[0]));
+    bindaddr.sin_port = htons(atoi(args[0]));
     bindaddr.sin_addr.s_addr = INADDR_ANY;
 
     remotehost.sin_family = AF_INET;
-    remotehost.sin_port = WS_htons(atoi(args[2]));
-    if (!WS_inet_aton(args[1], &remotehost.sin_addr))
+    remotehost.sin_port = htons(atoi(args[2]));
+    if (!inet_aton(args[1], &remotehost.sin_addr))
     {
         Error("invalid IP address: %s", args[1]);
     }
 
     WinsockInit();
-    sock = WS_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     atexit(Shutdown);
 
-    if (WS_bind(sock, &bindaddr) < 0)
+    if (bind(sock, &bindaddr) < 0)
     {
-        Error("WS_bind: err=%d", WS_LastError);
+        Error("bind: err=%d", WS_LastError);
     }
-    if (WS_ioctlsocket(sock, FIONBIO, &trueval) < 0)
+    if (ioctlsocket(sock, FIONBIO, &trueval) < 0)
     {
         Error("setting nonblocking failed, err=%d", WS_LastError);
     }

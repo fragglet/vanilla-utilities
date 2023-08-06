@@ -106,7 +106,7 @@ struct sockaddr_in {
 // are on most Unix systems; a long can always store a pointer.
 typedef long SOCKET;
 
-void WinsockInit(void);
+void DosSockInit(void);
 
 SOCKET socket(int domain, int type, int protocol);
 int closesocket(SOCKET socket);
@@ -121,4 +121,4 @@ int ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
 
 int inet_aton(const char *cp, struct in_addr *inp);
 
-extern unsigned long WS_LastError;
+extern unsigned long DosSockLastError;

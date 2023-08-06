@@ -94,7 +94,7 @@ static void Shutdown(void)
 {
     if (closesocket(sock) < 0)
     {
-        LogMessage("close failed: %d", WS_LastError);
+        LogMessage("close failed: %d", DosSockLastError);
     }
 }
 
@@ -123,17 +123,17 @@ int main(int argc, char *argv[])
         Error("invalid IP address: %s", args[1]);
     }
 
-    WinsockInit();
+    DosSockInit();
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     atexit(Shutdown);
 
     if (bind(sock, &bindaddr) < 0)
     {
-        Error("bind: err=%d", WS_LastError);
+        Error("bind: err=%d", DosSockLastError);
     }
     if (ioctlsocket(sock, FIONBIO, &trueval) < 0)
     {
-        Error("setting nonblocking failed, err=%d", WS_LastError);
+        Error("setting nonblocking failed, err=%d", DosSockLastError);
     }
 
     InitDoomcom();

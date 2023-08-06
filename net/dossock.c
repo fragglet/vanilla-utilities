@@ -52,7 +52,7 @@ typedef void __stdcall far (*vxd_entrypoint)();
 
 // TODO: mTCP, WATTCP?
 static enum { MSCLIENT, WINSOCK1, WINSOCK2 } stack;
-unsigned long WS_LastError;
+unsigned long DosSockLastError;
 
 static vxd_entrypoint vxdldr_entry = NULL;
 static vxd_entrypoint winsock_entry = NULL;
@@ -101,8 +101,8 @@ static int WinsockCall(int function, void far *ptr)
     ll_regs.x.es = FP_SEG(ptr);
     ll_regs.x.bx = FP_OFF(ptr);
     LowLevelCall();
-    WS_LastError = ll_regs.x.ax;
-    return WS_LastError == 0 ? 0 : -1;
+    DosSockLastError = ll_regs.x.ax;
+    return DosSockLastError == 0 ? 0 : -1;
 }
 
 static SOCKET WS_socket(int domain, int type, int protocol)
@@ -529,7 +529,7 @@ static int MSClientCall(int code, struct mssock_header *hdr)
 
     if (result < 0)
     {
-        WS_LastError = MSClientToWinsockErr(status);
+        DosSockLastError = MSClientToWinsockErr(status);
         return -1;
     }
 
@@ -651,7 +651,7 @@ static int MSC_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
         case FIONBIO:  cmd = 1; break;
         case FIONREAD: cmd = 2; break;
         default:
-            WS_LastError = WSAEOPNOTSUPP;
+            DosSockLastError = WSAEOPNOTSUPP;
             return -1;
     }
 
@@ -774,7 +774,7 @@ int inet_aton(const char *cp, struct in_addr *inp)
     return 1;
 }
 
-void WinsockInit(void)
+void DosSockInit(void)
 {
     if (getenv("NO_WINSOCK_CHECKS") == NULL)
     {
@@ -822,7 +822,7 @@ void WinsockInit(void)
         // TODO: Check socket created ok
 
         if (sendto(s, buf, 0, 0, &nowhere) < 0
-         && WS_LastError == WSAENOTSOCK)
+         && DosSockLastError == WSAENOTSOCK)
         {
             closesocket(s);
             Error("You have Winsock2 installed but its VxD bug has not been "

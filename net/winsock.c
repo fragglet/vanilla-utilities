@@ -9,11 +9,19 @@
 // * Ralf Brown's Interrupt List, which has some documentation for the
 //   Windows VxD backdoor APIs.
 // * The book "Unauthorized Windows 95", Andrew Schulman. ISBN 978-1568841694
+// * Berczi Gabor's (again) Freesock Pascal library, which has interfaces for
+//   calling into pretty much every DOS networking API ever created.
+//   MSSOCKS.PAS contains (some) details about the MSClient TCPIP driver API.
+// * "Microsoft TCP/IP Sockets Development Kit", Microsoft's published SDK for
+//   using the MSClient TCPIP driver, contains their official sockets API
+//   implementation that calls into that driver. Some reverse engineering of
+//   that helped to fill in the gaps missing from MSSOCKS.PAS.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <process.h>
 
 #include "lib/dos.h"
 #include "lib/log.h"
@@ -42,7 +50,7 @@ typedef unsigned short WORD;
 
 typedef void __stdcall far (*vxd_entrypoint)();
 
-static enum { WINSOCK1, WINSOCK2 } stack;
+static enum { MSCLIENT, WINSOCK1, WINSOCK2 } stack;
 unsigned long WS_LastError;
 
 static vxd_entrypoint vxdldr_entry = NULL;
@@ -446,10 +454,225 @@ static void CheckWindowsVersion(void)
     }
 }
 
+struct mssock_header {
+    uint8_t FuncCode;
+    void far *StatusPtr;
+    void far *ResultPtr;
+    uint16_t ProcessID;
+};
+
+static const int msclient_to_winsock_err[] = {
+    WSAENOTSOCK,         // 100 - Socket operation on non-socket
+    WSAEDESTADDRREQ,     // 101 - Destination address required
+    WSAEMSGSIZE,         // 102 - Message too long
+    WSAEPROTOTYPE,       // 103 - Protocol wrong type for socket
+    WSAENOPROTOOPT,      // 104 - Protocol not available
+    WSAEPROTONOSUPPORT,  // 105 - Protocol not supported
+    WSAESOCKTNOSUPPORT,  // 106 - Socket type not supported
+    WSAEOPNOTSUPP,       // 107 - Operation not supported on socket
+    WSAEPFNOSUPPORT,     // 108 - Protocol family not supported
+    WSAEAFNOSUPPORT,     // 109 - Address family not supported
+    WSAEADDRINUSE,       // 110 - Address already in use
+    WSAEADDRNOTAVAIL,    // 111 - Can't assign requested address
+    WSAENETDOWN,         // 112 - Network is down
+    WSAENETUNREACH,      // 113 - Network is unreachable
+    WSAENETRESET,        // 114 - Network dropped connection or reset
+    WSAECONNABORTED,     // 115 - Software caused connection abort
+    WSAECONNRESET,       // 116 - Connection reset by peer
+    WSAENOBUFS,          // 117 - No buffer space available
+    WSAEISCONN,          // 118 - Socket is already connected
+    WSAENOTCONN,         // 119 - Socket is not connected
+    WSAESHUTDOWN,        // 120 - Can't send after socket shutdown
+    WSAETIMEDOUT,        // 121 - Connection timed out
+    WSAECONNREFUSED,     // 122 - Connection refused
+    WSAEHOSTDOWN,        // 123 - Networking subsystem not started
+    WSAEHOSTUNREACH,     // 124 - No route to host
+    WSAEWOULDBLOCK,      // 125 - Operation would block
+    WSAEINPROGRESS,      // 126 - Operation now in progress
+    WSAEALREADY,         // 127 - Operation already in progress
+
+    // There are more msclient-specific errors that follow WSAEALREADY, but
+    // they don't have winsock equivalents.
+};
+
+static uint16_t MSClientToWinsockErr(uint16_t msclient_err)
+{
+    uint16_t err;
+
+    if (msclient_err == 0)
+    {
+        return 0;
+    }
+
+    if (msclient_err < 100 || msclient_err > 127)
+    {
+        // Can't map to a winsock error code, but at least translate it
+        // into something unique.
+        return 20000 + msclient_err;
+    }
+
+    return msclient_to_winsock_err[msclient_err - 100];
+}
+
+static int MSClientCall(int code, struct mssock_header *hdr)
+{
+    uint16_t status = 0;
+    int16_t result = 0;
+
+    hdr->FuncCode = code;
+    hdr->StatusPtr = &status;
+    hdr->ResultPtr = &result;
+    hdr->ProcessID = getpid();
+
+    // TODO...
+
+    if (result < 0)
+    {
+        WS_LastError = MSClientToWinsockErr(status);
+        return -1;
+    }
+
+    return result;
+}
+
+static SOCKET MSC_socket(int domain, int type, int protocol)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             SockFamily;
+        uint16_t             SockType;
+        uint16_t             SockProtocol;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+    params.SockFamily = domain;
+    params.SockType = type;
+    params.SockProtocol = protocol;
+
+    return MSClientCall(0x10, &params.Header);
+}
+
+static int MSC_closesocket(SOCKET socket)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             Socket;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+    params.Socket = (uint16_t) socket;
+
+    return MSClientCall(0x02, &params.Header);
+}
+
+static int MSC_bind(SOCKET socket, struct sockaddr_in far *addr)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             Socket;
+        void far            *Addr;
+        uint16_t             AddrLen;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+    params.Socket = (uint16_t) socket;
+    params.Addr = addr;
+    params.AddrLen = sizeof(*addr);
+
+    return MSClientCall(0x01, &params.Header);
+}
+
+static ssize_t MSC_sendto(SOCKET socket, const void far *msg, size_t len,
+                          int flags, const struct sockaddr_in far *to)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             Socket;
+        const void far      *Buffer;
+        uint16_t             BufferLen;
+        uint16_t             Flags;
+        const void far      *Addr;
+        uint16_t             AddrLen;
+        uint16_t             CallType;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+    params.Socket = (uint16_t) socket;
+    params.Buffer = msg;
+    params.BufferLen = len;
+    params.Flags = flags;
+    params.Addr = to;
+    params.AddrLen = sizeof(*to);
+    params.CallType = to != NULL;  // sendto(), not send()?
+
+    return MSClientCall(0x0d, &params.Header);
+}
+
+static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
+                           int flags, struct sockaddr_in far *from)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             Socket;
+        void far            *Buffer;
+        uint16_t             BufferLen;
+        uint16_t             Flags;
+        void far            *Addr;
+        uint16_t             AddrLen;
+        uint16_t             CallType;
+    } params;
+
+    memset(&params, 0, sizeof(params));
+    params.Socket = (uint16_t) socket;
+    params.Buffer = buf;
+    params.BufferLen = len;
+    params.Flags = flags;
+    params.Addr = from;
+    params.AddrLen = sizeof(*from);
+    params.CallType = from != NULL;  // recvfrom(), not recv()?
+
+    return MSClientCall(0x0b, &params.Header);
+}
+
+static int MSC_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
+{
+    struct {
+        struct mssock_header Header;
+        uint16_t             Socket;
+        uint16_t             Command;
+        void far            *Value;
+    } params;
+    int result;
+
+    // Winsock ioctl command# -> MSClient equivalent.
+    switch (cmd)
+    {
+        case FIONBIO:  cmd = 1; break;
+        case FIONREAD: cmd = 2; break;
+        default:
+            WS_LastError = WSAEOPNOTSUPP;
+            return -1;
+    }
+
+    params.Socket = (uint16_t) socket;
+    params.Command = cmd;
+    params.Value = value;
+
+    result = MSClientCall(0x09, &params.Header);
+
+    // Winsock ioctl operates on DWORDs, but MSClient uses WORDs. If the
+    // call set *value, zero off the top 16-bits of the DWORD.
+    ((uint16_t far *) value)[1] = 0;
+
+    return result;
+}
+
 SOCKET socket(int domain, int type, int protocol)
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_socket(domain, type, protocol);
         case WINSOCK1:
         case WINSOCK2:
             return WS_socket(domain, type, protocol);
@@ -462,6 +685,8 @@ int closesocket(SOCKET socket)
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_closesocket(socket);
         case WINSOCK1:
         case WINSOCK2:
             return WS_closesocket(socket);
@@ -474,6 +699,8 @@ int bind(SOCKET socket, struct sockaddr_in far *addr)
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_bind(socket, addr);
         case WINSOCK1:
         case WINSOCK2:
             return WS_bind(socket, addr);
@@ -487,6 +714,8 @@ ssize_t sendto(SOCKET socket, const void far *msg, size_t len, int flags,
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_sendto(socket, msg, len, flags, to);
         case WINSOCK1:
             return WS_sendto1(socket, msg, len, flags, to);
         case WINSOCK2:
@@ -501,6 +730,8 @@ ssize_t recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_recvfrom(socket,buf, len, flags, from);
         case WINSOCK1:
             return WS_recvfrom1(socket, buf, len, flags, from);
         case WINSOCK2:
@@ -514,6 +745,8 @@ int ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
 {
     switch (stack)
     {
+        case MSCLIENT:
+            return MSC_ioctlsocket(socket, cmd, value);
         case WINSOCK1:
             return WS_ioctlsocket1(socket, cmd, value);
         case WINSOCK2:

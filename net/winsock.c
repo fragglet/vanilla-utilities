@@ -20,6 +20,8 @@
 #include "net/llcall.h"
 #include "net/winsock.h"
 
+#pragma pack(1)
+
 #define WSOCK_BIND_CMD              0x0101
 #define WSOCK_CLOSESOCKET_CMD       0x0102
 #define WSOCK_GETPEERNAME_CMD       0x0104

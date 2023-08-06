@@ -19,7 +19,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
-#include "net/winsock.h"
+#include "net/dossock.h"
 
 static SOCKET sock;
 static int player2;

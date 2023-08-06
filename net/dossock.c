@@ -25,8 +25,8 @@
 
 #include "lib/dos.h"
 #include "lib/log.h"
+#include "net/dossock.h"
 #include "net/llcall.h"
-#include "net/winsock.h"
 
 #pragma pack(1)
 

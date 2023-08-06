@@ -50,6 +50,7 @@ typedef unsigned short WORD;
 
 typedef void __stdcall far (*vxd_entrypoint)();
 
+// TODO: mTCP, WATTCP?
 static enum { MSCLIENT, WINSOCK1, WINSOCK2 } stack;
 unsigned long WS_LastError;
 

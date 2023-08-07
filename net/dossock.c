@@ -448,8 +448,9 @@ static void CheckWindowsVersion(void)
     // Must be Windows 4.x (9x).
     if (outregs.x.ax != 0 || outregs.h.bh < 3 || outregs.x.cx != 3)
     {
-        Error("This program only works under Windows 9x "
-              "or Windows 3.x enhanced mode.");
+        Error("This program only works under Windows 9x or 3.x enhanced "
+              "mode.\nOr, under DOS you can use the MSClient stack (but "
+              "it doesn't seem to be installed).");
     }
 
     // If this is Windows 3, the DOS version doesn't matter.
@@ -596,10 +597,8 @@ static int MSClientInit(void)
     int err;
 
     err = _dos_open("TCPDRV$", O_RDWR, &msclient_handle);
-
     if (err != 0)
     {
-        LogMessage("MSClientInit: open failed, err=%d", err);
         msclient_handle = -1;
         return 0;
     }
@@ -608,9 +607,8 @@ static int MSClientInit(void)
     if (err != 0)
     {
         _dos_close(msclient_handle);
-        Error("MSClientInitIoctl: bind ioctl failed for TCPDRV$ "
-              "file: err=%d.\nYou might need to load SOCKETS.EXE "
-              "first before running this.", err);
+        Error("MSClientInit: bind ioctl failed for TCPDRV$ file: err=%d.\n"
+              "You might need to load SOCKETS.EXE before running this.", err);
         return 0;
     }
 
@@ -886,10 +884,12 @@ void DosSockInit(void)
 
     if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK2))
     {
+        LogMessage("DosSockInit: Using Winsock2 sockets interface.");
         stack = WINSOCK2;
     }
     else if (VxdGetEntryPoint(&winsock_entry, VXD_ID_WSOCK))
     {
+        LogMessage("DosSockInit: Using Winsock1 sockets interface.");
         stack = WINSOCK1;
     }
     else

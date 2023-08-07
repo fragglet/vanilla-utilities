@@ -1,5 +1,21 @@
-// Library for doing DOS Winsock networking via VxD backdoors.
-// This is some deep magic. Some recommended reading:
+// This is a minimal, incomplete version of the BSD sockets API (just the API).
+// It only implements those API functions needed for sending and receiving UDP
+// packets because that's all we need for writing a Doom network driver, but
+// it could be extended to add the other APIs too like connect() and accept().
+//
+// Multiple TCP/IP stacks are supported:
+// * Winsock 1 - this is the sockets implementation that shipped with Windows
+//   3.x and 95. We use undocumented (officially, at least) backdoors to talk
+//   with WSOCK.VXD which contains the Winsock stack.
+// * Winsock 2 - this version shipped with Windows 98, but Windows 95 can also
+//   be updated to use it. Same mechanism again, but the stack is in a VxD
+//   named WSOCK2.VXD and some of the ABI has been changed. Because of a bug
+//   in the driver interface, this only works if WS2PATCH is run first apply
+//   a hotfix into kernel memory.
+// * MSClient - this is the DOS TCP/IP stack used in "MS Client 3.0", MS LAN
+//   Manager, and "Workgroup Add-On for MS-DOS".
+//
+// There is some deep magic being used here. Some recommended reading:
 // * WSOCK.VXD pseudo-documentation (Richard Dawe)
 //   <https://www.richdawe.be/archive/dl/wsockvxd.htm>
 // * DJGPP libsocket, particularly the src/wsock directory (ls080s.zip).
@@ -11,7 +27,7 @@
 // * The book "Unauthorized Windows 95", Andrew Schulman. ISBN 978-1568841694
 // * Berczi Gabor's (again) Freesock Pascal library, which has interfaces for
 //   calling into pretty much every DOS networking API ever created.
-//   MSSOCKS.PAS contains (some) details about the MSClient TCPIP driver API.
+//   MSSOCKS.PAS contains some details about the MSClient TCPIP driver API.
 // * "Microsoft TCP/IP Sockets Development Kit", Microsoft's published SDK for
 //   using the MSClient TCPIP driver, contains their official sockets API
 //   implementation that calls into that driver. Some reverse engineering of

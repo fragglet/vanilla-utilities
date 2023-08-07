@@ -859,16 +859,16 @@ int inet_aton(const char *cp, struct in_addr *inp)
 
 void DosSockInit(void)
 {
+    if (getenv("NO_MSCLIENT") == NULL && MSClientInit())
+    {
+        LogMessage("DosSockInit: Using MSClient sockets interface.");
+        stack = MSCLIENT;
+        return;
+    }
+
     if (getenv("NO_WINSOCK_CHECKS") == NULL)
     {
         CheckWindowsVersion();
-    }
-
-    if (MSClientInit())
-    {
-        LogMessage("Using MSClient DOS interface.");
-        stack = MSCLIENT;
-        return;
     }
 
     if (!VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR))

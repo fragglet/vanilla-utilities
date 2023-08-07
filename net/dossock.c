@@ -59,6 +59,7 @@ unsigned long DosSockLastError;
 static vxd_entrypoint vxdldr_entry = NULL;
 static vxd_entrypoint winsock_entry = NULL;
 static int msclient_handle = -1;
+static void __stdcall far (*msclient_entrypoint)(void far *params);
 
 static int VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 {
@@ -534,10 +535,7 @@ static int MSClientCall(int code, struct mssock_header *hdr)
     hdr->ResultPtr = &result;
     hdr->ProcessID = getpid();
 
-    ll_regs.x.ax = 0;
-    ll_regs.x.es = FP_SEG(hdr);
-    ll_regs.x.bx = FP_OFF(hdr);
-    LowLevelCall();
+    msclient_entrypoint(hdr);
 
     if (result < 0)
     {
@@ -600,8 +598,7 @@ static int MSClientInit(void)
         return 0;
     }
 
-    LogMessage("MSClientInit: success, entrypoint at %Fp", entrypoint);
-    ll_funcptr = entrypoint;
+    msclient_entrypoint = entrypoint;
 
     MSClientInitIoctl(3, &entrypoint);  // "unbind"
 

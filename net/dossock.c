@@ -560,9 +560,8 @@ static int MSClientInitIoctl(int func_code, void far **entrypoint)
 
     params.FuncCode = func_code;
     params.Error = -1;
-    // MSSOCKS.PAS says this should be ('O' << 8) | 'S', so what gives? Is the
-    // signature different between the MSClient and the LAN Manager versions?
-    params.Signature = ('C' << 8) | 'T';
+    // We specifically want to talk to SOCKETS.EXE.
+    params.Signature = ('O' << 8) | 'S';
 
     regs.x.ax = 0x4402;  // DOS IOCTL
     regs.x.bx = msclient_handle;
@@ -596,15 +595,14 @@ static int MSClientInit(void)
     {
         _dos_close(msclient_handle);
         Error("MSClientInitIoctl: bind ioctl failed for TCPDRV$ "
-              "file: err=%d", err);
+              "file: err=%d.\nYou might need to load SOCKETS.EXE "
+              "first before running this.", err);
         return 0;
     }
 
     LogMessage("MSClientInit: success, entrypoint at %Fp", entrypoint);
     ll_funcptr = entrypoint;
 
-    // Not actually sure why these are necessary or why they're called
-    // "bind" and "unbind". This is what MSSOCKS.PAS does though.
     MSClientInitIoctl(3, &entrypoint);  // "unbind"
 
     return 1;

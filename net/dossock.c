@@ -647,7 +647,7 @@ static int MSC_bind(SOCKET socket, struct sockaddr_in far *addr)
     memset(&params, 0, sizeof(params));
     params.Socket = (uint16_t) socket;
     params.Addr = addr;
-    params.AddrLen = sizeof(*addr);
+    params.AddrLen = SOCKADDR_SIZE;
 
     return MSClientCall(0x01, &params.Header);
 }
@@ -672,7 +672,7 @@ static ssize_t MSC_sendto(SOCKET socket, const void far *msg, size_t len,
     params.BufferLen = len;
     params.Flags = flags;
     params.Addr = to;
-    params.AddrLen = sizeof(*to);
+    params.AddrLen = SOCKADDR_SIZE;
     params.CallType = to != NULL;  // sendto(), not send()?
 
     return MSClientCall(0x0d, &params.Header);
@@ -698,7 +698,7 @@ static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
     params.BufferLen = len;
     params.Flags = flags;
     params.Addr = from;
-    params.AddrLen = sizeof(*from);
+    params.AddrLen = SOCKADDR_SIZE;
     params.CallType = from != NULL;  // recvfrom(), not recv()?
 
     return MSClientCall(0x0b, &params.Header);

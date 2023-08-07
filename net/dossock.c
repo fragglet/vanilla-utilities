@@ -22,6 +22,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <process.h>
+#include <dos.h>
+#include <fcntl.h>
 
 #include "lib/dos.h"
 #include "lib/log.h"
@@ -56,6 +58,7 @@ unsigned long DosSockLastError;
 
 static vxd_entrypoint vxdldr_entry = NULL;
 static vxd_entrypoint winsock_entry = NULL;
+static int msclient_handle = -1;
 
 static int VxdGetEntryPoint(vxd_entrypoint *entrypoint, int id)
 {
@@ -409,6 +412,12 @@ static void WinsockShutdown(void)
     {
         VXDLDR_UnloadDevice("WSOCK.VXD");
         VXDLDR_UnloadDevice("WSOCK2.VXD");
+        vxdldr_entry = NULL;
+    }
+    else if (msclient_handle != -1)
+    {
+        _dos_close(msclient_handle);
+        msclient_handle = -1;
     }
 }
 
@@ -525,7 +534,10 @@ static int MSClientCall(int code, struct mssock_header *hdr)
     hdr->ResultPtr = &result;
     hdr->ProcessID = getpid();
 
-    // TODO...
+    ll_regs.x.ax = 0;
+    ll_regs.x.es = FP_SEG(hdr);
+    ll_regs.x.bx = FP_OFF(hdr);
+    LowLevelCall();
 
     if (result < 0)
     {
@@ -534,6 +546,68 @@ static int MSClientCall(int code, struct mssock_header *hdr)
     }
 
     return result;
+}
+
+static int MSClientInitIoctl(int func_code, void far **entrypoint)
+{
+    union REGS regs;
+    static struct {
+        uint8_t   FuncCode;
+        uint8_t   Error;
+        uint16_t  Signature;
+        void far *Entrypoint;
+    } params;
+
+    params.FuncCode = func_code;
+    params.Error = -1;
+    // MSSOCKS.PAS says this should be ('O' << 8) | 'S', so what gives? Is the
+    // signature different between the MSClient and the LAN Manager versions?
+    params.Signature = ('C' << 8) | 'T';
+
+    regs.x.ax = 0x4402;  // DOS IOCTL
+    regs.x.bx = msclient_handle;
+    regs.x.cx = 0x0019;
+    // ds is supposed to contain FP_SEG(&params), and since params is
+    // statically allocated, this is already true.
+    regs.x.dx = FP_OFF(&params);
+
+    int86(0x21, &regs, &regs);
+
+    *entrypoint = params.Entrypoint;
+    return params.Error;
+}
+
+static int MSClientInit(void)
+{
+    void far *entrypoint;
+    int err;
+
+    err = _dos_open("TCPDRV$", O_RDWR, &msclient_handle);
+
+    if (err != 0)
+    {
+        LogMessage("MSClientInit: open failed, err=%d", err);
+        msclient_handle = -1;
+        return 0;
+    }
+
+    err = MSClientInitIoctl(2, &entrypoint);  // "bind"
+    if (err != 0)
+    {
+        _dos_close(msclient_handle);
+        Error("MSClientInitIoctl: bind ioctl failed for TCPDRV$ "
+              "file: err=%d", err);
+        return 0;
+    }
+
+    LogMessage("MSClientInit: success, entrypoint at %Fp", entrypoint);
+    ll_funcptr = entrypoint;
+
+    // Not actually sure why these are necessary or why they're called
+    // "bind" and "unbind". This is what MSSOCKS.PAS does though.
+    MSClientInitIoctl(3, &entrypoint);  // "unbind"
+
+    return 1;
 }
 
 static SOCKET MSC_socket(int domain, int type, int protocol)
@@ -779,6 +853,13 @@ void DosSockInit(void)
     if (getenv("NO_WINSOCK_CHECKS") == NULL)
     {
         CheckWindowsVersion();
+    }
+
+    if (MSClientInit())
+    {
+        LogMessage("Using MSClient DOS interface.");
+        stack = MSCLIENT;
+        return;
     }
 
     if (!VxdGetEntryPoint(&vxdldr_entry, VXD_ID_VXDLDR))

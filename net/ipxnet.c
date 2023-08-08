@@ -43,8 +43,6 @@ static ECB ecbs[NUMPACKETS];
 
 const nodeaddr_t broadcast_addr = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
-static localaddr_t localaddr;            // set at startup
-
 static unsigned int port_flag = DOOM_DEFAULT_PORT;
 static int socketid;
 
@@ -82,10 +80,10 @@ void ListenForPacket(ECB *ecb)
     }
 }
 
-void GetLocalAddress(void)
+void IPXGetLocalAddress(localaddr_t *addr)
 {
-    ll_regs.x.si = FP_OFF(&localaddr);
-    ll_regs.x.es = FP_SEG(&localaddr);
+    ll_regs.x.si = FP_OFF(addr);
+    ll_regs.x.es = FP_SEG(addr);
     ll_regs.x.bx = 9;
     LowLevelCall();
     if (ll_regs.h.al != 0)
@@ -118,6 +116,7 @@ static void InitIPX(void)
 
 void InitNetwork(void)
 {
+    localaddr_t localaddr;
     int i, j;
 
     InitIPX();
@@ -131,8 +130,6 @@ void InitNetwork(void)
         SetLogDistinguisher(portnum);
         LogMessage("Using alternate port %u for network", port_flag);
     }
-
-    GetLocalAddress();
 
     // set up several receiving ECBs
     memset(packets, 0, NUMPACKETS * sizeof(packet_t));
@@ -150,6 +147,7 @@ void InitNetwork(void)
     // set up a sending ECB
     memset(&packets[0], 0, sizeof(packets[0]));
 
+    IPXGetLocalAddress(&localaddr);
     ecbs[0].ECBSocket = socketid;
     ecbs[0].FragmentCount = 2;
     ecbs[0].fAddress = &packets[0];

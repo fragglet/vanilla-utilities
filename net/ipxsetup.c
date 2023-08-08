@@ -202,6 +202,7 @@ static int DetermineConsolePlayer(void)
 // Exits with nodesetup[0..numnodes] and nodeaddr[0..numnodes] filled in
 void LookForNodes(void)
 {
+    localaddr_t localaddr;
     int i;
     clock_t now, last_time = 0;
     int total;
@@ -211,6 +212,9 @@ void LookForNodes(void)
     {
         Error("-player value must be in the range 1..%d", numnetnodes);
     }
+
+    IPXGetLocalAddress(&localaddr);
+    memcpy(nodeaddr[0].node, localaddr.node, sizeof(nodeaddr_t));
 
     // wait until we get [numnetnodes] packets, then start playing
     // the playernumbers are assigned by netid

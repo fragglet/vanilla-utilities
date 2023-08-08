@@ -55,6 +55,7 @@ extern const nodeaddr_t broadcast_addr;
 void IPXRegisterFlags(void);
 void InitNetwork(void);
 void ShutdownNetwork(void);
+void IPXGetLocalAddress(localaddr_t *addr);
 void IPXSendPacket(const nodeaddr_t *addr, void *data, size_t data_len);
 void IPXReleasePacket(packet_t *packet);
 packet_t *IPXGetPacket(void);

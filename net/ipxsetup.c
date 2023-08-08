@@ -29,7 +29,7 @@ doomcom_t doomcom;
 static int numnetnodes;
 
 static int force_player = -1;
-static nodeaddr_t nodeaddr[MAXNETNODES];
+static ipx_addr_t nodeaddr[MAXNETNODES];
 static setupdata_t nodesetup[MAXNETNODES];
 
 static void SendPacket(void)
@@ -43,13 +43,13 @@ static void SendPacket(void)
                   doomcom.datalength);
 }
 
-static int PlayerForAddress(uint8_t *addr)
+static int PlayerForAddress(ipx_addr_t *addr)
 {
     int i;
 
     for (i = 0; i < doomcom.numnodes; i++)
     {
-        if (!memcmp(addr, &nodeaddr[i], sizeof(nodeaddr_t)))
+        if (!memcmp(addr, &nodeaddr[i], sizeof(ipx_addr_t)))
         {
             return i;
         }
@@ -77,7 +77,7 @@ static void GetPacket(void)
         return;               // setup broadcast from other game
     }
 
-    i = PlayerForAddress(packet->ipx.sNode);
+    i = PlayerForAddress(&packet->ipx.Src);
     if (i != -1)
     {
         doomcom.remotenode = i;
@@ -105,7 +105,7 @@ static void NetCallback(void)
 // Process a setup packet found in doomcom.
 static void ProcessSetupPacket(packet_t *packet)
 {
-    uint8_t *addr;
+    ipx_addr_t *addr;
     setupdata_t *setup;
     int old_protocol;
     int n;
@@ -128,7 +128,7 @@ static void ProcessSetupPacket(packet_t *packet)
         setup->plnumwanted = -1;
     }
 
-    addr = (uint8_t *) packet->ipx.sNode;
+    addr = &packet->ipx.Src;
     n = PlayerForAddress(addr);
 
     // New node?
@@ -137,7 +137,7 @@ static void ProcessSetupPacket(packet_t *packet)
         n = doomcom.numnodes;
         ++doomcom.numnodes;
 
-        memcpy(&nodeaddr[n], addr, sizeof(nodeaddr_t));
+        memcpy(&nodeaddr[n], addr, sizeof(ipx_addr_t));
 
         LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
                    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
@@ -217,7 +217,7 @@ static int DetermineConsolePlayer(void)
 // Exits with nodesetup[0..numnodes] and nodeaddr[0..numnodes] filled in
 void LookForNodes(void)
 {
-    localaddr_t localaddr;
+    ipx_addr_t localaddr;
     int i;
     clock_t now, last_time = 0;
     int total;
@@ -229,14 +229,14 @@ void LookForNodes(void)
     }
 
     IPXGetLocalAddress(&localaddr);
-    memcpy(nodeaddr[0].node, localaddr.node, sizeof(nodeaddr_t));
+    memcpy(&nodeaddr[0], &localaddr, sizeof(ipx_addr_t));
 
     // wait until we get [numnetnodes] packets, then start playing
     // the playernumbers are assigned by netid
     LogMessage("Attempting to find %d players on IPX network", numnetnodes);
     LogMessage("Local address is %02x:%02x:%02x:%02x:%02x:%02x",
-               nodeaddr[0].node[0], nodeaddr[0].node[1], nodeaddr[0].node[2],
-               nodeaddr[0].node[3], nodeaddr[0].node[4], nodeaddr[0].node[5]);
+               nodeaddr[0].Node[0], nodeaddr[0].Node[1], nodeaddr[0].Node[2],
+               nodeaddr[0].Node[3], nodeaddr[0].Node[4], nodeaddr[0].Node[5]);
 
     ipx_localtime = -1;             // in setup time, not game time
 

@@ -56,7 +56,10 @@ typedef struct {
 static packet_t packets[NUMPACKETS];
 static ECB ecbs[NUMPACKETS];
 
-const nodeaddr_t broadcast_addr = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+const ipx_addr_t broadcast_addr = {
+    {0, 0, 0, 0},
+    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+};
 
 static unsigned int port_flag = DOOM_DEFAULT_PORT;
 static int socketid;
@@ -95,7 +98,7 @@ void ListenForPacket(ECB *ecb)
     }
 }
 
-void IPXGetLocalAddress(localaddr_t *addr)
+void IPXGetLocalAddress(ipx_addr_t *addr)
 {
     ll_regs.x.si = FP_OFF(addr);
     ll_regs.x.es = FP_SEG(addr);
@@ -131,7 +134,7 @@ static void InitIPX(void)
 
 void InitNetwork(void)
 {
-    localaddr_t localaddr;
+    ipx_addr_t localaddr;
     int i, j;
 
     InitIPX();
@@ -166,10 +169,7 @@ void InitNetwork(void)
     ecbs[0].ECBSocket = socketid;
     ecbs[0].FragmentCount = 2;
     ecbs[0].fAddress = &packets[0];
-    for (j = 0; j < 4; j++)
-    {
-        packets[0].ipx.dNetwork[j] = localaddr.network[j];
-    }
+    memcpy(&packets[0].ipx.Dest, &localaddr, sizeof(ipx_addr_t));
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
 }
@@ -181,7 +181,7 @@ void ShutdownNetwork(void)
 
 // Send packet to the given destination.
 // A destination of MAXNETNODES is a broadcast.
-void IPXSendPacket(const nodeaddr_t *addr, void *data, size_t data_len)
+void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 {
     int j;
 
@@ -189,8 +189,8 @@ void IPXSendPacket(const nodeaddr_t *addr, void *data, size_t data_len)
     packets[0].time = ipx_localtime;
 
     // set the address
-    memcpy(packets[0].ipx.dNode, addr, sizeof(nodeaddr_t));
-    memcpy(ecbs[0].ImmediateAddress, addr, sizeof(nodeaddr_t));
+    memcpy(&packets[0].ipx.Dest, addr, sizeof(ipx_addr_t));
+    memcpy(ecbs[0].ImmediateAddress, addr->Node, 6);
 
     // set the length (ipx + time + datalength)
     ecbs[0].fSize = sizeof(ipx_header_t) + 4;

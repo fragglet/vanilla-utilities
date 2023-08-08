@@ -49,8 +49,6 @@ typedef struct {
     uint8_t payload[512];
 } packet_t;
 
-extern int gameid;
-
 extern nodeaddr_t nodeaddr[MAXNETNODES];
 extern int localnodenum;
 

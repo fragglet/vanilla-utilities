@@ -128,8 +128,7 @@ void InitNetwork(void)
     {
         ecbs[i].ECBSocket = socketid;
         ecbs[i].FragmentCount = 1;
-        ecbs[i].fAddress[0] = FP_OFF(&packets[i]);
-        ecbs[i].fAddress[1] = FP_SEG(&packets[i]);
+        ecbs[i].fAddress = &packets[i];
         ecbs[i].fSize = sizeof(packet_t);
 
         ListenForPacket(&ecbs[i]);
@@ -140,16 +139,14 @@ void InitNetwork(void)
 
     ecbs[0].ECBSocket = socketid;
     ecbs[0].FragmentCount = 2;
-    ecbs[0].fAddress[0] = FP_OFF(&packets[0]);
-    ecbs[0].fAddress[1] = FP_SEG(&packets[0]);
+    ecbs[0].fAddress = &packets[0];
     for (j = 0; j < 4; j++)
     {
         packets[0].ipx.dNetwork[j] = localaddr.network[j];
     }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
-    ecbs[0].f2Address[0] = FP_OFF(doomcom.data);
-    ecbs[0].f2Address[1] = FP_SEG(doomcom.data);
+    ecbs[0].f2Address = doomcom.data;
 
     // known local node at 0
     for (i = 0; i < 6; i++)

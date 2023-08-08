@@ -40,8 +40,8 @@ typedef struct {
 } nodeaddr_t;
 
 typedef struct ECBStructure {
-    uint16_t Link[2];              /* offset-segment */
-    uint16_t ESRAddress[2];        /* offset-segment */
+    void far *Link;                /* offset-segment */
+    void far *ESRAddress;          /* offset-segment */
     uint8_t InUseFlag;
     uint8_t CompletionCode;
     uint16_t ECBSocket;            /* high-low */
@@ -50,9 +50,9 @@ typedef struct ECBStructure {
     uint8_t ImmediateAddress[6];   /* high-low */
     uint16_t FragmentCount;        /* low-high */
 
-    uint16_t fAddress[2];          /* offset-segment */
+    void far *fAddress;            /* offset-segment */
     uint16_t fSize;                /* low-high */
-    uint16_t f2Address[2];         /* offset-segment */
+    void far *f2Address;           /* offset-segment */
     uint16_t f2Size;               /* low-high */
 } ECB;
 

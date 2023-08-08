@@ -23,6 +23,7 @@
 
 extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
+static ECB ecbs[NUMPACKETS];
 
 nodeaddr_t nodeaddr[MAXNETNODES + 1];     // first is local, last is broadcast
 
@@ -125,30 +126,30 @@ void InitNetwork(void)
 
     for (i = 1; i < NUMPACKETS; i++)
     {
-        packets[i].ecb.ECBSocket = socketid;
-        packets[i].ecb.FragmentCount = 1;
-        packets[i].ecb.fAddress[0] = FP_OFF(&packets[i].ipx);
-        packets[i].ecb.fAddress[1] = FP_SEG(&packets[i].ipx);
-        packets[i].ecb.fSize = sizeof(packet_t) - sizeof(ECB);
+        ecbs[i].ECBSocket = socketid;
+        ecbs[i].FragmentCount = 1;
+        ecbs[i].fAddress[0] = FP_OFF(&packets[i]);
+        ecbs[i].fAddress[1] = FP_SEG(&packets[i]);
+        ecbs[i].fSize = sizeof(packet_t);
 
-        ListenForPacket(&packets[i].ecb);
+        ListenForPacket(&ecbs[i]);
     }
 
     // set up a sending ECB
     memset(&packets[0], 0, sizeof(packets[0]));
 
-    packets[0].ecb.ECBSocket = socketid;
-    packets[0].ecb.FragmentCount = 2;
-    packets[0].ecb.fAddress[0] = FP_OFF(&packets[0].ipx);
-    packets[0].ecb.fAddress[1] = FP_SEG(&packets[0].ipx);
+    ecbs[0].ECBSocket = socketid;
+    ecbs[0].FragmentCount = 2;
+    ecbs[0].fAddress[0] = FP_OFF(&packets[0]);
+    ecbs[0].fAddress[1] = FP_SEG(&packets[0]);
     for (j = 0; j < 4; j++)
     {
         packets[0].ipx.dNetwork[j] = localaddr.network[j];
     }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
-    packets[0].ecb.f2Address[0] = FP_OFF(doomcom.data);
-    packets[0].ecb.f2Address[1] = FP_SEG(doomcom.data);
+    ecbs[0].f2Address[0] = FP_OFF(doomcom.data);
+    ecbs[0].f2Address[1] = FP_SEG(doomcom.data);
 
     // known local node at 0
     for (i = 0; i < 6; i++)
@@ -180,17 +181,17 @@ void SendPacket(int destination)
     // set the address
     for (j = 0; j < 6; j++)
     {
-        packets[0].ipx.dNode[j] = packets[0].ecb.ImmediateAddress[j] =
+        packets[0].ipx.dNode[j] = ecbs[0].ImmediateAddress[j] =
             nodeaddr[destination].node[j];
     }
 
     // set the length (ipx + time + datalength)
-    packets[0].ecb.fSize = sizeof(ipx_header_t) + 4;
-    packets[0].ecb.f2Size = doomcom.datalength + 4;
+    ecbs[0].fSize = sizeof(ipx_header_t) + 4;
+    ecbs[0].f2Size = doomcom.datalength + 4;
 
     // send the packet
-    ll_regs.x.si = FP_OFF(&packets[0]);
-    ll_regs.x.es = FP_SEG(&packets[0]);
+    ll_regs.x.si = FP_OFF(&ecbs[0]);
+    ll_regs.x.es = FP_SEG(&ecbs[0]);
     ll_regs.x.bx = 3;
     LowLevelCall();
     if (ll_regs.h.al != 0)
@@ -198,7 +199,7 @@ void SendPacket(int destination)
         Error("SendPacket: 0x%x", ll_regs.h.al);
     }
 
-    while (packets[0].ecb.InUseFlag != 0)
+    while (ecbs[0].InUseFlag != 0)
     {
         // IPX Relinquish Control - polled drivers MUST have this here!
         ll_regs.x.bx = 10;
@@ -218,6 +219,7 @@ int GetPacket(void)
     int i;
     long besttic;
     packet_t *packet;
+    ECB *ecb;
 
     // if multiple packets are waiting, return them in order by time
 
@@ -227,7 +229,7 @@ int GetPacket(void)
 
     for (i = 1; i < NUMPACKETS; i++)
     {
-        if (packets[i].ecb.InUseFlag)
+        if (ecbs[i].InUseFlag)
         {
             continue;
         }
@@ -245,20 +247,20 @@ int GetPacket(void)
     }
 
     packet = &packets[packetnum];
+    ecb = &ecbs[packetnum];
 
     if (besttic == -1 && ipx_localtime != -1)
     {
-        ListenForPacket(&packet->ecb);
+        ListenForPacket(ecb);
         return 0;               // setup broadcast from other game
     }
 
     ipx_remotetime = besttic;
 
     // got a good packet
-    if (packet->ecb.CompletionCode != 0)
+    if (ecb->CompletionCode != 0)
     {
-        Error("GetPacket: ecb.CompletionCode = 0x%x",
-              packet->ecb.CompletionCode);
+        Error("GetPacket: ecb.CompletionCode = 0x%x", ecb->CompletionCode);
     }
 
     // set remoteaddr to the sender of the packet
@@ -278,7 +280,7 @@ int GetPacket(void)
     else if (ipx_localtime != -1)
     {
         // this really shouldn't happen
-        ListenForPacket(&packet->ecb);
+        ListenForPacket(ecb);
         return 0;
     }
 
@@ -287,7 +289,7 @@ int GetPacket(void)
     memcpy(doomcom.data, packet->payload, doomcom.datalength);
 
     // repost the ECB
-    ListenForPacket(&packet->ecb);
+    ListenForPacket(ecb);
 
     return 1;
 }

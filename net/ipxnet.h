@@ -60,7 +60,6 @@ typedef struct ECBStructure {
 // to DOOM when more than one is waiting
 
 typedef struct {
-    ECB ecb;
     ipx_header_t ipx;
 
     int32_t time;

@@ -57,8 +57,6 @@ extern int localnodenum;
 extern long ipx_localtime;          // for time stamp in packets
 extern const nodeaddr_t broadcast_addr;
 
-extern nodeaddr_t remoteaddr;
-
 void IPXRegisterFlags(void);
 void InitNetwork(void);
 void ShutdownNetwork(void);

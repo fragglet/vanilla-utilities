@@ -44,8 +44,6 @@ static ECB ecbs[NUMPACKETS];
 const nodeaddr_t broadcast_addr = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 nodeaddr_t nodeaddr[MAXNETNODES];     // first is local, last is broadcast
 
-nodeaddr_t remoteaddr;            // set by each GetPacket
-
 static localaddr_t localaddr;            // set at startup
 
 static unsigned int port_flag = DOOM_DEFAULT_PORT;

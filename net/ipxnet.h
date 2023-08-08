@@ -39,23 +39,6 @@ typedef struct {
     uint8_t node[6];               /* high-low */
 } nodeaddr_t;
 
-typedef struct ECBStructure {
-    void far *Link;                /* offset-segment */
-    void far *ESRAddress;          /* offset-segment */
-    uint8_t InUseFlag;
-    uint8_t CompletionCode;
-    uint16_t ECBSocket;            /* high-low */
-    uint8_t IPXWorkspace[4];       /* N/A */
-    uint8_t DriverWorkspace[12];   /* N/A */
-    uint8_t ImmediateAddress[6];   /* high-low */
-    uint16_t FragmentCount;        /* low-high */
-
-    void far *fAddress;            /* offset-segment */
-    uint16_t fSize;                /* low-high */
-    void far *f2Address;           /* offset-segment */
-    uint16_t f2Size;               /* low-high */
-} ECB;
-
 // time is used by the communication driver to sequence packets returned
 // to DOOM when more than one is waiting
 

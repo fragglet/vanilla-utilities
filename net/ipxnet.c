@@ -15,6 +15,23 @@
 #include "net/ipxnet.h"
 #include "net/llcall.h"
 
+typedef struct {
+    void far *Link;                /* offset-segment */
+    void far *ESRAddress;          /* offset-segment */
+    uint8_t InUseFlag;
+    uint8_t CompletionCode;
+    uint16_t ECBSocket;            /* high-low */
+    uint8_t IPXWorkspace[4];       /* N/A */
+    uint8_t DriverWorkspace[12];   /* N/A */
+    uint8_t ImmediateAddress[6];   /* high-low */
+    uint16_t FragmentCount;        /* low-high */
+
+    void far *fAddress;            /* offset-segment */
+    uint16_t fSize;                /* low-high */
+    void far *f2Address;           /* offset-segment */
+    uint16_t f2Size;               /* low-high */
+} ECB;
+
 // 0x869c is the official DOOM socket as registered with Novell back in the
 // '90s. But the original IPXSETUP used a signed 16-bit integer for the port
 // variable, causing an integer overflow. As a result, the actual default

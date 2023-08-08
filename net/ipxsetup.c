@@ -25,6 +25,17 @@
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
 
+// setupdata_t is used as doomdata_t during setup
+typedef struct {
+    int16_t gameid;               // so multiple games can setup at once
+    int16_t drone;
+    int16_t nodesfound;
+    int16_t nodeswanted;
+    // xttl extensions:
+    int16_t dupwanted;
+    int16_t plnumwanted;
+} setupdata_t;
+
 doomcom_t doomcom;
 static int numnetnodes;
 

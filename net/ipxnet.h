@@ -19,17 +19,6 @@
 
 #define NUMPACKETS      10      // max outstanding packets before loss
 
-// setupdata_t is used as doomdata_t during setup
-typedef struct {
-    int16_t gameid;               // so multiple games can setup at once
-    int16_t drone;
-    int16_t nodesfound;
-    int16_t nodeswanted;
-    // xttl extensions:
-    int16_t dupwanted;
-    int16_t plnumwanted;
-} setupdata_t;
-
 typedef struct {
     uint8_t Network[4];            /* high-low */
     uint8_t Node[6];               /* high-low */

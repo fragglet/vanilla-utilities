@@ -27,6 +27,52 @@ static void SendPacket(void)
                   doomcom.datalength);
 }
 
+static int PlayerForAddress(uint8_t *addr)
+{
+    int i;
+
+    for (i = 0; i < doomcom.numnodes; i++)
+    {
+        if (!memcmp(addr, &nodeaddr[i], sizeof(nodeaddr_t)))
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static void GetPacket(void)
+{
+    packet_t *packet;
+    int i;
+
+    doomcom.remotenode = -1;
+
+    packet = IPXGetPacket();
+    if (packet == NULL)
+    {
+        return;
+    }
+
+    if (packet->time == -1)
+    {
+        IPXReleasePacket(packet);
+        return;               // setup broadcast from other game
+    }
+
+    i = PlayerForAddress(packet->ipx.sNode);
+    if (i != -1)
+    {
+        doomcom.remotenode = i;
+        doomcom.datalength = ShortSwap(packet->ipx.PacketLength) - 38;
+        memcpy(doomcom.data, packet->payload, doomcom.datalength);
+    }
+
+    // repost the ECB
+    IPXReleasePacket(packet);
+}
+
 static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
@@ -41,14 +87,23 @@ static void NetCallback(void)
 }
 
 // Process a setup packet found in doomcom.
-static void ProcessSetupPacket(void)
+static void ProcessSetupPacket(packet_t *packet)
 {
+    uint8_t *addr;
     setupdata_t *setup;
     int old_protocol;
     int n;
 
-    setup = (setupdata_t *) doomcom.data;
-    old_protocol = doomcom.datalength < sizeof(setupdata_t);
+    // Confirm it is a setup packet.
+    if (packet->time != -1)
+    {
+        return;
+    }
+
+    setup = (setupdata_t *) packet->payload;
+    old_protocol = (ShortSwap(packet->ipx.PacketLength) - 38)
+                 < sizeof(setupdata_t);
+
     // We support the xttl setup extensions but we still maintain compatibility
     // with the original IPXSETUP.
     if (old_protocol)
@@ -57,19 +112,19 @@ static void ProcessSetupPacket(void)
         setup->plnumwanted = -1;
     }
 
-    n = doomcom.remotenode;
+    addr = (uint8_t *) packet->ipx.sNode;
+    n = PlayerForAddress(addr);
 
     // New node?
-    if (doomcom.remotenode == -1)
+    if (n == -1)
     {
         n = doomcom.numnodes;
         ++doomcom.numnodes;
 
-        memcpy(&nodeaddr[n], &remoteaddr, sizeof(nodeaddr_t));
+        memcpy(&nodeaddr[n], addr, sizeof(nodeaddr_t));
 
         LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
-                   remoteaddr.node[0], remoteaddr.node[1], remoteaddr.node[2],
-                   remoteaddr.node[3], remoteaddr.node[4], remoteaddr.node[5]);
+                   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 
         if (force_player != -1 && old_protocol)
         {
@@ -91,18 +146,6 @@ static void ProcessSetupPacket(void)
 
     // update setup info
     memcpy(&nodesetup[n], setup, sizeof(setupdata_t));
-
-    if (ipx_remotetime != -1)
-    {
-        // an early game packet, not a setup packet
-        if (doomcom.remotenode == -1)
-        {
-            Error("Got an unknown game packet during setup");
-        }
-
-        // if it already started, it must have found all nodes
-        nodesetup[n].nodesfound = nodesetup[n].nodeswanted;
-    }
 }
 
 static int DetermineConsolePlayer(void)
@@ -182,14 +225,21 @@ void LookForNodes(void)
     nodesetup[0].nodeswanted = numnetnodes;
     doomcom.numnodes = 1;
 
-    do
+    for (;;)
     {
         CheckAbort("Network game synchronization");
 
         // listen to the network
-        while (GetPacket())
+        for (;;)
         {
-            ProcessSetupPacket();
+            packet_t *packet = IPXGetPacket();
+            if (packet == NULL)
+            {
+		break;
+            }
+
+            ProcessSetupPacket(packet);
+            IPXReleasePacket(packet);
         }
 
         // we are done if all nodes have found all other nodes
@@ -218,8 +268,7 @@ void LookForNodes(void)
             nodesetup[0].dupwanted = doomnet_dup;
             IPXSendPacket(&broadcast_addr, &nodesetup[0], sizeof(setupdata_t));
         }
-
-    } while (1);
+    }
 
     total = 0;
 

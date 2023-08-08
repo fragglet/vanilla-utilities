@@ -38,7 +38,6 @@ typedef struct {
 // port number is one higher.
 #define DOOM_DEFAULT_PORT 0x869d
 
-extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
 static ECB ecbs[NUMPACKETS];
 
@@ -53,7 +52,6 @@ static unsigned int port_flag = DOOM_DEFAULT_PORT;
 static int socketid;
 
 long ipx_localtime;                 // for time stamp in packets
-long ipx_remotetime;
 
 int OpenSocket(unsigned short socketNumber)
 {
@@ -218,8 +216,7 @@ unsigned short ShortSwap(unsigned short i)
     return ((i & 255) << 8) + ((i >> 8) & 255);
 }
 
-// Returns false if no packet is waiting
-int GetPacket(void)
+packet_t *IPXGetPacket(void)
 {
     int packetnum;
     int i;
@@ -228,10 +225,8 @@ int GetPacket(void)
     ECB *ecb;
 
     // if multiple packets are waiting, return them in order by time
-
     besttic = LONG_MAX;
     packetnum = -1;
-    doomcom.remotenode = -1;
 
     for (i = 1; i < NUMPACKETS; i++)
     {
@@ -249,19 +244,10 @@ int GetPacket(void)
 
     if (besttic == LONG_MAX)
     {
-        return 0;               // no packets
+        return NULL;               // no packets
     }
 
-    packet = &packets[packetnum];
     ecb = &ecbs[packetnum];
-
-    if (besttic == -1 && ipx_localtime != -1)
-    {
-        ListenForPacket(ecb);
-        return 0;               // setup broadcast from other game
-    }
-
-    ipx_remotetime = besttic;
 
     // got a good packet
     if (ecb->CompletionCode != 0)
@@ -269,33 +255,11 @@ int GetPacket(void)
         Error("GetPacket: ecb.CompletionCode = 0x%x", ecb->CompletionCode);
     }
 
-    // set remoteaddr to the sender of the packet
-    memcpy(&remoteaddr, packet->ipx.sNode, sizeof(remoteaddr));
-    for (i = 0; i < doomcom.numnodes; i++)
-    {
-        if (!memcmp(&remoteaddr, &nodeaddr[i], sizeof(remoteaddr)))
-        {
-            break;
-        }
-    }
+    return &packets[packetnum];
+}
 
-    if (i < doomcom.numnodes)
-    {
-        doomcom.remotenode = i;
-    }
-    else if (ipx_localtime != -1)
-    {
-        // this really shouldn't happen
-        ListenForPacket(ecb);
-        return 0;
-    }
-
-    // copy out the data
-    doomcom.datalength = ShortSwap(packet->ipx.PacketLength) - 38;
-    memcpy(doomcom.data, packet->payload, doomcom.datalength);
-
-    // repost the ECB
-    ListenForPacket(ecb);
-
-    return 1;
+void IPXReleasePacket(packet_t *packet)
+{
+    int packetnum = packet - packets;
+    ListenForPacket(&ecbs[packetnum]);
 }

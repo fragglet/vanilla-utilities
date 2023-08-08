@@ -52,17 +52,18 @@ typedef struct {
 extern doomcom_t doomcom;
 extern int gameid;
 
-extern nodeaddr_t nodeaddr[MAXNETNODES + 1];
+extern nodeaddr_t nodeaddr[MAXNETNODES];
 extern int localnodenum;
 
 extern long ipx_localtime;          // for time stamp in packets
 extern long ipx_remotetime;         // timestamp of last packet gotten
+extern const nodeaddr_t broadcast_addr;
 
 extern nodeaddr_t remoteaddr;
 
 void IPXRegisterFlags(void);
 void InitNetwork(void);
 void ShutdownNetwork(void);
-void SendPacket(int destination);
+void IPXSendPacket(const nodeaddr_t *addr, void *data, size_t data_len);
 int GetPacket(void);
 

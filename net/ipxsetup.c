@@ -16,12 +16,23 @@ static int numnetnodes;
 static int force_player = -1;
 static setupdata_t nodesetup[MAXNETNODES];
 
+static void SendPacket(void)
+{
+    if (doomcom.remotenode < 1 || doomcom.remotenode >= numnetnodes)
+    {
+        return;
+    }
+
+    IPXSendPacket(&nodeaddr[doomcom.remotenode], doomcom.data,
+                  doomcom.datalength);
+}
+
 static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
         ipx_localtime++;
-        SendPacket(doomcom.remotenode);
+        SendPacket();
     }
     else if (doomcom.command == CMD_GET)
     {
@@ -205,10 +216,7 @@ void LookForNodes(void)
             nodesetup[0].nodesfound = doomcom.numnodes;
             nodesetup[0].plnumwanted = force_player;
             nodesetup[0].dupwanted = doomnet_dup;
-            memcpy(&doomcom.data, &nodesetup[0], sizeof(setupdata_t));
-
-            doomcom.datalength = sizeof(setupdata_t);
-            SendPacket(MAXNETNODES);        // send to all
+            IPXSendPacket(&broadcast_addr, &nodesetup[0], sizeof(setupdata_t));
         }
 
     } while (1);

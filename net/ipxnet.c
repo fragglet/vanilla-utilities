@@ -42,7 +42,8 @@ extern doomcom_t doomcom;
 static packet_t packets[NUMPACKETS];
 static ECB ecbs[NUMPACKETS];
 
-nodeaddr_t nodeaddr[MAXNETNODES + 1];     // first is local, last is broadcast
+const nodeaddr_t broadcast_addr = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
+nodeaddr_t nodeaddr[MAXNETNODES];     // first is local, last is broadcast
 
 nodeaddr_t remoteaddr;            // set by each GetPacket
 
@@ -163,18 +164,11 @@ void InitNetwork(void)
     }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
-    ecbs[0].f2Address = doomcom.data;
 
     // known local node at 0
     for (i = 0; i < 6; i++)
     {
         nodeaddr[0].node[i] = localaddr.node[i];
-    }
-
-    // broadcast node at MAXNETNODES
-    for (j = 0; j < 6; j++)
-    {
-        nodeaddr[MAXNETNODES].node[j] = 0xff;
     }
 }
 
@@ -185,7 +179,7 @@ void ShutdownNetwork(void)
 
 // Send packet to the given destination.
 // A destination of MAXNETNODES is a broadcast.
-void SendPacket(int destination)
+void IPXSendPacket(const nodeaddr_t *addr, void *data, size_t data_len)
 {
     int j;
 
@@ -193,15 +187,13 @@ void SendPacket(int destination)
     packets[0].time = ipx_localtime;
 
     // set the address
-    for (j = 0; j < 6; j++)
-    {
-        packets[0].ipx.dNode[j] = ecbs[0].ImmediateAddress[j] =
-            nodeaddr[destination].node[j];
-    }
+    memcpy(packets[0].ipx.dNode, addr, sizeof(nodeaddr_t));
+    memcpy(ecbs[0].ImmediateAddress, addr, sizeof(nodeaddr_t));
 
     // set the length (ipx + time + datalength)
     ecbs[0].fSize = sizeof(ipx_header_t) + 4;
-    ecbs[0].f2Size = doomcom.datalength + 4;
+    ecbs[0].f2Address = data;
+    ecbs[0].f2Size = data_len + 4;
 
     // send the packet
     ll_regs.x.si = FP_OFF(&ecbs[0]);

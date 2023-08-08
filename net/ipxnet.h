@@ -49,9 +49,6 @@ typedef struct {
     uint8_t payload[512];
 } packet_t;
 
-extern nodeaddr_t nodeaddr[MAXNETNODES];
-extern int localnodenum;
-
 extern long ipx_localtime;          // for time stamp in packets
 extern const nodeaddr_t broadcast_addr;
 

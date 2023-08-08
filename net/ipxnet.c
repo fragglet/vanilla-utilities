@@ -42,7 +42,6 @@ static packet_t packets[NUMPACKETS];
 static ECB ecbs[NUMPACKETS];
 
 const nodeaddr_t broadcast_addr = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
-nodeaddr_t nodeaddr[MAXNETNODES];     // first is local, last is broadcast
 
 static localaddr_t localaddr;            // set at startup
 
@@ -160,12 +159,6 @@ void InitNetwork(void)
     }
     packets[0].ipx.dSocket[0] = socketid & 255;
     packets[0].ipx.dSocket[1] = socketid >> 8;
-
-    // known local node at 0
-    for (i = 0; i < 6; i++)
-    {
-        nodeaddr[0].node[i] = localaddr.node[i];
-    }
 }
 
 void ShutdownNetwork(void)

@@ -14,6 +14,7 @@ doomcom_t doomcom;
 static int numnetnodes;
 
 static int force_player = -1;
+static nodeaddr_t nodeaddr[MAXNETNODES];
 static setupdata_t nodesetup[MAXNETNODES];
 
 static void SendPacket(void)

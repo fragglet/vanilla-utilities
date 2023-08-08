@@ -1,3 +1,17 @@
+//
+// Copyright(C) 2019-2023 Simon Howard
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+
 // This is a minimal, incomplete version of the BSD sockets API (just the API).
 // It only implements those API functions needed for sending and receiving UDP
 // packets because that's all we need for writing a Doom network driver, but

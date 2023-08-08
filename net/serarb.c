@@ -1,3 +1,18 @@
+//
+// Copyright(C) 1993 id Software, Inc.
+// Copyright(C) 2019-2023 Simon Howard
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+
 // Player arbitration code for establishing initial connection over a
 // point-to-point link (eg. serial/modem), and determining which player
 // we are. Different versions of Doom's SERSETUP used two different

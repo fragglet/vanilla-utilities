@@ -185,7 +185,7 @@ void SendPacket(int destination)
     }
 
     // set the length (ipx + time + datalength)
-    packets[0].ecb.fSize = sizeof(IPXPacket) + 4;
+    packets[0].ecb.fSize = sizeof(ipx_header_t) + 4;
     packets[0].ecb.f2Size = doomcom.datalength + 4;
 
     // send the packet

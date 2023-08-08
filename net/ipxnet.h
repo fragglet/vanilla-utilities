@@ -15,7 +15,7 @@ typedef struct {
     int16_t plnumwanted;
 } setupdata_t;
 
-typedef struct IPXPacketStructure {
+typedef struct {
     uint16_t PacketCheckSum;       /* high-low */
     uint16_t PacketLength;         /* high-low */
     uint8_t PacketTransportControl;
@@ -28,7 +28,7 @@ typedef struct IPXPacketStructure {
     uint8_t sNetwork[4];           /* high-low */
     uint8_t sNode[6];              /* high-low */
     uint8_t sSocket[2];            /* high-low */
-} IPXPacket;
+} ipx_header_t;
 
 typedef struct {
     uint8_t network[4];            /* high-low */
@@ -61,7 +61,7 @@ typedef struct ECBStructure {
 
 typedef struct {
     ECB ecb;
-    IPXPacket ipx;
+    ipx_header_t ipx;
 
     int32_t time;
     uint8_t payload[512];

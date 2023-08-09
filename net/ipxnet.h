@@ -26,7 +26,7 @@
 #define DOOM_DEFAULT_PORT 0x869d
 
 typedef struct {
-    uint8_t Network[4];            /* high-low */
+    uint32_t Network;              /* high-low */
     uint8_t Node[6];               /* high-low */
 } ipx_addr_t;
 
@@ -37,10 +37,10 @@ typedef struct {
     uint8_t PacketType;
 
     ipx_addr_t Dest;
-    uint8_t dSocket[2];            /* high-low */
+    uint16_t DestSocket;           /* high-low */
 
     ipx_addr_t Src;
-    uint8_t sSocket[2];            /* high-low */
+    uint16_t SrcSocket;            /* high-low */
 } ipx_header_t;
 
 // time is used by the communication driver to sequence packets returned

@@ -29,10 +29,7 @@
 #include "net/dossock.h"
 #include "net/ipxnet.h"
 
-const ipx_addr_t broadcast_addr = {
-    {0, 0, 0, 0},
-    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-};
+const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
 static ipx_addr_t local_addr;
 static packet_t packet;
@@ -73,10 +70,8 @@ void InitNetwork(void)
     // TODO: Connect to server.
 
     memcpy(&packet.ipx.Src, &local_addr, sizeof(ipx_addr_t));
-    packet.ipx.sSocket[0] = (ipxport >> 8);
-    packet.ipx.sSocket[1] = ipxport & 255;
-    packet.ipx.dSocket[0] = (ipxport >> 8);
-    packet.ipx.dSocket[1] = ipxport & 255;
+    packet.ipx.SrcSocket = htons(ipxport);
+    packet.ipx.DestSocket = htons(ipxport);
 }
 
 void ShutdownNetwork(void)

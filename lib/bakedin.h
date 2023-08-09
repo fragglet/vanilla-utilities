@@ -21,7 +21,7 @@
 #define HAVE_BAKED_IN_CONFIG(cfg) ((cfg).config[0] != '\0')
 
 struct baked_in_config {
-	char magic[20];
-	char config[BAKED_IN_MAX_LEN];
+    char magic[20];
+    char config[BAKED_IN_MAX_LEN];
 };
 

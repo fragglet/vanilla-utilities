@@ -151,7 +151,8 @@ static void ProcessSetupPacket(packet_t *packet)
         memcpy(&nodeaddr[n], addr, sizeof(ipx_addr_t));
 
         LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
-                   addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+                   addr->Node[0], addr->Node[1], addr->Node[2],
+                   addr->Node[3], addr->Node[4], addr->Node[5]);
 
         if (force_player != -1 && old_protocol)
         {

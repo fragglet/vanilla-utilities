@@ -107,12 +107,16 @@ void IPXRegisterFlags(void)
                     "use alternate IPX port number");
 }
 
-static void InitIPX(void)
+void InitNetwork(char **args)
 {
     union REGS regs;
     struct SREGS sregs;
+    ipx_addr_t localaddr;
+    int i, j;
 
-    // First, try to use the newer, redirector-based API:
+    args = args;  // We don't use it.
+
+    // We require the newer, redirector-based API:
     regs.x.ax = 0x7a00;
     int86x(0x2f, &regs, &regs, &sregs);
     if (regs.h.al != 0xff)
@@ -121,14 +125,6 @@ static void InitIPX(void)
     }
 
     ll_funcptr = MK_FP(sregs.es, regs.x.di);
-}
-
-void InitNetwork(void)
-{
-    ipx_addr_t localaddr;
-    int i, j;
-
-    InitIPX();
 
     // allocate a socket for sending and receiving
     socketid = OpenSocket(ShortSwap(port_flag));

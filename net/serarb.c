@@ -119,7 +119,7 @@ static void MakeLocalID(char *buf)
     }
     else
     {
-        id = (rand() << 16) | rand();
+        id = ((uint32_t) rand() << 16) | rand();
         id = id % 1000000L;
     }
     sprintf(buf, "%.6ld", id);

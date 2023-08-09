@@ -29,6 +29,8 @@
 #define INADDR_LOOPBACK   0x7f000001UL  // 127.0.0.1
 #define INADDR_BROADCAST  0xffffffffUL
 
+#define INVALID_SOCKET  0xffffffffUL
+
 #define WSABASEERR      10000
 
 #define WSAEINTR                (WSABASEERR+4)

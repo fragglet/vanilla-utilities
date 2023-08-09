@@ -775,7 +775,7 @@ SOCKET socket(int domain, int type, int protocol)
         case WINSOCK2:
             return WS_socket(domain, type, protocol);
         default:
-            return -1;
+            return INVALID_SOCKET;
     }
 }
 

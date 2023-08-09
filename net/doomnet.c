@@ -107,7 +107,7 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args,
     args = AppendArgs(args, "-net", addrstring, NULL);
 
     SquashToResponseFile(args);
-    spawnv(P_WAIT, args[0], args);
+    spawnv(P_WAIT, args[0], (void *) args);
 
     UnhookDoomVector();
     free(args);

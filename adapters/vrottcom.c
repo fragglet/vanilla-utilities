@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     sprintf(addrstring, "%lu", flataddr);
     args = AppendArgs(args, "-net", addrstring, NULL);
 
-    spawnv(P_WAIT, args[0], args);
+    spawnv(P_WAIT, args[0], (void *) args);
 
     RestoreInterrupt(&net_interrupt);
 

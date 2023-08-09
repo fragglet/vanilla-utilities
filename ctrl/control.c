@@ -104,7 +104,7 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
     SquashToResponseFile(args);
 
     // Launch Doom:
-    spawnv(P_WAIT, args[0], args);
+    spawnv(P_WAIT, args[0], (void *) args);
 
     free(args);
 

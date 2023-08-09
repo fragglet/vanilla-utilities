@@ -19,6 +19,12 @@
 
 #define NUMPACKETS      10      // max outstanding packets before loss
 
+// 0x869c is the official DOOM socket as registered with Novell back in the
+// '90s. But the original IPXSETUP used a signed 16-bit integer for the port
+// variable, causing an integer overflow. As a result, the actual default
+// port number is one higher.
+#define DOOM_DEFAULT_PORT 0x869d
+
 typedef struct {
     uint8_t Network[4];            /* high-low */
     uint8_t Node[6];               /* high-low */

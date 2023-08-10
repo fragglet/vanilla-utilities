@@ -29,8 +29,11 @@
 #include "net/dossock.h"
 #include "net/ipxnet.h"
 
+#define DEFAULT_UDP_PORT  213  /* as used by dosbox */
+
 const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
+static char *server_addr_flag = NULL;
 static ipx_addr_t local_addr;
 static packet_t packet;
 static struct sockaddr_in server_addr;
@@ -52,12 +55,37 @@ void IPXGetLocalAddress(ipx_addr_t *addr)
 void IPXRegisterFlags(void)
 {
     UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
+    StringFlag("-connect", &server_addr_flag, "addr[:port]",
+               "[or -c] connect to server at specified address");
+    StringFlag("-c", &server_addr_flag, NULL, NULL);
+}
+
+static void ParseServerAddress(const char *addr)
+{
+    const char *p;
+
+    if (!inet_aton(addr, &server_addr.sin_addr))
+    {
+        Error("Not a valid server address: %s", addr);
+    }
+
+    server_addr.sin_port = htons(DEFAULT_UDP_PORT);
+
+    p = strchr(addr, ':');
+    if (p != NULL)
+    {
+        server_addr.sin_port = htons(atoi(p + 1));
+    }
 }
 
 void InitNetwork(void)
 {
-    // TODO: Determine server address.
+    if (server_addr_flag == NULL)
+    {
+        ErrorPrintUsage("Must specify server address with -connect!");
+    }
 
+    ParseServerAddress(server_addr_flag);
     DosSockInit();
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);

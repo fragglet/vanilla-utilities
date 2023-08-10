@@ -103,6 +103,10 @@ void IPXGetLocalAddress(ipx_addr_t *addr)
 
 void IPXRegisterFlags(void)
 {
+    // We set the help text here rather than in ipxsetup.c, because
+    // ipxsetup.c is reused between ipxsetup and udpsetup.
+    SetHelpText("Doom IPX network device driver",
+                "%s -nodes 4 doom.exe -warp 2 2 -deathmatch -skill 4");
     UnsignedIntFlag("-port", &port_flag, "port",
                     "use alternate IPX port number");
 }

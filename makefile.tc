@@ -2,7 +2,7 @@
 # makefile for Borland Turbo C make
 # To invoke: make -f makefile.tc
 
-CFLAGS = -O -d -w -Dinline=
+CFLAGS = -O2 -d -w -Dinline=
 
 REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj \

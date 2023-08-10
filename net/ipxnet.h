@@ -57,7 +57,7 @@ extern long ipx_localtime;          // for time stamp in packets
 extern const ipx_addr_t broadcast_addr;
 
 void IPXRegisterFlags(void);
-void InitNetwork(char **args);
+void InitNetwork(void);
 void ShutdownNetwork(void);
 void IPXGetLocalAddress(ipx_addr_t *addr);
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len);

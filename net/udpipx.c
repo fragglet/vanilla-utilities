@@ -29,8 +29,6 @@
 #include "net/dossock.h"
 #include "net/ipxnet.h"
 
-#define DEFAULT_UDP_PORT  213  /* as used by dosbox */
-
 const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
 static ipx_addr_t local_addr;
@@ -56,36 +54,9 @@ void IPXRegisterFlags(void)
     UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
 }
 
-static void ParseServerAddress(const char *addr)
+void InitNetwork(void)
 {
-    const char *p;
-
-    if (!inet_aton(addr, &server_addr.sin_addr))
-    {
-        Error("Not a valid server address: %s", addr);
-    }
-
-    server_addr.sin_port = htons(DEFAULT_UDP_PORT);
-
-    p = strchr(addr, ':');
-    if (p != NULL)
-    {
-        server_addr.sin_port = htons(atoi(p + 1));
-    }
-}
-
-void InitNetwork(char **args)
-{
-    int argc = ArgListLength(args);
-    if (argc < 2)
-    {
-        ErrorPrintUsage("Please provide server address and command to run.");
-    }
-
-    // We parse the server address from the start of the argument list, and
-    /// then move the whole argument list backwards to crop it off.
-    ParseServerAddress(*args);
-    memmove(args, args + 1, argc * sizeof(char *));
+    // TODO: Determine server address.
 
     DosSockInit();
 

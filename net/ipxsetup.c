@@ -355,7 +355,7 @@ void main(int argc, char *argv[])
     }
 
     // make sure the network exists and create a bunch of buffers
-    InitNetwork(args);
+    InitNetwork();
     atexit(ShutdownNetwork);
 
     // get addresses of all nodes

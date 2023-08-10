@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/dos.h"
@@ -125,6 +126,8 @@ void ParallelRegisterFlags(void)
 
 void GetPort(void)
 {
+    int portnum = 0;
+
     if (port_flag != 0)
     {
         portbase = port_flag;
@@ -140,6 +143,7 @@ void GetPort(void)
             irq = 5;
         }
         portbase = 0x278;
+        portnum = 2;
     }
     else if (lpt3)
     {
@@ -151,11 +155,19 @@ void GetPort(void)
                   "number for this port.");
         }
         portbase = 0x3bc;
+        portnum = 3;
     }
     else
     {
         SetLogDistinguisher("LPT1");
         irq = 7;
+        portnum = 1;
+    }
+
+    if (portnum > ((_bios_equiplist() >> 14) & 0x3))
+    {
+        LogMessage("Proceeding, but your BIOS says you don't have an LPT%d.",
+                   portnum);
     }
 
     if (irq_flag != 0)

@@ -68,7 +68,10 @@ static void ParseServerAddress(const char *addr)
 
     if (!inet_aton(addr, &server_addr.sin_addr))
     {
-        Error("Not a valid server address: %s", addr);
+        Error("Not a valid server address: %s\n"
+              "DNS names are not supported; you must specify an IP "
+              "address.\nTo resolve a name, try using the 'ping' "
+              "command.", addr);
     }
 
     server_addr.sin_port = htons(DEFAULT_UDP_PORT);
@@ -122,7 +125,10 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
     packet.ipx.PacketLength = htons(packet_len);
     packet.time = ipx_localtime;
     memcpy(packet.payload, data, data_len);
-    sendto(sock, &packet, packet_len, 0, &server_addr);
+    if (sendto(sock, &packet, packet_len, 0, &server_addr) < 0)
+    {
+        // TODO: Log error.
+    }
 }
 
 packet_t *IPXGetPacket(void)

@@ -139,7 +139,7 @@ void PrintProgramUsage(FILE *output)
     {
         f = &flags[i];
         cnt = 4 + strlen(f->name);
-        if (f->type != FLAG_BOOL)
+        if (f->type != FLAG_BOOL && f->param_name != NULL)
         {
             cnt += 3 + strlen(f->param_name);
         }
@@ -157,7 +157,7 @@ void PrintProgramUsage(FILE *output)
             continue;
         }
         cnt = fprintf(output, "  %s", f->name);
-        if (f->type != FLAG_BOOL)
+        if (f->type != FLAG_BOOL && f->param_name != NULL)
         {
             cnt += fprintf(output, " <%s>", f->param_name);
         }

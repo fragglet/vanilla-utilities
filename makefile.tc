@@ -24,12 +24,16 @@ VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \
                 adapters\nodemap.obj lib\common.lib
 VCOMMIT_OBJS = adapters\vcommit.obj adapters\fragment.obj net\doomnet.obj \
                adapters\nodemap.obj lib\common.lib
+VSETARGS_OBJS = lib\vsetargs.obj
+UDPSETUP_OBJS = net\udpsetup.obj net\doomnet.obj net\dossock.obj \
+                net\llcall.obj lib\common.lib
 FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
                 stat\stats.obj lib\common.lib
 
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe \
-       vcommit.exe vrottcom.exe sirsetup.exe
+       vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe \
+       udpsetup.exe
 
 all: $(EXES)
 tests: fakedoom.exe
@@ -49,6 +53,8 @@ sirsetup.exe: $(SIRSETUP_OBJS)
 	tcc -e$* -o$@ $(SIRSETUP_OBJS)
 parsetup.exe: $(PARSETUP_OBJS)
 	tcc -e$* -o$@ $(PARSETUP_OBJS)
+udpsetup.exe: $(UDPSETUP_OBJS)
+	tcc -e$* -o$@ $(UDPSETUP_OBJS)
 metanet.exe: $(METANET_OBJS)
 	tcc -e$* -o$@ $(METANET_OBJS)
 passthru.exe: $(PASSTHRU_OBJS)
@@ -61,6 +67,8 @@ vcommit.exe: $(VCOMMIT_OBJS)
 	tcc -e$* -o$@ $(VCOMMIT_OBJS)
 vrottcom.exe: $(VROTTCOM_OBJS)
 	tcc -e$* -o$@ $(VROTTCOM_OBJS)
+vsetargs.exe: $(VSETARGS_OBJS)
+	tcc -e$* -o$@ $(VSETARGS_OBJS)
 fakedoom.exe: $(FAKEDOOM_OBJS)
 	tcc -e$* -o$@ $(FAKEDOOM_OBJS)
 

@@ -174,7 +174,7 @@ void PrintProgramUsage(FILE *output)
     {
         fprintf(output, "\nExample:\n  ");
         fprintf(output, example, program);
-        fprintf(output, "\n\n");
+        fprintf(output, "\n");
     }
 }
 

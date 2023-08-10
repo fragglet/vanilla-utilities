@@ -19,6 +19,7 @@
 #define cmdline_argc  _argc
 #define cmdline_argv  _argv
 #define __stdcall
+typedef int ssize_t;
 #else
 #define cmdline_argc  __argc
 #define cmdline_argv  __argv

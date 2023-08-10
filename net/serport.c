@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <bios.h>
 #include "lib/inttypes.h"
 
 #include "lib/dos.h"
@@ -97,6 +98,12 @@ void GetUart(void)
     else
     {
         comport = 1;
+    }
+
+    if (comport > ((_bios_equiplist() >> 9) & 0x7))
+    {
+        LogMessage("Proceeding, but your BIOS says you don't have a COM%d.",
+                   comport);
     }
 
     regs.h.ah = 0xc0;

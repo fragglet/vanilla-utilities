@@ -50,12 +50,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 #include <process.h>
 #include <dos.h>
 #include <fcntl.h>
 
 #include "lib/dos.h"
+#include "lib/inttypes.h"
 #include "lib/log.h"
 #include "net/dossock.h"
 #include "net/llcall.h"
@@ -251,7 +251,7 @@ static ssize_t WS_sendto1(SOCKET socket, const void far *msg, size_t len,
         return -1;
     }
 
-    return params.BytesSent;
+    return (ssize_t) params.BytesSent;
 }
 
 struct WSABuffer {
@@ -298,7 +298,7 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
         return -1;
     }
 
-    return params.BytesSent;
+    return (ssize_t) params.BytesSent;
 }
 
 // Winsock1 version of recvfrom().
@@ -335,7 +335,7 @@ static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
 
     far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
 
-    return params.BytesReceived;
+    return (ssize_t) params.BytesReceived;
 }
 
 static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
@@ -380,7 +380,7 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
 
     far_memcpy(from, frombuf, sizeof(struct sockaddr_in));
 
-    return params.BytesReceived;
+    return (ssize_t) params.BytesReceived;
 }
 
 static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
@@ -539,8 +539,6 @@ static const int msclient_to_winsock_err[] = {
 
 static uint16_t MSClientToWinsockErr(uint16_t msclient_err)
 {
-    uint16_t err;
-
     if (msclient_err == 0)
     {
         return 0;
@@ -922,7 +920,6 @@ void DosSockInit(void)
         struct sockaddr_in nowhere = {AF_INET, 0, {htonl(INADDR_LOOPBACK)}};
         SOCKET s;
         char buf[1];
-        int err;
 
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         // TODO: Check socket created ok

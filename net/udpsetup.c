@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lib/dos.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"

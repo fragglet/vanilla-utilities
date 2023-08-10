@@ -19,11 +19,16 @@ jobs:
         cp *.EXE artifacts
     - name: test
       run: ./test/runtests.sh
+    - name: Find Git version
+      id: version
+      run: |
+        export VERSION=$(git rev-parse --short HEAD)
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Upload EXEs
       uses: actions/upload-artifact@v1
       with:
         path: "artifacts"
-        name: vutils
+        name: vanilla-utilities-${{steps.version.outputs.VERSION}}
 
   turboc_build:
     runs-on: ubuntu-latest

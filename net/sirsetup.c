@@ -27,6 +27,9 @@
 // receiving side uses as a signal to begin transmitting. Because latency is
 // crucial, we do this handoff inside the serial ISR so that it happens
 // instantaneously.
+//
+// TODO: In theory it should be possible to support more than two players.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

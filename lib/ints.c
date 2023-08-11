@@ -113,7 +113,7 @@ void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
     // interrupt we set a special environment variable. Other instances
     // then detect this and set chaining mode.
     // Doing this also ensures that we send the EOI message to the PIC only
-    // once (see EndOfIRQ below).
+    // once (see END_OF_IRQ() macro).
     state->irq = irq;
     state->chained = CheckChainedIRQ(irq);
     if (!state->chained)

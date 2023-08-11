@@ -366,7 +366,7 @@ static void interrupt far ISR8250(void)
 
             default:
                 // done
-                EndOfIRQ(&uart_interrupt);
+                END_OF_IRQ(uart_interrupt);
                 return;
         }
     }
@@ -427,7 +427,7 @@ static void interrupt far ISR16550(void)
         }
     }
 
-    EndOfIRQ(&uart_interrupt);
+    END_OF_IRQ(uart_interrupt);
 }
 
 // Start up the transmission interrupts by sending the first char

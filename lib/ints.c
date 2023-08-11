@@ -83,9 +83,6 @@ void RestoreInterrupt(struct interrupt_hook *state)
     state->interrupt_num = 0;
 }
 
-#define PIC_COMMAND_PORT  0x20
-#define PIC_DATA_PORT     0x21
-
 static int CheckChainedIRQ(unsigned int irq)
 {
     char name[14];
@@ -165,22 +162,6 @@ void SetIRQMask(struct irq_hook *irq)
 void ClearIRQMask(struct irq_hook *irq)
 {
     OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) & ~(1 << irq->irq));
-}
-
-void EndOfIRQ(struct irq_hook *irq)
-{
-    // In chained mode we call the original ISR and it sends the EOI
-    // to the PIC. Otherwise we send it ourselves. It is important that
-    // the interrupt is only acknowledged once, otherwise we can end up
-    // acknowledging the wrong interrupt.
-    if (irq->chained)
-    {
-        _chain_intr(irq->old_isr);
-    }
-    else
-    {
-        OUTPUT(PIC_COMMAND_PORT, 0x60 + irq->irq);
-    }
 }
 
 #define DOS_INTERRUPT_API  0x21

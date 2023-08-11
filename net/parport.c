@@ -88,7 +88,7 @@ void interrupt far ReceiveISR(void)
 
     PLIORecvPacket();
 
-    EndOfIRQ(&parport_interrupt);
+    END_OF_IRQ(parport_interrupt);
 }
 
 // Returns zero if there is no packet waiting to be received.

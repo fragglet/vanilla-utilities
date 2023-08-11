@@ -123,6 +123,9 @@ void RestoreInterrupt(struct interrupt_hook *state);
 unsigned int SwitchPSP(void);
 void RestorePSP(unsigned int old_psp);
 
+#define PIC_COMMAND_PORT  0x20
+#define PIC_DATA_PORT     0x21
+
 struct irq_hook
 {
     unsigned int irq;
@@ -137,7 +140,17 @@ void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
 void RestoreIRQ(struct irq_hook *state);
 void SetIRQMask(struct irq_hook *irq);
 void ClearIRQMask(struct irq_hook *irq);
-void EndOfIRQ(struct irq_hook *irq);
+
+// In chained mode we call the original ISR and it sends the EOI
+// to the PIC. Otherwise we send it ourselves. It is important that
+// the interrupt is only acknowledged once, otherwise we can end up
+// acknowledging the wrong interrupt.
+#define END_OF_IRQ(irq_hook) \
+    if ((irq_hook).chained) { \
+        _chain_intr((irq_hook).old_isr); \
+    } else { \
+        OUTPUT(PIC_COMMAND_PORT, 0x60 + (irq_hook).irq); \
+    }
 
 extern unsigned char isr_stack_space[ISR_STACK_SIZE];
 

@@ -130,7 +130,7 @@ static void InitIPX(void)
 void InitNetwork(void)
 {
     ipx_addr_t localaddr;
-    int i, j;
+    int i;
 
     InitIPX();
 
@@ -177,8 +177,6 @@ void ShutdownNetwork(void)
 // A destination of MAXNETNODES is a broadcast.
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 {
-    int j;
-
     // set the time
     packets[0].time = ipx_localtime;
 
@@ -219,7 +217,6 @@ packet_t *IPXGetPacket(void)
     int packetnum;
     int i;
     long besttic;
-    packet_t *packet;
     ECB *ecb;
 
     // if multiple packets are waiting, return them in order by time

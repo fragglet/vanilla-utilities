@@ -62,7 +62,6 @@ static void far ReplayCallback(ticcmd_t *ticcmd)
 
 static void OpenDemo(char *filename)
 {
-    size_t len;
     int header_size;
 
     if (is_strife)

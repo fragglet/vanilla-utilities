@@ -141,7 +141,6 @@ static void SendBroadcast(doomcom_t far *src, node_addr_t src_addr)
     doomcom_t far *dest;
     struct meta_header far *hdr;
     int ddriver, dnode;
-    doomcom_t far *dc;
 
     for (ddriver = 0; ddriver < num_drivers; ++ddriver)
     {
@@ -546,7 +545,6 @@ static void SendFromBuffer(doomcom_t *src)
     doomcom_t far *dc;
     struct meta_data_msg far *msg;
     struct node_data *node;
-    int first_hop;
 
     // First entry in node_addr is the first hop
     node = &nodes[src->remotenode];

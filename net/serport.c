@@ -386,7 +386,7 @@ void PollSerialReceive(void)
 
 static void interrupt far ISR16550(void)
 {
-    int c, done = 0;
+    int done = 0;
     int count;
 
     while (!done)

@@ -3,7 +3,7 @@
 # To invoke: wmake -f makefile.wat
 
 SOURCE_DIRS = ctrl;lib;net;stat;adapters;test
-CFLAGS = -I. -q -onx
+CFLAGS = -I. -q -onx -w3
 LDFLAGS = -q
 
 REPLAY_OBJS = ctrl\replay.o ctrl\control.o lib\common.lib

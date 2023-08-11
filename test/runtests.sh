@@ -2,9 +2,9 @@
 
 tests="
   ipxsetup_test
-  metanet_test
   sersetup_test
   sirsetup_test
+  metanet_test
 "
 
 result=0

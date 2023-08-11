@@ -167,8 +167,8 @@ static void SendBroadcast(doomcom_t far *src, node_addr_t src_addr)
 
 // Constructs a new source address based on old address and new hop.
 // This may not be possible if we have reached the hop limit.
-static int PrependPreviousHop(node_addr_t far result, uint8_t prev_hop,
-                              node_addr_t far old_addr)
+static int PrependPreviousHop(uint8_t far *result, uint8_t prev_hop,
+                              uint8_t far *old_addr)
 {
     if (old_addr[sizeof(node_addr_t) - 1] != 0)
     {

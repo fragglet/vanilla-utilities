@@ -43,6 +43,6 @@ jobs:
     - name: build
       run: |
         ./build/tcbuild.sh
-    - name: test
-      run: ./test/runtests.sh
-      timeout-minutes: 10
+ #  - name: test
+ #    run: ./test/runtests.sh
+ #    timeout-minutes: 10

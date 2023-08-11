@@ -19,6 +19,7 @@ jobs:
         cp *.EXE artifacts
     - name: test
       run: ./test/runtests.sh
+      timeout-minutes: 10
     - name: Find Git version
       id: version
       run: |
@@ -44,4 +45,4 @@ jobs:
         ./build/tcbuild.sh
     - name: test
       run: ./test/runtests.sh
-    # We do not yet run tests on the TurboC .exes.
+      timeout-minutes: 10

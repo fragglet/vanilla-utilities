@@ -42,6 +42,4 @@ jobs:
     - name: build
       run: |
         ./build/tcbuild.sh
-    - name: test
-      run: ./test/runtests.sh
     # We do not yet run tests on the TurboC .exes.

@@ -2,19 +2,7 @@
 TEST_DIR=$(mktemp -d)
 TOPLEVEL_DIR=$(dirname $0)/..
 
-DOSBOX_COMMON_OPTIONS="
-[sdl]
-usescancodes=false
-
-[sblaster]
-sbtype=none
-
-[midi]
-mpu401=none
-
-[render]
-frameskip=10
-"
+DOSBOX_COMMON_OPTIONS=$(cat $TOPLEVEL_DIR/test/dosbox.conf)
 
 # Don't show a window when DOSbox is running; this should be able to
 # run entirely headless.

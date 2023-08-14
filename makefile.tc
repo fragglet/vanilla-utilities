@@ -25,8 +25,8 @@ VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \
 VCOMMIT_OBJS = adapters\vcommit.obj adapters\fragment.obj net\doomnet.obj \
                adapters\nodemap.obj lib\common.lib
 VSETARGS_OBJS = lib\vsetargs.obj
-UDPSETUP_OBJS = net\udpsetup.obj net\doomnet.obj net\dossock.obj \
-                net\llcall.obj lib\common.lib
+UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\udpipx.obj \
+                net\llcall.obj lib\common.lib net\dossock.obj
 FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
                 stat\stats.obj lib\common.lib
 

@@ -124,8 +124,6 @@ static int CheckRegistrationReply(void)
             }
         }
 
-        LogMessage("got packet, src=%d, dest=%d", packet.ipx.SrcSocket, packet.ipx.DestSocket);
-
         if (ntohs(packet.ipx.SrcSocket) == 2
          && ntohs(packet.ipx.DestSocket) == 2)
         {

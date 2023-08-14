@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <time.h>
 
 #include "lib/inttypes.h"
 
@@ -74,6 +75,7 @@ static void ParseServerAddress(const char *addr)
               "command.", addr);
     }
 
+    server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(DEFAULT_UDP_PORT);
 
     p = strchr(addr, ':');
@@ -83,11 +85,95 @@ static void ParseServerAddress(const char *addr)
     }
 }
 
+static void SendRegistration(void)
+{
+    ipx_header_t tmphdr;
+
+    memset(&tmphdr, 0, sizeof(tmphdr));
+    tmphdr.DestSocket = htons(2);
+    tmphdr.SrcSocket = htons(2);
+    tmphdr.PacketCheckSum = htons(0xffff);
+    tmphdr.PacketLength = htons(0x1e);
+    tmphdr.PacketTransportControl = 0;
+    tmphdr.PacketType = 0xff;
+
+    if (sendto(sock, &tmphdr, sizeof(ipx_header_t), 0, &server_addr) < 0)
+    {
+        Error("Error sending registration packet: errno=%d",
+              DosSockLastError);
+    }
+}
+
+static int CheckRegistrationReply(void)
+{
+    int result;
+
+    for (;;)
+    {
+        // TODO: Check the remote address matches the server.
+        result = recvfrom(sock, &packet, sizeof(packet), 0, NULL);
+        if (result < 0)
+        {
+            if (DosSockLastError == WSAEWOULDBLOCK)
+            {
+                return 0;
+            }
+            else
+            {
+                Error("Error receiving packet: errno=%d", DosSockLastError);
+            }
+        }
+
+        LogMessage("got packet, src=%d, dest=%d", packet.ipx.SrcSocket, packet.ipx.DestSocket);
+
+        if (ntohs(packet.ipx.SrcSocket) == 2
+         && ntohs(packet.ipx.DestSocket) == 2)
+        {
+            memcpy(&local_addr, &packet.ipx.Dest, sizeof(ipx_addr_t));
+            return 1;
+        }
+    }
+}
+
+static void Connect(void)
+{
+    clock_t start_time, last_send_time, now;
+
+    start_time = clock();
+    last_send_time = start_time - 2 * CLOCKS_PER_SEC;;
+
+    do
+    {
+        CheckAbort("Connection to server");
+        now = clock();
+        if (now - start_time > 5 * CLOCKS_PER_SEC)
+        {
+            Error("No response from server");
+        }
+        else if (now - last_send_time > CLOCKS_PER_SEC)
+        {
+            last_send_time = now;
+            SendRegistration();
+        }
+    } while (!CheckRegistrationReply());
+}
+
+void ShutdownNetwork(void)
+{
+    if (sock != INVALID_SOCKET)
+    {
+        closesocket(sock);
+        sock = INVALID_SOCKET;
+    }
+}
+
 void InitNetwork(void)
 {
+    unsigned long trueval = 1;
+
     if (server_addr_flag == NULL)
     {
-        ErrorPrintUsage("Must specify server address with -connect!");
+        Error("Must specify server address with -connect!");
     }
 
     ParseServerAddress(server_addr_flag);
@@ -100,16 +186,18 @@ void InitNetwork(void)
               DosSockLastError);
     }
 
-    // TODO: Connect to server.
+    atexit(ShutdownNetwork);
+
+    if (ioctlsocket(sock, FIONBIO, &trueval) < 0)
+    {
+        Error("Setting nonblocking failed, err=%d", DosSockLastError);
+    }
+
+    Connect();
 
     memcpy(&packet.ipx.Src, &local_addr, sizeof(ipx_addr_t));
     packet.ipx.SrcSocket = htons(ipxport);
     packet.ipx.DestSocket = htons(ipxport);
-}
-
-void ShutdownNetwork(void)
-{
-    closesocket(sock);
 }
 
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
@@ -121,6 +209,7 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
         return;
     }
 
+    memcpy(&packet.ipx.Src, &local_addr, sizeof(ipx_addr_t));
     memcpy(&packet.ipx.Dest, addr, sizeof(ipx_addr_t));
     packet.ipx.PacketLength = htons(packet_len);
     packet.time = ipx_localtime;
@@ -149,4 +238,5 @@ void IPXReleasePacket(packet_t *packet)
 {
     // No-op. Well, really, we should block IPXGetPacket() from
     // returning a new packet until the current one is returned.
+    packet = NULL;
 }

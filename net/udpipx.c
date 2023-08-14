@@ -220,16 +220,26 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 
 packet_t *IPXGetPacket(void)
 {
-    int result;
-
-    result = recvfrom(sock, &packet, sizeof(packet), 0, NULL);
-    if (result < 0)
+    do
     {
-        // TODO: Should probably check for and log any real errors.
-        return NULL;
-    }
+        if (recvfrom(sock, &packet, sizeof(packet), 0, NULL) < 0)
+        {
+            // No more packets to process for now.
+            // TODO: Should probably check for and log any real errors.
+            return NULL;
+        }
 
-    return &packet;
+        // TODO: Check server address.
+        // TODO: Check destination address is broadcast or our address?
+
+        // Check destination IPX socket#, since we only care about our
+        // specific port. If there are other games in progress on the
+        // server, we definitely want to ignore them.
+        if (ntohs(packet.ipx.DestSocket) == ipxport)
+        {
+            return &packet;
+        }
+    } while (1);
 }
 
 void IPXReleasePacket(packet_t *packet)

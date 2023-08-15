@@ -104,14 +104,20 @@ static void SendRegistration(void)
     }
 }
 
+static int SameServerAddr(struct sockaddr_in *a, struct sockaddr_in *b)
+{
+    return a->sin_addr.s_addr == b->sin_addr.s_addr
+        && a->sin_port == b->sin_port;
+}
+
 static int CheckRegistrationReply(void)
 {
+    struct sockaddr_in addr;
     int result;
 
     for (;;)
     {
-        // TODO: Check the remote address matches the server.
-        result = recvfrom(sock, &packet, sizeof(packet), 0, NULL);
+        result = recvfrom(sock, &packet, sizeof(packet), 0, &addr);
         if (result < 0)
         {
             if (DosSockLastError == WSAEWOULDBLOCK)
@@ -122,6 +128,12 @@ static int CheckRegistrationReply(void)
             {
                 Error("Error receiving packet: errno=%d", DosSockLastError);
             }
+        }
+
+        // Not from the server?
+        if (!SameServerAddr(&server_addr, &addr))
+        {
+            continue;
         }
 
         if (ntohs(packet.ipx.SrcSocket) == 2
@@ -220,17 +232,28 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 
 packet_t *IPXGetPacket(void)
 {
+    struct sockaddr_in addr;
+
     do
     {
-        if (recvfrom(sock, &packet, sizeof(packet), 0, NULL) < 0)
+        if (recvfrom(sock, &packet, sizeof(packet), 0, &addr) < 0)
         {
             // No more packets to process for now.
             // TODO: Should probably check for and log any real errors.
             return NULL;
         }
 
-        // TODO: Check server address.
-        // TODO: Check destination address is broadcast or our address?
+        // Not from the server?
+        if (!SameServerAddr(&server_addr, &addr))
+        {
+            continue;
+        }
+        // Check destination address is for us.
+        if (memcmp(&packet.ipx.Dest, &local_addr, sizeof(ipx_addr_t)) != 0
+         && memcmp(&packet.ipx.Dest, &broadcast_addr, sizeof(ipx_addr_t)) != 0)
+        {
+            continue;
+        }
 
         // Check destination IPX socket#, since we only care about our
         // specific port. If there are other games in progress on the

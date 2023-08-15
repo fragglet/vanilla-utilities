@@ -20,10 +20,20 @@ straightforward.
 
 ## Utilities
 
-* **ipxsetup** and **sersetup** - bugfixed and expanded versions of the IPX
-and serial/modem drivers originally included with Doom.
+* **udpsetup** - network driver for Internet play over the UDP protocol.
+Multiple network stacks are supported including Winsock1, Winsock2 and the
+DOS MSClient stack. The protocol is the same as DOSbox's IPXNET protocol,
+so it can connect to DOSbox servers and play against emulated machines.
+* **ipxsetup** - bugfixed and expanded version of the driver originally shipped
+with Doom. Supports the extensions from [xttl's version](https://github.com/AXDOOMER/ipxsetup_xttl)
+with further enhancements (not all players need specify the -dup or -player
+parameters).
+* **sersetup** - bugfixed and expanded version of the serial/modem driver
+originally included with Doom. Supports background answering, which allows the
+game to launch before the incoming call is received.
 * **parsetup** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
+Performance has been significantly improved.
 * **sirsetup** - driver for running over a half-duplex serial infrared (SIR)
 link (aka IrDA), as commonly found on many late '90s laptops.
 * **metanet** - networking driver that combines other networking drivers

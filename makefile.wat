@@ -34,7 +34,7 @@ FAKEDOOM_OBJS = test\fakedoom.o net\doomnet.o ctrl\control.o &
 EXES = analogjs.exe replay.exe statdump.exe metanet.exe &
        ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe &
        vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe &
-       udpsetup.exe
+       udpsetup.exe ws2patch.exe
 
 all: $(EXES)
 tests: fakedoom.exe

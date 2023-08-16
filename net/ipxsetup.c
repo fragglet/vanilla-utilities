@@ -245,7 +245,7 @@ void LookForNodes(void)
 
     // wait until we get [numnetnodes] packets, then start playing
     // the playernumbers are assigned by netid
-    LogMessage("Attempting to find %d players on IPX network", numnetnodes);
+    LogMessage("Attempting to find %d players on network", numnetnodes);
     LogMessage("Local address is %02x:%02x:%02x:%02x:%02x:%02x",
                nodeaddr[0].Node[0], nodeaddr[0].Node[1], nodeaddr[0].Node[2],
                nodeaddr[0].Node[3], nodeaddr[0].Node[4], nodeaddr[0].Node[5]);

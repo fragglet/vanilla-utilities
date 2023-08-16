@@ -27,6 +27,7 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 
+#include "net/dbserver.h"
 #include "net/dossock.h"
 #include "net/ipxnet.h"
 
@@ -37,7 +38,9 @@ const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 static char *server_addr_flag = NULL;
 static ipx_addr_t local_addr;
 static packet_t packet;
+static int run_server_flag = 0;
 static struct sockaddr_in server_addr;
+static unsigned int udpport = DEFAULT_UDP_PORT;
 static unsigned int ipxport = DOOM_DEFAULT_PORT;
 static SOCKET sock;
 
@@ -57,10 +60,15 @@ void IPXRegisterFlags(void)
 {
     SetHelpText("Doom UDP/IP network device driver",
                 "%s -nodes 4 -c 192.168.1.5 doom2.exe -warp 7 -deathmatch");
-    UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
     StringFlag("-connect", &server_addr_flag, "addr[:port]",
                "[or -c] connect to server at specified address");
     StringFlag("-c", &server_addr_flag, NULL, NULL);
+    BoolFlag("-server", &run_server_flag,
+             "[or -s] run server for other clients to connect to");
+    BoolFlag("-s", &run_server_flag, NULL);
+    UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
+    UnsignedIntFlag("-udpport", &udpport, "port",
+                    "UDP port that server should use, default 213");
 }
 
 static void ParseServerAddress(const char *addr)
@@ -165,6 +173,7 @@ static void Connect(void)
             last_send_time = now;
             SendRegistration();
         }
+        RunServer();
     } while (!CheckRegistrationReply());
 }
 
@@ -181,13 +190,27 @@ void InitNetwork(void)
 {
     unsigned long trueval = 1;
 
-    if (server_addr_flag == NULL)
+    if (server_addr_flag != NULL)
     {
-        Error("Must specify server address with -connect!");
+        ParseServerAddress(server_addr_flag);
+    }
+    else if (run_server_flag)
+    {
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(udpport);
+        server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    }
+    else
+    {
+        Error("Must specify either -connect or -server!");
     }
 
-    ParseServerAddress(server_addr_flag);
     DosSockInit();
+
+    if (run_server_flag)
+    {
+        StartServer(udpport);
+    }
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock == INVALID_SOCKET)
@@ -214,6 +237,8 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 {
     size_t packet_len = data_len + sizeof(ipx_header_t) + 8;
 
+    RunServer();
+
     if (data_len > sizeof(packet.payload))
     {
         return;
@@ -228,11 +253,18 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
     {
         // TODO: Log error.
     }
+
+    // If we're running a server, we just sent our packet to it via loopback.
+    // So now we need to run the server to ensure it needs to be delivered to
+    // the appropriate destination(s).
+    RunServer();
 }
 
 packet_t *IPXGetPacket(void)
 {
     struct sockaddr_in addr;
+
+    RunServer();
 
     do
     {

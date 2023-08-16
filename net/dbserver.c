@@ -35,15 +35,16 @@ static SOCKET server_sock = INVALID_SOCKET;
 
 static void SockaddrToIPX(struct sockaddr_in *inaddr, ipx_addr_t *ipxaddr)
 {
-    memcpy(&ipxaddr->Node, &inaddr->sin_addr, sizeof(struct in_addr));
-    memcpy(&ipxaddr->Node + 4, &inaddr->sin_port, 2);
+    ipxaddr->Network = 0;
+    memcpy(&ipxaddr->Node[0], &inaddr->sin_addr, 4);
+    memcpy(&ipxaddr->Node[4], &inaddr->sin_port, 2);
 }
 
 static void IPXToSockaddr(ipx_addr_t *ipxaddr, struct sockaddr_in *inaddr)
 {
     inaddr->sin_family = AF_INET;
-    memcpy(&inaddr->sin_addr, &ipxaddr->Node, sizeof(struct in_addr));
-    memcpy(&inaddr->sin_port, &ipxaddr->Node + 4, 2);
+    memcpy(&inaddr->sin_addr, &ipxaddr->Node[0], 4);
+    memcpy(&inaddr->sin_port, &ipxaddr->Node[4], 2);
 }
 
 static int InClientsList(struct sockaddr_in *addr)

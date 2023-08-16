@@ -160,6 +160,11 @@ static void Connect(void)
     start_time = clock();
     last_send_time = start_time - 2 * CLOCKS_PER_SEC;;
 
+    if (!run_server_flag)
+    {
+        LogMessage("Trying...");
+    }
+
     do
     {
         CheckAbort("Connection to server");
@@ -175,6 +180,11 @@ static void Connect(void)
         }
         RunServer();
     } while (!CheckRegistrationReply());
+
+    if (!run_server_flag)
+    {
+        LogMessage("Connection accepted");
+    }
 }
 
 void ShutdownNetwork(void)
@@ -210,6 +220,7 @@ void InitNetwork(void)
     if (run_server_flag)
     {
         StartServer(udpport);
+        LogMessage("Server now running on port %d", udpport);
     }
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);

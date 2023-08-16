@@ -40,8 +40,7 @@ all: $(EXES)
 tests: fakedoom.exe
 
 lib\common.lib: lib\flag.o lib\log.o lib\dos.o lib\ints.o
-	del $@
-	wlib -q $@ +lib\flag.o +lib\log.o +lib\dos.o +lib\ints.o
+	wlib -q -n $@ +lib\flag.o +lib\log.o +lib\dos.o +lib\ints.o
 replay.exe: $(REPLAY_OBJS)
 	wcl -q -fe=$@ $(REPLAY_OBJS)
 analogjs.exe: $(ANALOGJS_OBJS)

@@ -17,7 +17,7 @@ SIRSETUP_OBJS = net\sirsetup.o net\doomnet.o net\serport.o net\serarb.o &
 PARSETUP_OBJS = net\parsetup.o net\doomnet.o net\parport.o net\plio.o &
                 net\serarb.o lib\common.lib
 UDPSETUP_OBJS = net\ipxsetup.o net\doomnet.o net\udpipx.o net\llcall.o &
-                lib\common.lib net\dossock.o
+                lib\common.lib net\dossock.o net\dbserver.o
 PASSTHRU_OBJS = net\passthru.o net\doomnet.o lib\common.lib
 SOLO_NET_OBJS = net\solo-net.o net\doomnet.o lib\common.lib
 METANET_OBJS = net\metanet.o net\doomnet.o lib\common.lib

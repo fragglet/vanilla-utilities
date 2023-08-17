@@ -887,9 +887,9 @@ void DosSockInit(void)
     {
         LogMessage("Failed to get VxD entrypoint for VXDLDR.");
     }
-    else if (!VXDLDR_LoadDevice("WSOCK.VXD")
-          && !VXDLDR_LoadDevice("WSOCK.386")
-          && !VXDLDR_LoadDevice("WSOCK2.VXD"))
+    else if (!VXDLDR_LoadDevice("WSOCK2.VXD")
+          && !VXDLDR_LoadDevice("WSOCK.VXD")
+          && !VXDLDR_LoadDevice("WSOCK.386"))
     {
         LogMessage("Failed to load either WSOCK or WSOCK2 VxD.");
     }

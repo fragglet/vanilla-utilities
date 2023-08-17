@@ -62,10 +62,10 @@ void IPXRegisterFlags(void)
     SetHelpText("Doom UDP/IP network device driver",
                 "%s -nodes 4 -c 192.168.1.5 doom2.exe -warp 7 -deathmatch");
     StringFlag("-connect", &server_addr_flag, "addr[:port]",
-               "[or -c] connect to server at specified address");
+               "(or -c) connect to server at specified address");
     StringFlag("-c", &server_addr_flag, NULL, NULL);
     BoolFlag("-server", &run_server_flag,
-             "[or -s] run server for other clients to connect to");
+             "(or -s) run server for other clients to connect to");
     BoolFlag("-s", &run_server_flag, NULL);
     UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
     UnsignedIntFlag("-udpport", &udpport, "port",

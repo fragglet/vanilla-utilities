@@ -15,8 +15,7 @@ jobs:
     - name: build
       run: |
         ./build/watbuild.sh
-        mkdir -p artifacts
-        cp *.EXE artifacts
+        ./mkrelease.sh
     - name: test
       run: ./test/runtests.sh
       timeout-minutes: 10
@@ -28,7 +27,7 @@ jobs:
     - name: Upload EXEs
       uses: actions/upload-artifact@v1
       with:
-        path: "artifacts"
+        path: "dist"
         name: vanilla-utilities-${{steps.version.outputs.VERSION}}
 
   turboc_build:

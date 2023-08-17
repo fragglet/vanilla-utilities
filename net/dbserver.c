@@ -128,6 +128,38 @@ static void NewClient(struct sockaddr_in *addr)
     }
 }
 
+static void SendShutdown(void)
+{
+    ipx_header_t msg;
+    int i, c;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.PacketCheckSum = htons(0xffff);
+    msg.PacketLength = htons(sizeof(msg));
+    msg.PacketTransportControl = 0;
+    msg.PacketType = 0xff;
+    msg.DestSocket = htons(86);
+    msg.SrcSocket = htons(86);
+
+    memcpy(&msg.Src, &null_addr, sizeof(ipx_addr_t));
+
+    for (c = 0; c < server_num_clients; c++)
+    {
+        SockaddrToIPX(&server_client_addrs[c], &msg.Dest);
+
+        for (i = 0; i < 3; i++)
+        {
+            if (sendto(server_sock, &msg, sizeof(ipx_header_t), 0,
+                       &server_client_addrs[c]) < 0)
+            {
+                LogMessage("Error sending shutdown packet: errno=%d",
+                           DosSockLastError);
+                return;
+            }
+        }
+    }
+}
+
 void RunServer(void)
 {
     struct sockaddr_in addr;
@@ -162,6 +194,7 @@ void ShutdownServer(void)
 {
     if (server_sock != INVALID_SOCKET)
     {
+        SendShutdown();
         closesocket(server_sock);
         server_sock = INVALID_SOCKET;
     }

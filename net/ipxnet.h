@@ -63,5 +63,6 @@ void IPXGetLocalAddress(ipx_addr_t *addr);
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len);
 void IPXReleasePacket(packet_t *packet);
 packet_t *IPXGetPacket(void);
+void IPXStartGame(void);
 unsigned short ShortSwap(unsigned short i);
 

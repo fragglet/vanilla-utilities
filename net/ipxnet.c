@@ -258,3 +258,8 @@ void IPXReleasePacket(packet_t *packet)
     int packetnum = packet - packets;
     ListenForPacket(&ecbs[packetnum]);
 }
+
+void IPXStartGame(void)
+{
+    // no-op.
+}

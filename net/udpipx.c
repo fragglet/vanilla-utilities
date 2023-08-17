@@ -38,6 +38,7 @@ const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 static char *server_addr_flag = NULL;
 static ipx_addr_t local_addr;
 static packet_t packet;
+static int in_game = 0;
 static int run_server_flag = 0;
 static struct sockaddr_in server_addr;
 static unsigned int udpport = DEFAULT_UDP_PORT;
@@ -200,6 +201,8 @@ void InitNetwork(void)
 {
     unsigned long trueval = 1;
 
+    in_game = 0;
+
     if (server_addr_flag != NULL)
     {
         ParseServerAddress(server_addr_flag);
@@ -305,6 +308,12 @@ packet_t *IPXGetPacket(void)
         {
             return &packet;
         }
+        else if (ntohs(packet.ipx.DestSocket) == 86
+              && ntohs(packet.ipx.SrcSocket) == 86 && !in_game)
+        {
+            // We don't abort the program if the game's in progress.
+            Error("Server has shut down");
+        }
     } while (1);
 }
 
@@ -313,4 +322,9 @@ void IPXReleasePacket(packet_t *packet)
     // No-op. Well, really, we should block IPXGetPacket() from
     // returning a new packet until the current one is returned.
     packet = NULL;
+}
+
+void IPXStartGame(void)
+{
+    in_game = 1;
 }

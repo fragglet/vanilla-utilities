@@ -359,6 +359,7 @@ void main(int argc, char *argv[])
     // get addresses of all nodes
     LookForNodes();
 
+    IPXStartGame();
     ipx_localtime = 0;              // no longer in setup
 
     // launch DOOM

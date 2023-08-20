@@ -17,7 +17,8 @@ PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \
                 net\plio.obj net\serarb.obj lib\common.lib
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\common.lib
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\common.lib
-METANET_OBJS = net\metanet.obj net\doomnet.obj lib\common.lib
+METANET_OBJS = net\metanet.obj net\doomnet.obj lib\common.lib \
+               net\pktaggr.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
                 stat\stats.obj lib\common.lib
 VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \

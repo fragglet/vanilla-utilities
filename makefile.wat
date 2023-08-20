@@ -20,7 +20,7 @@ UDPSETUP_OBJS = net\ipxsetup.o net\doomnet.o net\udpipx.o net\llcall.o &
                 lib\common.lib net\dossock.o net\dbserver.o
 PASSTHRU_OBJS = net\passthru.o net\doomnet.o lib\common.lib
 SOLO_NET_OBJS = net\solo-net.o net\doomnet.o lib\common.lib
-METANET_OBJS = net\metanet.o net\doomnet.o lib\common.lib
+METANET_OBJS = net\metanet.o net\doomnet.o lib\common.lib net\pktaggr.o
 STATDUMP_OBJS = stat\statdump.o ctrl\control.o stat\statprnt.o stat\stats.o &
                 lib\common.lib
 VCOMMIT_OBJS = adapters\vcommit.o adapters\fragment.o net\doomnet.o &

@@ -552,7 +552,6 @@ static void SendFromBuffer(int dest, void *data, size_t data_len)
         return;
     }
 
-    // First entry in node_addr is the first hop
     node = &nodes[dest];
     dc = drivers[ADDR_DRIVER(node->first_hop)];
     dc->remotenode = ADDR_NODE(node->first_hop);

@@ -199,6 +199,7 @@ void ShutdownNetwork(void)
 
 void InitNetwork(void)
 {
+    struct sockaddr_in bind_any_addr = {AF_INET, 0, {INADDR_ANY}};
     unsigned long trueval = 1;
 
     in_game = 0;
@@ -234,6 +235,11 @@ void InitNetwork(void)
     }
 
     atexit(ShutdownNetwork);
+
+    if (bind(sock, &bind_any_addr) < 0)
+    {
+        Error("Binding to a port failed, err=%d", DosSockLastError);
+    }
 
     if (ioctlsocket(sock, FIONBIO, &trueval) < 0)
     {

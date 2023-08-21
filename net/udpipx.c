@@ -115,7 +115,11 @@ static void SendRegistration(void)
 
 static int SameServerAddr(struct sockaddr_in *a, struct sockaddr_in *b)
 {
-    return a->sin_addr.s_addr == b->sin_addr.s_addr
+    // TODO: MSClient doesn't seem to have a proper loopback interface, so
+    // even though we send to 127.0.0.1, the replies come back from a
+    // different address. What we should do instead is use getsockname(),
+    // but that's going to require more reverse engineering work.
+    return 1 //a->sin_addr.s_addr == b->sin_addr.s_addr
         && a->sin_port == b->sin_port;
 }
 

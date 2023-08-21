@@ -115,6 +115,7 @@ struct sockaddr_in {
     unsigned short sin_family;  // Set this to AF_INET
     unsigned short sin_port;
     struct in_addr sin_addr;
+    char _padding[8];  // msclient/winsock expect sizeof(sockaddr_in) == 16
 };
 
 // Socket handles are actually pointers rather than file handles like they

@@ -714,9 +714,10 @@ static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
         uint16_t             BufferLen;
         uint16_t             Flags;
         void far            *Addr;
-        uint16_t             AddrLen;
-        uint16_t             CallType;
+        uint16_t far        *AddrLen;
+        uint8_t              CallType;
     } params;
+    uint16_t addr_len = SOCKADDR_SIZE;
 
     memset(&params, 0, sizeof(params));
     params.Socket = (uint16_t) socket;
@@ -724,8 +725,8 @@ static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
     params.BufferLen = len;
     params.Flags = flags;
     params.Addr = from;
-    params.AddrLen = SOCKADDR_SIZE;
-    params.CallType = from != NULL;  // recvfrom(), not recv()?
+    params.AddrLen = &addr_len;
+    params.CallType = from != NULL ? 3 : 2;  // recvfrom(), not recv()?
 
     return MSClientCall(0x0b, &params.Header);
 }

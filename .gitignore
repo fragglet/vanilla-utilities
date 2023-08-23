@@ -1,6 +1,3 @@
-*.O
-*.OBJ
 *.ERR
-*.EXE
-*.LIB
+bld
 dist

@@ -4,77 +4,77 @@
 
 CFLAGS = -O2 -d -w -Dinline=
 
-REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj lib\common.lib
+REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj bld\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj \
-                lib\common.lib
+                bld\common.lib
 IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj \
-                net\llcall.obj lib\common.lib
+                net\llcall.obj bld\common.lib
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
-                net\serarb.obj lib\common.lib
+                net\serarb.obj bld\common.lib
 SIRSETUP_OBJS = net\sirsetup.obj net\doomnet.obj net\serport.obj \
-                net\serarb.obj lib\common.lib
+                net\serarb.obj bld\common.lib
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \
-                net\plio.obj net\serarb.obj lib\common.lib
-PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj lib\common.lib
-SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj lib\common.lib
-METANET_OBJS = net\metanet.obj net\doomnet.obj lib\common.lib \
+                net\plio.obj net\serarb.obj bld\common.lib
+PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj bld\common.lib
+SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj bld\common.lib
+METANET_OBJS = net\metanet.obj net\doomnet.obj bld\common.lib \
                net\pktaggr.obj
 STATDUMP_OBJS = stat\statdump.obj ctrl\control.obj stat\statprnt.obj \
-                stat\stats.obj lib\common.lib
+                stat\stats.obj bld\common.lib
 VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \
-                adapters\nodemap.obj lib\common.lib
+                adapters\nodemap.obj bld\common.lib
 VCOMMIT_OBJS = adapters\vcommit.obj adapters\fragment.obj net\doomnet.obj \
-               adapters\nodemap.obj lib\common.lib
+               adapters\nodemap.obj bld\common.lib
 VSETARGS_OBJS = lib\vsetargs.obj
-UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj lib\common.lib lib\udpipx.lib
+UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj bld\common.lib lib\udpipx.lib
 FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
-                stat\stats.obj lib\common.lib
+                stat\stats.obj bld\common.lib
 
-EXES = analogjs.exe replay.exe statdump.exe metanet.exe \
-       ipxsetup.exe sersetup.exe parsetup.exe solo-net.exe \
-       vcommit.exe vrottcom.exe vsetargs.exe sirsetup.exe \
-       udpsetup.exe
+EXES = bld\analogjs.exe bld\replay.exe bld\statdump.exe bld\metanet.exe \
+       bld\ipxsetup.exe bld\sersetup.exe bld\parsetup.exe bld\solo-net.exe \
+       bld\vcommit.exe bld\vrottcom.exe bld\vsetargs.exe bld\sirsetup.exe \
+       bld\udpsetup.exe
 
 all: $(EXES)
-tests: fakedoom.exe
+tests: test\fakedoom.exe
 
-lib\common.lib: lib\flag.obj lib\log.obj lib\dos.obj lib\ints.obj
+bld\common.lib: lib\flag.obj lib\log.obj lib\dos.obj lib\ints.obj
 	del $@
 	tlib $@ +lib\flag.obj +lib\log.obj +lib\dos.obj +lib\ints.obj
 lib\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj net\dbserver.obj
 	del $@
 	tlib $@ +net\udpipx.obj +net\llcall.obj +net\dossock.obj
 	tlib $@ +net\dbserver.obj
-replay.exe: $(REPLAY_OBJS)
-	tcc -e$* -o$@ $(REPLAY_OBJS)
-analogjs.exe: $(ANALOGJS_OBJS)
-	tcc -e$* -o$@ $(ANALOGJS_OBJS)
-ipxsetup.exe: $(IPXSETUP_OBJS)
-	tcc -e$* -o$@ $(IPXSETUP_OBJS)
-sersetup.exe: $(SERSETUP_OBJS)
-	tcc -e$* -o$@ $(SERSETUP_OBJS)
-sirsetup.exe: $(SIRSETUP_OBJS)
-	tcc -e$* -o$@ $(SIRSETUP_OBJS)
-parsetup.exe: $(PARSETUP_OBJS)
-	tcc -e$* -o$@ $(PARSETUP_OBJS)
-udpsetup.exe: $(UDPSETUP_OBJS)
-	tcc -e$* -o$@ $(UDPSETUP_OBJS)
-metanet.exe: $(METANET_OBJS)
-	tcc -e$* -o$@ $(METANET_OBJS)
-passthru.exe: $(PASSTHRU_OBJS)
-	tcc -e$* -o$@ $(PASSTHRU_OBJS)
-statdump.exe: $(STATDUMP_OBJS)
-	tcc -e$* -o$@ $(STATDUMP_OBJS)
-solo-net.exe: $(SOLO_NET_OBJS)
-	tcc -e$* -o$@ $(SOLO_NET_OBJS)
-vcommit.exe: $(VCOMMIT_OBJS)
-	tcc -e$* -o$@ $(VCOMMIT_OBJS)
-vrottcom.exe: $(VROTTCOM_OBJS)
-	tcc -e$* -o$@ $(VROTTCOM_OBJS)
-vsetargs.exe: $(VSETARGS_OBJS)
-	tcc -e$* -o$@ $(VSETARGS_OBJS)
-fakedoom.exe: $(FAKEDOOM_OBJS)
-	tcc -e$* -o$@ $(FAKEDOOM_OBJS)
+bld\replay.exe: $(REPLAY_OBJS)
+	tcc -e$* -oreplay $(REPLAY_OBJS)
+bld\analogjs.exe: $(ANALOGJS_OBJS)
+	tcc -e$* -oanalogjs $(ANALOGJS_OBJS)
+bld\ipxsetup.exe: $(IPXSETUP_OBJS)
+	tcc -e$* -oipxsetup $(IPXSETUP_OBJS)
+bld\sersetup.exe: $(SERSETUP_OBJS)
+	tcc -e$* -osersetup $(SERSETUP_OBJS)
+bld\sirsetup.exe: $(SIRSETUP_OBJS)
+	tcc -e$* -osirsetup $(SIRSETUP_OBJS)
+bld\parsetup.exe: $(PARSETUP_OBJS)
+	tcc -e$* -oparsetup $(PARSETUP_OBJS)
+bld\udpsetup.exe: $(UDPSETUP_OBJS)
+	tcc -e$* -oudpsetup $(UDPSETUP_OBJS)
+bld\metanet.exe: $(METANET_OBJS)
+	tcc -e$* -ometanet $(METANET_OBJS)
+bld\passthru.exe: $(PASSTHRU_OBJS)
+	tcc -e$* -opassthru $(PASSTHRU_OBJS)
+bld\statdump.exe: $(STATDUMP_OBJS)
+	tcc -e$* -ostatdump $(STATDUMP_OBJS)
+bld\solo-net.exe: $(SOLO_NET_OBJS)
+	tcc -e$* -osolo-net $(SOLO_NET_OBJS)
+bld\vcommit.exe: $(VCOMMIT_OBJS)
+	tcc -e$* -ovcommit $(VCOMMIT_OBJS)
+bld\vrottcom.exe: $(VROTTCOM_OBJS)
+	tcc -e$* -ovrottcom $(VROTTCOM_OBJS)
+bld\vsetargs.exe: $(VSETARGS_OBJS)
+	tcc -e$* -ovsetargs $(VSETARGS_OBJS)
+test\fakedoom.exe: $(FAKEDOOM_OBJS)
+	tcc -e$* -ofakedoom $(FAKEDOOM_OBJS)
 
 .c.obj:
 	tcc $(CFLAGS) -c -o$@ $<
@@ -82,14 +82,5 @@ fakedoom.exe: $(FAKEDOOM_OBJS)
 	tasm /ml $< $@
 
 clean:
-	del $(EXES)
-	del $(ANALOGJS_OBJS)
-	del $(IPXSETUP_OBJS)
-	del $(METANET_OBJS)
-	del $(PARSETUP_OBJS)
-	del $(PASSTHRU_OBJS)
-	del $(REPLAY_OBJS)
-	del $(SERSETUP_OBJS)
-	del $(SOLO_NET_OBJS)
-	del $(STATDUMP_OBJS)
-	del $(SIRSETUP_OBJS)
+	del bld\*.*
+	del test\fakedoom.exe

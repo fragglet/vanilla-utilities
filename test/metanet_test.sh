@@ -25,7 +25,7 @@
 #  * There are two nodes running in forwarding mode (B), and they
 #    quit automatically when there is no more work to be done.
 #  * There is at least one four-hop route through the network
-#    (G-D-A-C-F-I). 
+#    (G-D-A-C-F-I).
 
 set -eu
 
@@ -36,7 +36,7 @@ start_dosbox <<END
   serial1 modem listenport:4001
   ipx true
   ipxnet startserver 4000
-  sersetup -answer ipxsetup -nodes 3 metanet fakedoom -out MNTEST_A.TXT -secret 10001
+  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_A.TXT -secret 10001
 END
 
 sleep 1
@@ -46,7 +46,7 @@ start_dosbox <<END
   serial1 modem listenport:4002
   ipx true
   ipxnet connect localhost 4000
-  sersetup -answer ipxsetup -nodes 3 metanet -forward
+  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet -forward
 END
 
 sleep 1
@@ -56,7 +56,7 @@ start_dosbox <<END
   serial1 modem listenport:4003
   ipx true
   ipxnet connect localhost 4000
-  sersetup -answer ipxsetup -nodes 3 metanet fakedoom -out MNTEST_C.TXT -secret 10003
+  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_C.TXT -secret 10003
 END
 
 sleep 1
@@ -65,7 +65,7 @@ sleep 1
 start_dosbox <<END
   serial1 modem
   serial2 modem listenport:4004
-  sersetup -dial localhost:4001 sersetup -com2 -answer metanet fakedoom -out MNTEST_D.TXT -secret 10004
+  bld\\sersetup -dial localhost:4001 bld\\sersetup -com2 -answer bld\\metanet test\\fakedoom -out MNTEST_D.TXT -secret 10004
 END
 
 sleep 1
@@ -73,7 +73,7 @@ sleep 1
 # Node E (dial-in to B)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4002 metanet fakedoom -out MNTEST_E.TXT -secret 10005
+  bld\\sersetup -dial localhost:4002 bld\\metanet test\\fakedoom -out MNTEST_E.TXT -secret 10005
 END
 
 sleep 1
@@ -81,7 +81,7 @@ sleep 1
 # Node G (dial-in to D)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4004 metanet fakedoom -out MNTEST_G.TXT -secret 10007
+  bld\\sersetup -dial localhost:4004 bld\\metanet test\\fakedoom -out MNTEST_G.TXT -secret 10007
 END
 
 # Node F (dial-in to C, accept call from H, I and J)
@@ -92,7 +92,7 @@ start_dosbox <<END
   serial2 modem listenport:4005
   serial3 modem listenport:4006
   serial4 modem listenport:4007
-  sersetup -dial localhost:4003 sersetup -com2 -bg -answer sersetup -com3 -bg -answer sersetup -com4 -bg -answer metanet -forward
+  bld\\sersetup -dial localhost:4003 bld\\sersetup -com2 -bg -answer bld\\sersetup -com3 -bg -answer bld\\sersetup -com4 -bg -answer bld\\metanet -forward
 END
 
 sleep 5
@@ -100,19 +100,19 @@ sleep 5
 # Node J (dial-in to J)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4007 metanet fakedoom -out MNTEST_J.TXT -secret 10010
+  bld\\sersetup -dial localhost:4007 bld\\metanet test\\fakedoom -out MNTEST_J.TXT -secret 10010
 END
 
 # Node I (dial-in to F)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4006 metanet fakedoom -out MNTEST_I.TXT -secret 10009
+  bld\\sersetup -dial localhost:4006 bld\\metanet test\\fakedoom -out MNTEST_I.TXT -secret 10009
 END
 
 # Node H (dial-in to F)
 start_dosbox <<END
   serial1 modem
-  sersetup -dial localhost:4005 metanet fakedoom -out MNTEST_H.TXT -secret 10008
+  bld\\sersetup -dial localhost:4005 bld\\metanet test\\fakedoom -out MNTEST_H.TXT -secret 10008
 END
 
 wait_dosboxes

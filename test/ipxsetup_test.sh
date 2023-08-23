@@ -21,7 +21,7 @@ test_8players() {
 	start_dosbox <<END
 	  config -set ipx true
 	  ipxnet startserver $TEST_PORT
-	  ipxsetup -player 5 -dup 3 -nodes 8 fakedoom \
+	  bld\\ipxsetup -player 5 -dup 3 -nodes 8 test\\fakedoom \
 	    -out t:SERVER.TXT -secret 1000
 END
 
@@ -31,7 +31,7 @@ END
 		start_dosbox <<END
 		  config -set ipx true
 		  ipxnet connect localhost $TEST_PORT
-		  ipxsetup -nodes 8 fakedoom \
+		  bld\\ipxsetup -nodes 8 test\\fakedoom \
 		    -out t:CLIENT$i.TXT -secret $((1000 + i))
 END
 	done
@@ -58,7 +58,7 @@ test_xttl_compatibility() {
 	start_dosbox <<END
 	  config -set ipx true
 	  ipxnet startserver $TEST_PORT
-	  ipxsetup -dup 3 -player 4 -nodes 4 fakedoom \
+	  bld\\ipxsetup -dup 3 -player 4 -nodes 4 test\\fakedoom \
 	    -out t:SERVER.TXT -secret 1000
 END
 
@@ -67,7 +67,7 @@ END
 	start_dosbox <<END
 	  config -set ipx true
 	  ipxnet connect localhost $TEST_PORT
-	  ipxsetup -dup 3 -player 3 -nodes 4 fakedoom \
+	  bld\\ipxsetup -dup 3 -player 3 -nodes 4 test\\fakedoom \
 	    -out t:CLIENT1.TXT -secret 1001
 END
 
@@ -85,7 +85,7 @@ END
 	  cd 3
 	  c:\\test\\exes\\ipxttl \
 	    -out t:\\CLIENT2.TXT -secret 1002 \
-	    foobar -exec c:\\fakedoom -extratic -nodes 4 -dup 3 -player 2
+	    foobar -exec c:\\test\\fakedoom -extratic -nodes 4 -dup 3 -player 2
 END
 
 	start_dosbox <<END
@@ -96,7 +96,7 @@ END
 	  cd 4
 	  c:\\test\\exes\\ipxttl \
 	    -out t:\\CLIENT3.TXT -secret 1003 \
-	    foobar -exec c:\\fakedoom -extratic -nodes 4 -player 1 -dup 3
+	    foobar -exec c:\\test\\fakedoom -extratic -nodes 4 -player 1 -dup 3
 END
 
 	wait_dosboxes

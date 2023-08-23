@@ -11,7 +11,7 @@ start_node1() {
     start_dosbox <<END
       config -set serial serial1 modem listenport:$TEST_PORT1
       config -set serial serial2 nullmodem port:$TEST_PORT2
-      sersetup $@ fakedoom -out t:NODE1.TXT -secret 1000
+      bld\\sersetup $@ test\\fakedoom -out t:NODE1.TXT -secret 1000
 END
     sleep 1
 }
@@ -20,7 +20,7 @@ start_node2() {
     start_dosbox <<END
       config -set serial serial1 modem
       config -set serial serial2 nullmodem server:localhost port:$TEST_PORT2
-      sersetup $@ fakedoom -out t:NODE2.TXT -secret 2000
+      bld\\sersetup $@ test\\fakedoom -out t:NODE2.TXT -secret 2000
 END
 }
 

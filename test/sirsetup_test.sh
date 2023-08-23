@@ -9,7 +9,7 @@ set -eu
 start_node1() {
     start_dosbox <<END
       config -set serial serial2 nullmodem port:$TEST_PORT1
-      sirsetup -com2 $@ fakedoom -out t:node1.txt -secret 1000
+      bld\\sirsetup -com2 $@ test\\fakedoom -out t:node1.txt -secret 1000
 END
     sleep 1
 }
@@ -17,7 +17,7 @@ END
 start_node2() {
     start_dosbox <<END
       config -set serial serial2 nullmodem server:localhost port:$TEST_PORT1
-      sirsetup -com2 $@ fakedoom -out t:node2.txt -secret 2000
+      bld\\sirsetup -com2 $@ test\\fakedoom -out t:node2.txt -secret 2000
 END
 }
 

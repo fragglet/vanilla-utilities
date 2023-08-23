@@ -2,3 +2,4 @@
 *.OBJ
 bld
 dist
+test/FAKEDOOM.EXE

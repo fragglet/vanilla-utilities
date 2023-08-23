@@ -23,8 +23,8 @@ straightforward.
 * **udpsetup** - network driver for Internet play over the UDP protocol.
 Multiple network stacks are supported including Winsock1, Winsock2 and the
 DOS MSClient stack. The protocol is the same as DOSbox's IPXNET protocol,
-so it can connect to DOSbox servers and play against emulated machines. 
-[Example video](https://youtu.be/4L5wVLp5wVE). 
+so it can connect to DOSbox servers and play against emulated machines.
+[Example video](https://www.youtube.com/watch?v=1PLXPSP7ZBE).
 * **ipxsetup** - bugfixed and expanded version of the driver originally shipped
 with Doom. Supports the extensions from [xttl's version](https://github.com/AXDOOMER/ipxsetup_xttl)
 with further enhancements (not all players need specify the -dup or -player
@@ -53,7 +53,7 @@ demos can be "continued" by recording a new demo from an old one.
 *COMMIT* driver, as used for *Duke Nukem 3D*, *Blood*, *Shadow Warrior*
 and various other games. This means that all of the above network drivers
 can also be used with those games.
-[Example video](https://www.youtube.com/watch?v=qqdv999nMQc).
+[Example video](https://youtu.be/4L5wVLp5wVE).
 * **vrottcom** - adapter that converts a Doom network driver into a *Rise
 of the Triad* ROTTCOM driver. This means that all of the above network
 drivers can also be used with ROTT.

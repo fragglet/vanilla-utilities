@@ -26,7 +26,7 @@ VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \
 VCOMMIT_OBJS = adapters\vcommit.obj adapters\fragment.obj net\doomnet.obj \
                adapters\nodemap.obj bld\common.lib
 VSETARGS_OBJS = lib\vsetargs.obj
-UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj bld\common.lib lib\udpipx.lib
+UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj bld\common.lib bld\udpipx.lib
 FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
                 stat\stats.obj bld\common.lib
 
@@ -41,7 +41,7 @@ tests: test\fakedoom.exe
 bld\common.lib: lib\flag.obj lib\log.obj lib\dos.obj lib\ints.obj
 	del $@
 	tlib $@ +lib\flag.obj +lib\log.obj +lib\dos.obj +lib\ints.obj
-lib\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj net\dbserver.obj
+bld\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj net\dbserver.obj
 	del $@
 	tlib $@ +net\udpipx.obj +net\llcall.obj +net\dossock.obj
 	tlib $@ +net\dbserver.obj
@@ -84,3 +84,9 @@ test\fakedoom.exe: $(FAKEDOOM_OBJS)
 clean:
 	del bld\*.*
 	del test\fakedoom.exe
+	del adapters\*.obj
+	del ctrl\*.obj
+	del lib\*.obj
+	del net\*.obj
+	del stat\*.obj
+	del test\*.obj

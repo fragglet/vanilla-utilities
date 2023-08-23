@@ -28,7 +28,7 @@ VCOMMIT_OBJS = bld\vcommit.o bld\fragment.o bld\doomnet.o &
 VROTTCOM_OBJS = bld\vrottcom.o bld\fragment.o bld\doomnet.o &
                 bld\nodemap.o bld\common.lib
 VSETARGS_OBJS = bld\vsetargs.o
-FAKEDOOM_OBJS = test\fakedoom.o bld\doomnet.o bld\control.o &
+FAKEDOOM_OBJS = bld\fakedoom.o bld\doomnet.o bld\control.o &
                 bld\stats.o bld\common.lib
 
 EXES = bld\analogjs.exe bld\replay.exe bld\statdump.exe bld\metanet.exe &

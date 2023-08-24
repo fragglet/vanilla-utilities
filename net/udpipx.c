@@ -60,7 +60,7 @@ void IPXGetLocalAddress(ipx_addr_t *addr)
 void IPXRegisterFlags(void)
 {
     SetHelpText("Doom UDP/IP network device driver",
-                "%s -nodes 4 -c 192.168.1.5 doom2.exe -warp 7 -deathmatch");
+                "See UDPSETUP-HOWTO for examples.");
     StringFlag("-connect", &server_addr_flag, "addr[:port]",
                "(or -c) connect to server at specified address");
     StringFlag("-c", &server_addr_flag, NULL, NULL);

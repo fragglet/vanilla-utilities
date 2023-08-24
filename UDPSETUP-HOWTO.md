@@ -36,10 +36,10 @@ pure DOS and was used to allow DOS users to integrate into Windows
 networks.
 
 The MSClient stack requires some initial work to set up, including
-providing appropriate drivers if your network card -- real or
-emulated -- is not one of those supported by the stack out of the box.
-The stack uses quite a lot of memory so you will probably want to tweak
-your system so that you only load the stack when you want to use it.
+providing appropriate drivers if your network card - real or emulated -
+is not one of those supported by the stack out of the box.  The stack
+uses quite a lot of memory so you will probably want to tweak your
+system so that you only load the stack when you want to use it.
 
 Once set up, `udpsetup` should work out of the box; the only important
 detail is that you need to run `SOCKETS.EXE` to load the sockets driver

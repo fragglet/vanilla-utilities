@@ -36,9 +36,9 @@ EXES = bld\analogjs.exe bld\replay.exe bld\statdump.exe bld\metanet.exe &
        bld\vcommit.exe bld\vrottcom.exe bld\vsetargs.exe bld\sirsetup.exe &
        bld\udpsetup.exe bld\ws2patch.exe
 
-all: exes tests
-exes: $(EXES)
-tests: test\fakedoom.exe
+TESTS = test\fakedoom.exe
+
+all: $(EXES) $(TESTS)
 
 bld\common.lib: bld\flag.o bld\log.o bld\dos.o bld\ints.o
 	wlib -q -n $@ +bld\flag.o +bld\log.o +bld\dos.o +bld\ints.o

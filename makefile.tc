@@ -83,7 +83,8 @@ test\fakedoom.exe: $(FAKEDOOM_OBJS)
 	tasm /ml $< $@
 
 clean:
-	del bld\*.*
+	del bld\*.exe
+	del bld\*.lib
 	del test\fakedoom.exe
 	del adapters\*.obj
 	del ctrl\*.obj

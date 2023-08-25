@@ -90,5 +90,7 @@ bld\ws2patch.exe: net\ws2patch.c
 	wasm -q -fo=$@ $<
 
 clean:
-	del bld\*.*
+	del bld\*.o
+	del bld\*.exe
+	del bld\*.lib
 	del test\fakedoom.exe

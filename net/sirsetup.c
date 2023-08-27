@@ -206,7 +206,10 @@ unsigned int SerialMoreTXData(void)
         {
             serial_tx_buffer[0] = FRAMECHAR;
             serial_tx_buffer[1] = FRAMECHAR_HANDOFF;
-            state = STATE_WAIT;
+            if (state != STATE_ARBITRATE)
+            {
+                state = STATE_WAIT;
+            }
         }
         else
         {
@@ -325,6 +328,26 @@ static void NetCallback(void)
     }
 }
 
+// Before transitioning out of the STATE_ARBITRATE state, we block for a
+// maximum of one second to ensure the interrupt handler has finished
+// transmitting all packets still buffered for transmit. This is important
+// because we can otherwise end up with a corner-case deadlock where we're in
+// STATE_WAIT waiting for the other side, while it's waiting for our
+// arbitration packet to launch the game.
+static void FlushArbitrationPackets(void)
+{
+    int end_time = clock() + CLOCKS_PER_SEC;
+
+    state = STATE_ARBITRATE;
+
+    while (clock() < end_time && outque.head != outque.tail)
+    {
+        CheckAbort("Arbitration packet flush");
+    }
+
+    state = doomcom.consoleplayer == 0 ? STATE_TRANSMIT : STATE_WAIT;
+}
+
 void main(int argc, char *argv[])
 {
     char **args;
@@ -357,7 +380,7 @@ void main(int argc, char *argv[])
 
     ArbitratePlayers(&doomcom, NetCallback);
 
-    state = doomcom.consoleplayer == 0 ? STATE_TRANSMIT : STATE_WAIT;
+    FlushArbitrationPackets();
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);

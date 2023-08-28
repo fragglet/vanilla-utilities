@@ -16,15 +16,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <assert.h>
 #include "lib/inttypes.h"
 
-//#include "ctrl/control.h"
 #include "lib/flag.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
-#include "stat/stats.h"
 
 #define MAGIC_NUMBER 0x83b3
 
@@ -35,31 +34,31 @@ struct test_packet
     int secret;
 };
 
+static int myargc;
+static char **myargv;
+
 FILE *log;
 int net_secret = 1337;
-//control_handle_t far *control = NULL;
 doomcom_t far *doomcom = NULL;
-wbstartstruct_t far *stats = NULL;
 
-// TODO: Resolve ticcmd_t type conflict between headers.
-/*
-static void SetControlDriver(long l)
+static char **CheckParm(char *name, int nargs)
 {
-    assert(control == NULL);
-    control = ControlGetHandle(l);
-}
-*/
+    int i;
 
-static void SetNetDriver(long l)
-{
-    assert(doomcom == NULL);
-    doomcom = NetGetHandle(l);
-}
+    for (i = 1; i < myargc; i++)
+    {
+        if (strcmp(myargv[i], name) != 0)
+        {
+            continue;
+        }
+        if (i + nargs >= myargc)
+        {
+            Error("%s needs %d arguments", name, nargs);
+        }
+        return myargv + i + 1;
+    }
 
-static void SetStatsDriver(long l)
-{
-    assert(stats == NULL);
-    stats = StatsGetHandle(l);
+    return NULL;
 }
 
 static void SendTestPackets(void)
@@ -138,22 +137,41 @@ static void RunNetworkTest(void)
 int main(int argc, char *argv[])
 {
     clock_t start;
+    char **arg;
     char *filename = NULL;
 
-    //APIPointerFlag("-control", SetControlDriver);
-    APIPointerFlag("-net", SetNetDriver);
-    APIPointerFlag("-statcopy", SetStatsDriver);
+    myargc = argc;
+    myargv = argv;
+
+    if (argc < 2)
+    {
+        printf("Usage: %s -out <filename> [other args]\n\n"
+               "  -secret n     Secret number for network test\n",
+               argv[0]);
+        exit(1);
+    }
+
     StringFlag("-out", &filename, "filename", "Output log file");
     IntFlag("-secret", &net_secret, "n", "Secret number for network test");
-    NetRegisterFlags();
-    ParseCommandLine(argc, argv);
 
-    assert(filename != NULL);
-    log = fopen(filename, "w");
+    arg = CheckParm("-out", 1);
+    if (arg == NULL)
+    {
+        Error("Must supply -out <filename> for log");
+    }
+    log = fopen(*arg, "w");
     assert(log != NULL);
 
-    if (doomcom != NULL)
+    arg = CheckParm("-secret", 1);
+    if (arg != NULL)
     {
+        net_secret = atoi(*arg);
+    }
+
+    arg = CheckParm("-net", 1);
+    if (arg != NULL)
+    {
+        doomcom = NetGetHandle(atol(*arg));
         RunNetworkTest();
     }
 

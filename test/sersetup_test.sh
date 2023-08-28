@@ -11,7 +11,7 @@ start_node1() {
     start_dosbox <<END
       config -set serial serial1 modem listenport:$TEST_PORT1
       config -set serial serial2 nullmodem port:$TEST_PORT2
-      bld\\sersetup $@ test\\fakedoom -out t:NODE1.TXT -secret 1000
+      $@ test\\fakedoom -out t:NODE1.TXT -secret 1000
 END
     sleep 1
 }
@@ -20,64 +20,62 @@ start_node2() {
     start_dosbox <<END
       config -set serial serial1 modem
       config -set serial serial2 nullmodem server:localhost port:$TEST_PORT2
-      bld\\sersetup $@ test\\fakedoom -out t:NODE2.TXT -secret 2000
+      $@ test\\fakedoom -out t:NODE2.TXT -secret 2000
 END
 }
 
-run_player_tests() {
-    # Simple dial and answer.
-    start_node1 $1
-    start_node2 $2
-    wait_dosboxes
-
-    if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||
-       ! grep -q secret=1000 $TEST_DIR/NODE1.TXT ||
-       ! grep -q secret=2000 $TEST_DIR/NODE1.TXT; then
-        echo "Wrong or missing secrets for '$1' '$2' #1: "
+check_player_secrets() {
+    if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT; then
+        echo "$1: fakedoom output from node1 and node2 does not match."
+        exit 1
+    fi
+    if ! grep -q "$2" $TEST_DIR/NODE1.TXT; then
+        echo "$1: fakedoom output does not contain '$2':"
         diff -u /dev/null $TEST_DIR/NODE1.TXT
         exit 1
     fi
+    if ! grep -q "$3" $TEST_DIR/NODE1.TXT; then
+        echo "$1: fakedoom output does not contain '$3':"
+        diff -u /dev/null $TEST_DIR/NODE1.TXT
+        exit 1
+    fi
+}
+
+run_player_tests() {
+    test_descr="run_player_tests '$1' '$2'"
+
+    # Simple dial and answer.
+    start_node1 "bld\\sersetup" $1
+    start_node2 "bld\\sersetup" $2
+    wait_dosboxes
+
+    check_player_secrets "$test_descr" "secret=1000" "secret=2000"
 
     # Force player at answer.
-    start_node1 $1 -player2
-    start_node2 $2
+    start_node1 "bld\\sersetup" $1 -player2
+    start_node2 "bld\\sersetup" $2
     wait_dosboxes
 
-    if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||
-       ! grep -q "Player 1: secret=2000" $TEST_DIR/NODE1.TXT ||
-       ! grep -q "Player 2: secret=1000" $TEST_DIR/NODE1.TXT; then
-        echo "Wrong or missing secrets for '$1' '$2' #2: "
-        diff -u /dev/null $TEST_DIR/NODE1.TXT
-        exit 1
-    fi
+    check_player_secrets "$test_descr" \
+        "Player 1: secret=2000" "Player 2: secret=1000"
 
     # Force player at both works as long as they're consistent.
-    start_node1 $1 -player2
-    start_node2 $2 -player1
+    start_node1 "bld\\sersetup" $1 -player2
+    start_node2 "bld\\sersetup" $2 -player1
     wait_dosboxes
 
-    if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||
-       ! grep -q "Player 1: secret=2000" $TEST_DIR/NODE1.TXT ||
-       ! grep -q "Player 2: secret=1000" $TEST_DIR/NODE1.TXT; then
-        echo "Wrong or missing secrets for '$1' '$2' #3: "
-        diff -u /dev/null $TEST_DIR/NODE1.TXT
-        exit 1
-    fi
+    check_player_secrets "$test_descr" \
+        "Player 1: secret=2000" "Player 2: secret=1000"
 }
 
 run_player_tests_non_bg() {
     # Force player at dial.
-    start_node1 $1
-    start_node2 $2 -player1
+    start_node1 "bld\\sersetup" $1
+    start_node2 "bld\\sersetup" $2 -player1
     wait_dosboxes
 
-    if ! diff -u $TEST_DIR/NODE1.TXT $TEST_DIR/NODE2.TXT ||
-       ! grep -q "Player 1: secret=2000" $TEST_DIR/NODE1.TXT ||
-       ! grep -q "Player 2: secret=1000" $TEST_DIR/NODE1.TXT; then
-        echo "Wrong or missing secrets for '$1' '$2' #4: "
-        diff -u /dev/null $TEST_DIR/NODE1.TXT
-        exit 1
-    fi
+    check_player_secrets "$test_descr" \
+        "Player 1: secret=2000" "Player 2: secret=1000"
 }
 
 run_player_tests "-answer" "-dial localhost:$TEST_PORT1"

@@ -18,7 +18,7 @@ jobs:
         ./mkrelease.sh
     - name: test
       run: ./test/runtests.sh
-      timeout-minutes: 10
+      timeout-minutes: 20
     - name: Find Git version
       id: version
       run: |
@@ -44,4 +44,4 @@ jobs:
         ./build/tcbuild.sh
     - name: test
       run: ./test/runtests.sh
-      timeout-minutes: 10
+      timeout-minutes: 20

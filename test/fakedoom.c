@@ -41,6 +41,56 @@ FILE *log;
 int net_secret = 1337;
 doomcom_t far *doomcom = NULL;
 
+static void ReadResponseFile(void)
+{
+    static char responsebuf[256];
+    static char *response_args[32];
+    char *p, *r;
+    FILE *fs;
+    int i, nbytes;
+
+    for (i = 1; i < myargc; i++)
+    {
+        if (myargv[i][0] == '@')
+        {
+            break;
+        }
+    }
+    if (i >= myargc)
+    {
+        return;
+    }
+
+    memcpy(response_args, myargv, sizeof(char *) * myargc);
+
+    fs = fopen(myargv[i] + 1, "rb");
+    assert(fs != NULL);
+    nbytes = fread(responsebuf, 1, sizeof(responsebuf), fs);
+    responsebuf[nbytes] = '\0';
+    fclose(fs);
+
+    p = responsebuf;
+    for (;;)
+    {
+        r = strchr(p, '\n');
+        if (r == NULL)
+        {
+            break;
+        }
+
+        *r = '\0';
+        if (*(r - 1) == '\r')
+        {
+            *(r - 1) = '\0';
+        }
+        response_args[myargc] = p;
+        ++myargc;
+        p = r + 1;
+    }
+
+    myargv = response_args;
+}
+
 static char **CheckParm(char *name, int nargs)
 {
     int i;
@@ -138,10 +188,11 @@ int main(int argc, char *argv[])
 {
     clock_t start;
     char **arg;
-    char *filename = NULL;
 
     myargc = argc;
     myargv = argv;
+
+    ReadResponseFile();
 
     if (argc < 2)
     {
@@ -150,9 +201,6 @@ int main(int argc, char *argv[])
                argv[0]);
         exit(1);
     }
-
-    StringFlag("-out", &filename, "filename", "Output log file");
-    IntFlag("-secret", &net_secret, "n", "Secret number for network test");
 
     arg = CheckParm("-out", 1);
     if (arg == NULL)

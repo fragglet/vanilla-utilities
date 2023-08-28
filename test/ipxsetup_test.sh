@@ -49,6 +49,31 @@ END
 	grep -q "Player 5: secret=1000" $TEST_DIR/SERVER.TXT
 }
 
+test_orig_compatibility() {
+	rm -f $TEST_DIR/*.TXT
+
+	start_dosbox <<END
+	  config -set ipx true
+	  ipxnet startserver $TEST_PORT
+	  bld\\ipxsetup test\\fakedoom -out t:SERVER.TXT -secret 1000
+END
+
+	sleep 1
+
+	start_dosbox <<END
+	  config -set ipx true
+	  ipxnet connect localhost $TEST_PORT
+	  $1 test\\fakedoom -out t:CLIENT1.TXT -secret 1001
+END
+
+	wait_dosboxes
+	check_outputs_match 1
+
+	# We check the -dup and -player parameters work correctly.
+	grep -q "secret=1000" $TEST_DIR/SERVER.TXT
+	grep -q "secret=1001" $TEST_DIR/SERVER.TXT
+}
+
 # Check that our IPXSETUP is compatible with xttl's modified IPXSETUP.
 # To check this we spin up a four player netgame where two players are
 # of each executable.
@@ -85,7 +110,7 @@ END
 	  cd 3
 	  c:\\test\\exes\\ipxttl \
 	    -out t:\\CLIENT2.TXT -secret 1002 \
-	    foobar -exec c:\\test\\fakedoom -extratic -nodes 4 -dup 3 -player 2
+	    -exec c:\\test\\fakedoom.exe -extratic -nodes 4 -dup 3 -player 2
 END
 
 	start_dosbox <<END
@@ -96,7 +121,7 @@ END
 	  cd 4
 	  c:\\test\\exes\\ipxttl \
 	    -out t:\\CLIENT3.TXT -secret 1003 \
-	    foobar -exec c:\\test\\fakedoom -extratic -nodes 4 -player 1 -dup 3
+	    -exec c:\\test\\fakedoom.exe -extratic -nodes 4 -player 1 -dup 3
 END
 
 	wait_dosboxes
@@ -111,4 +136,7 @@ END
 }
 
 test_8players
+test_orig_compatibility "test\\exes\\ipx1"
+test_orig_compatibility "test\\exes\\ipx2"
+
 test_xttl_compatibility

@@ -78,6 +78,35 @@ run_player_tests_non_bg() {
         "Player 1: secret=2000" "Player 2: secret=1000"
 }
 
+# Checks for compatibility with original versions of SERSETUP.
+run_compatibility_tests() {
+    test_descr="run_compatibility_tests '$1'"
+
+    # Our sersetup answers call.
+    start_node1 "bld\\sersetup" -answer -player2
+    start_node2 "$1" -dial localhost:$TEST_PORT1
+    wait_dosboxes
+
+    check_player_secrets "$test_descr, our sersetup answers" \
+        "Player 1: secret=2000" "Player 2: secret=1000"
+
+    # Our sersetup dials call.
+    start_node1 "$1" -answer
+    start_node2 "bld\\sersetup" -dial localhost:$TEST_PORT1 -player1
+    wait_dosboxes
+
+    check_player_secrets "$test_descr, our sersetup dials" \
+        "Player 1: secret=2000" "Player 2: secret=1000"
+
+    # Null modem game
+    start_node1 "$1" -com2
+    start_node2 "bld\\sersetup" -com2 -player2
+    wait_dosboxes
+
+    check_player_secrets "$test_descr, null modem game" \
+        "Player 1: secret=1000" "Player 2: secret=2000"
+}
+
 run_player_tests "-answer" "-dial localhost:$TEST_PORT1"
 run_player_tests_non_bg "-answer" "-dial localhost:$TEST_PORT1"
 
@@ -90,4 +119,7 @@ run_player_tests_non_bg "-com2" "-com2"
 # Run tests again forcing 8250 UART (uses different code paths).
 run_player_tests "-8250 -com2" "-8250 -com2"
 run_player_tests_non_bg "-8250 -com2" "-8250 -com2"
+
+run_compatibility_tests "test\\exes\\ser1"
+run_compatibility_tests "test\\exes\\ser2"
 

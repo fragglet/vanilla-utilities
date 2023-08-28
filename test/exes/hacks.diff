@@ -1,0 +1,110 @@
+diff --color -ur orig/ser1/doomnet.c hacks/ser1/doomnet.c
+--- orig/ser1/doomnet.c	1994-02-13 14:49:28.000000000 -0500
++++ hacks/ser1/doomnet.c	2023-08-28 14:09:44.716117918 -0400
+@@ -101,7 +101,7 @@
+ 	newargs[_argc+2] = NULL;
+ 
+ //	spawnv  (P_WAIT, "m:\\newdoom\\doom", newargs);
+-	spawnv  (P_WAIT, "doom", newargs);
++	spawnv(P_WAIT, "test\\fakedoom", newargs);
+ 
+ 	printf ("Returned from DOOM\n");
+ 
+diff --color -ur orig/ser1/sersetup.c hacks/ser1/sersetup.c
+--- orig/ser1/sersetup.c	1994-02-13 16:00:24.000000000 -0500
++++ hacks/ser1/sersetup.c	2023-08-27 23:53:25.460068339 -0400
+@@ -393,7 +393,7 @@
+ 	int		mcr;
+ 	FILE	*f;
+ 
+-	f = fopen ("modem.cfg","r");
++	f = fopen ("test\\modem.cfg","r");
+ 	if (!f)
+ 		Error ("Couldn't read MODEM.CFG");
+ 	ReadLine (f, startup);
+@@ -427,9 +427,11 @@
+ 
+ 	ModemCommand(cmd);
+ 	ModemResponse ("CONNECT");
++	/*
+ 	if (strncmp (response+8,"9600",4) )
+ 		Error ("The connection MUST be made at 9600 baud, no error correction, no compression!\n"
+ 			   "Check your modem initialization string!");
++			   */
+ 	doomcom.consoleplayer = 1;
+ }
+ 
+diff --color -ur orig/ser2/doomnet.c hacks/ser2/doomnet.c
+--- orig/ser2/doomnet.c	1994-09-20 13:21:58.000000000 -0400
++++ hacks/ser2/doomnet.c	2023-08-28 14:09:46.852110238 -0400
+@@ -6,8 +6,8 @@
+ #include <dos.h>
+ #include "doomnet.h"
+ 
+-//#include "serstr.h"
+-#include "ser_frch.h"		// FRENCH VERSION
++#include "serstr.h"
++//#include "ser_frch.h"		// FRENCH VERSION
+ 
+ #define DOOM2
+ 
+@@ -109,10 +109,7 @@
+ 	newargs[myargc+2] = NULL;
+ 
+ //	spawnv  (P_WAIT, "m:\\newdoom\\doom", newargs);
+-	if (!access("doom2.exe",0))
+-		spawnv  (P_WAIT, "doom2", newargs);
+-	else
+-		spawnv  (P_WAIT, "doom", newargs);
++	spawnv(P_WAIT, "test\\fakedoom", newargs);
+ 
+ 	#ifdef DOOM2
+ 	printf (STR_RETURNED"\n");
+diff --color -ur orig/ser2/port.c hacks/ser2/port.c
+--- orig/ser2/port.c	1994-09-21 08:21:38.000000000 -0400
++++ hacks/ser2/port.c	2023-08-27 23:21:14.544953655 -0400
+@@ -2,8 +2,8 @@
+ 
+ #include "doomnet.h"
+ #include "sersetup.h"
+-//#include "serstr.h"
+-#include "ser_frch.h"		// FRENCH VERSION
++#include "serstr.h"
++//#include "ser_frch.h"		// FRENCH VERSION
+ 
+ 
+ void jump_start( void );
+diff --color -ur orig/ser2/sersetup.c hacks/ser2/sersetup.c
+--- orig/ser2/sersetup.c	1994-09-20 13:20:28.000000000 -0400
++++ hacks/ser2/sersetup.c	2023-08-27 23:53:32.820032503 -0400
+@@ -1,8 +1,8 @@
+ // sersetup.c
+ #define DOOM2
+ #include "sersetup.h"
+-//#include "serstr.h"
+-#include "ser_frch.h"		// FRENCH VERSION
++#include "serstr.h"
++//#include "ser_frch.h"		// FRENCH VERSION
+ #include "DoomNet.h"
+ 
+ extern	que_t		inque, outque;
+@@ -466,7 +466,7 @@
+ 	FILE	*f;
+ 	unsigned	baud;
+ 
+-	f = fopen ("modem.cfg","r");
++	f = fopen ("test\\modem.cfg","r");
+ 	if (!f)
+ 		Error (STR_CANTREAD);
+ 	ReadLine (f, startup);
+diff --color -ur orig/ser2/serstr.h hacks/ser2/serstr.h
+--- orig/ser2/serstr.h	1994-09-21 08:21:58.000000000 -0400
++++ hacks/ser2/serstr.h	2023-08-27 23:20:33.021237047 -0400
+@@ -19,3 +19,7 @@
+ #define STR_COMM		"Communicating with interrupt vector 0x%x"
+ #define STR_RETURNED	"Returned from DOOM II"
+ #define STR_PORTSET		"Setting port to %lu baud"
++#define STR_PORTLOOK "Looking for UART at port"
++#define STR_CLEARPEND   "Resetting pending interrupts.\n"
++#define STR_UART8250	"UART = 8250"
++#define STR_UART16550	"UART = 16550"

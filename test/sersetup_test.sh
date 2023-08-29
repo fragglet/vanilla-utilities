@@ -49,14 +49,15 @@ run_player_tests() {
     start_node2 "bld\\sersetup" $2
     wait_dosboxes
 
-    check_player_secrets "$test_descr" "secret=1000" "secret=2000"
+    check_player_secrets "$test_descr, simple dial and answer" \
+        "secret=1000" "secret=2000"
 
     # Force player at answer.
     start_node1 "bld\\sersetup" $1 -player2
     start_node2 "bld\\sersetup" $2
     wait_dosboxes
 
-    check_player_secrets "$test_descr" \
+    check_player_secrets "$test_descr, force player at answer" \
         "Player 1: secret=2000" "Player 2: secret=1000"
 
     # Force player at both works as long as they're consistent.
@@ -64,17 +65,19 @@ run_player_tests() {
     start_node2 "bld\\sersetup" $2 -player1
     wait_dosboxes
 
-    check_player_secrets "$test_descr" \
+    check_player_secrets "$test_descr, force player at both" \
         "Player 1: secret=2000" "Player 2: secret=1000"
 }
 
 run_player_tests_non_bg() {
+    test_descr="run_player_tests_non_bg '$1' '$2'"
+
     # Force player at dial.
     start_node1 "bld\\sersetup" $1
     start_node2 "bld\\sersetup" $2 -player1
     wait_dosboxes
 
-    check_player_secrets "$test_descr" \
+    check_player_secrets "$test_descr, force player at dial" \
         "Player 1: secret=2000" "Player 2: secret=1000"
 }
 

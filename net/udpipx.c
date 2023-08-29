@@ -42,7 +42,7 @@ static int in_game = 0;
 static int run_server_flag = 0;
 static struct sockaddr_in server_addr;
 static unsigned int udpport = DEFAULT_UDP_PORT;
-static unsigned int ipxport = DOOM_DEFAULT_PORT;
+static unsigned int ipxsocket = DEFAULT_IPX_SOCKET;
 static SOCKET sock;
 
 long ipx_localtime;                 // for time stamp in packets
@@ -67,7 +67,7 @@ void IPXRegisterFlags(void)
     BoolFlag("-server", &run_server_flag,
              "(or -s) run server for other clients to connect to");
     BoolFlag("-s", &run_server_flag, NULL);
-    UnsignedIntFlag("-ipxport", &ipxport, "port", NULL);
+    UnsignedIntFlag("-ipxsocket", &ipxsocket, "socket", NULL);
     UnsignedIntFlag("-udpport", &udpport, "port",
                     "UDP port that server should use, default 213");
 }
@@ -253,8 +253,8 @@ void InitNetwork(void)
     Connect();
 
     memcpy(&packet.ipx.Src, &local_addr, sizeof(ipx_addr_t));
-    packet.ipx.SrcSocket = htons(ipxport);
-    packet.ipx.DestSocket = htons(ipxport);
+    packet.ipx.SrcSocket = htons(ipxsocket);
+    packet.ipx.DestSocket = htons(ipxsocket);
 }
 
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
@@ -314,7 +314,7 @@ packet_t *IPXGetPacket(void)
         // Check destination IPX socket#, since we only care about our
         // specific port. If there are other games in progress on the
         // server, we definitely want to ignore them.
-        if (ntohs(packet.ipx.DestSocket) == ipxport)
+        if (ntohs(packet.ipx.DestSocket) == ipxsocket)
         {
             return &packet;
         }

@@ -52,7 +52,7 @@ static ECB ecbs[NUMPACKETS];
 
 const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
-static unsigned int port_flag = DOOM_DEFAULT_PORT;
+static unsigned int socket_flag = DEFAULT_IPX_SOCKET;
 static int socketid;
 
 long ipx_localtime;                 // for time stamp in packets
@@ -107,8 +107,9 @@ void IPXRegisterFlags(void)
     // ipxsetup.c is reused between ipxsetup and udpsetup.
     SetHelpText("Doom IPX network device driver",
                 "%s -nodes 4 doom.exe -warp 2 2 -deathmatch -skill 4");
-    UnsignedIntFlag("-port", &port_flag, "port",
-                    "use alternate IPX port number");
+    UnsignedIntFlag("-port", &socket_flag, "socket", NULL);
+    UnsignedIntFlag("-socket", &socket_flag, "socket",
+                    "(or -port) use alternate IPX socket number");
 }
 
 static void InitIPX(void)
@@ -135,13 +136,13 @@ void InitNetwork(void)
     InitIPX();
 
     // allocate a socket for sending and receiving
-    socketid = OpenSocket(ShortSwap(port_flag));
-    if (port_flag != DOOM_DEFAULT_PORT)
+    socketid = OpenSocket(ShortSwap(socket_flag));
+    if (socket_flag != DEFAULT_IPX_SOCKET)
     {
-        char portnum[10];
-        sprintf(portnum, "0x%x", port_flag);
-        SetLogDistinguisher(portnum);
-        LogMessage("Using alternate port %u for network", port_flag);
+        char socketnum[10];
+        sprintf(socketnum, "0x%x", socket_flag);
+        SetLogDistinguisher(socketnum);
+        LogMessage("Using alternate IPX socket %u for network", socket_flag);
     }
 
     // set up several receiving ECBs
@@ -165,7 +166,7 @@ void InitNetwork(void)
     ecbs[0].FragmentCount = 2;
     ecbs[0].fAddress = &packets[0];
     memcpy(&packets[0].ipx.Dest, &localaddr, sizeof(ipx_addr_t));
-    packets[0].ipx.DestSocket = ShortSwap(port_flag);
+    packets[0].ipx.DestSocket = ShortSwap(socket_flag);
 }
 
 void ShutdownNetwork(void)

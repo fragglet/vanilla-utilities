@@ -552,7 +552,7 @@ char **ParseCommandLine(int argc, char **argv)
     for (i = 1; i < argc; i++)
     {
         if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help")
-         || !strcasecmp(argv[i], "--help"))
+         || !strcasecmp(argv[i], "--help") || !strcmp(argv[i], "/?"))
         {
             PrintProgramUsage(stdout);
             exit(0);

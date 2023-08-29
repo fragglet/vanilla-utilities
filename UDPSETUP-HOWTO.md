@@ -51,7 +51,7 @@ first.
 data from other players is routed through it. If playing over the
 Internet this may mean you need to set up a port forward so that the
 other players can connect to the server. How to do this depends on your
-particular brand of router and it out of scope for this document; it's
+particular brand of router and is out of scope for this document; it's
 suggested that you search the web for information.
 
 ### Starting the server

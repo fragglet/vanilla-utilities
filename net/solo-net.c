@@ -191,7 +191,10 @@ int main(int argc, char *argv[])
     char **args;
     int nodes = 1;
 
-    IntFlag("-nodes", &nodes, "n", "number of players in game");
+    SetHelpText("Doom single player network driver",
+                "%s doom2.exe");
+    IntFlag("-nodes", &nodes, "n",
+            "total number of players (other players are simulated)");
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)

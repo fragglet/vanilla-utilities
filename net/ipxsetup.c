@@ -341,10 +341,10 @@ void main(int argc, char *argv[])
     doomcom.skill = 2;
     doomcom.deathmatch = 0;
 
-    IPXRegisterFlags();
     IntFlag("-nodes", &numnetnodes, "n",
-            "number of nodes (players) in game, default 2");
+            "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
+    IPXRegisterFlags();
     NetRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)

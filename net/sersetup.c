@@ -491,13 +491,14 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
-    BoolFlag("-answer", &answer, "listen for incoming call");
-    BoolFlag("-bg", &background_flag, "answer calls in the background");
     StringFlag("-dial", &dial_no, "phone#",
                "dial the given phone number");
-    StringFlag("-modemcfg", &modem_config_file, "filename",
-               "specify config file for modem");
+    BoolFlag("-answer", &answer, "listen for incoming call");
+    BoolFlag("-bg", &background_flag,
+             "launch game and answer call in the background");
     RegisterArbitrationFlags();
+    StringFlag("-modemcfg", &modem_config_file, "f.cfg",
+               "specify config file for modem");
     SerialRegisterFlags();
     NetRegisterFlags();
 

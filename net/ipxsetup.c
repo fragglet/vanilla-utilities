@@ -267,7 +267,7 @@ void LookForNodes(void)
             packet_t *packet = IPXGetPacket();
             if (packet == NULL)
             {
-		break;
+                break;
             }
 
             ProcessSetupPacket(packet);

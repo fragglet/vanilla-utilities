@@ -49,9 +49,12 @@
 #define QUEUE_LEN  8
 
 // Escape characters are reused from SERSETUP; we use a common protocol.
-#define FRAMECHAR             0x70
-#define FRAMECHAR_END_PACKET  0x00 /* End of packet - same as SERSETUP. */
-#define FRAMECHAR_HANDOFF     0x04 /* ASCII end of transmission */
+#define FRAMECHAR              0x70
+#define FRAMECHAR_END_PACKET   0x00 /* End of packet - same as SERSETUP. */
+
+// 0x10 ... 0x1f indicate a handoff to a peer, with the byte indicating which
+// peer. 0x10 is player 1, 0x11 is player 2, etc.
+#define FRAMECHAR_HANDOFF_BASE 0x10
 
 struct packet_header
 {
@@ -74,6 +77,11 @@ struct queue
 static struct queue inque, outque;
 static unsigned int tx_offset;
 static doomcom_t doomcom;
+
+// The handoff partner is the peer we hand off to once we have completed
+// sending packets. When we receive a handoff directed at us, we take over
+// control of the channel.
+static int handoff_partner;
 
 // During gameplay we flip between STATE_TRANSMIT and STATE_WAIT as we pass
 // the handoff token between nodes.
@@ -162,20 +170,21 @@ int SerialByteReceived(uint8_t c)
     if (in_escape)
     {
         in_escape = 0;
-        switch (c)
+        if (c == FRAMECHAR)
         {
-            case FRAMECHAR:
-                AddInByte(pkt, FRAMECHAR);
-                break;
-
-            case FRAMECHAR_END_PACKET:
-                success = PacketReceived();
-                break;
-
-            case FRAMECHAR_HANDOFF:
-                success = PacketReceived();
-                ReceivedHandoff();
-                break;
+            AddInByte(pkt, FRAMECHAR);
+        }
+        else if (c == FRAMECHAR_END_PACKET
+              || (c >= FRAMECHAR_HANDOFF_BASE
+               && c < FRAMECHAR_HANDOFF_BASE + MAXNETNODES))
+        {
+            success = PacketReceived();
+        }
+        // We take over the channel when we receive a handoff specifically
+        // directed to us.
+        if (c == FRAMECHAR_HANDOFF_BASE + doomcom.consoleplayer)
+        {
+            ReceivedHandoff();
         }
     }
     else if (c == FRAMECHAR)
@@ -224,7 +233,7 @@ unsigned int SerialMoreTXData(void)
         if (outque.head == outque.tail)
         {
             serial_tx_buffer[0] = FRAMECHAR;
-            serial_tx_buffer[1] = FRAMECHAR_HANDOFF;
+            serial_tx_buffer[1] = FRAMECHAR_HANDOFF_BASE + handoff_partner;
             if (state != STATE_ARBITRATE)
             {
                 state = STATE_WAIT;
@@ -397,6 +406,9 @@ void main(int argc, char *argv[])
     doomcom.numnodes = 2;
     doomcom.numplayers = 2;
     doomcom.drone = 0;
+
+    // TODO: This will become more elaborate once we support >2 players.
+    handoff_partner = 1 - doomcom.consoleplayer;
 
     // establish communications
     InitPort(115200);

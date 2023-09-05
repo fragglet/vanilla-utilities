@@ -59,6 +59,7 @@
 struct packet_header
 {
     uint8_t checksum;
+    uint8_t dest, src;
 };
 
 struct packet
@@ -77,6 +78,13 @@ struct queue
 static struct queue inque, outque;
 static unsigned int tx_offset;
 static doomcom_t doomcom;
+
+// We do addressing based on player number, but the doomcom interface has
+// its own addressing where node 0 is always the local console. These arrays
+// do the mapping between the two; node_to_player maps doomcom.remotenode
+// value to player number, and player_to_node does the opposite.
+static int node_to_player[MAXNETNODES];
+static int player_to_node[MAXNETNODES];
 
 // The handoff partner is the peer we hand off to once we have completed
 // sending packets. When we receive a handoff directed at us, we take over
@@ -280,7 +288,8 @@ static void SendPacket(void)
 
     pkt = &outque.packets[outque.head];
 
-    if (doomcom.remotenode != 1 || doomcom.datalength > sizeof(pkt->data)
+    if (doomcom.remotenode == 0 || doomcom.remotenode >= doomcom.numnodes
+     || doomcom.datalength > sizeof(pkt->data) - sizeof(struct packet_header)
      || next_head == outque.tail)
     {
         return;
@@ -290,6 +299,8 @@ static void SendPacket(void)
     memcpy(pkt->data + sizeof(struct packet_header),
            doomcom.data, doomcom.datalength);
     pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
+    hdr->dest = node_to_player[doomcom.remotenode];
+    hdr->src = node_to_player[0];
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
 
@@ -298,6 +309,7 @@ static void SendPacket(void)
 
 static void GetPacket(void)
 {
+    struct packet_header *hdr;
     struct packet *pkt;
 
     if (inque.head == inque.tail)
@@ -314,10 +326,15 @@ static void GetPacket(void)
         return;
     }
 
-    memcpy(doomcom.data, pkt->data + sizeof(struct packet_header),
-           pkt->data_len - sizeof(struct packet_header));
-    doomcom.datalength = pkt->data_len - sizeof(struct packet_header);
-    doomcom.remotenode = 1;
+    hdr = (struct packet_header *) pkt->data;
+    if (hdr->src < MAXNETNODES)
+    {
+        memcpy(doomcom.data, pkt->data + sizeof(struct packet_header),
+               pkt->data_len - sizeof(struct packet_header));
+        doomcom.datalength = pkt->data_len - sizeof(struct packet_header);
+        doomcom.remotenode = player_to_node[hdr->src];
+    }
+
     inque.tail = (inque.tail + 1) & (QUEUE_LEN - 1);
     ResumeReceive();
 }
@@ -407,9 +424,6 @@ void main(int argc, char *argv[])
     doomcom.numplayers = 2;
     doomcom.drone = 0;
 
-    // TODO: This will become more elaborate once we support >2 players.
-    handoff_partner = 1 - doomcom.consoleplayer;
-
     // establish communications
     InitPort(115200);
     atexit(ShutdownPort);
@@ -417,6 +431,13 @@ void main(int argc, char *argv[])
     ArbitratePlayers(&doomcom, NetCallback);
 
     FlushArbitrationPackets();
+
+    // TODO: This will become more elaborate once we support >2 players.
+    handoff_partner = 1 - doomcom.consoleplayer;
+    node_to_player[0] = doomcom.consoleplayer;
+    node_to_player[1] = 1 - doomcom.consoleplayer;
+    player_to_node[doomcom.consoleplayer] = 0;
+    player_to_node[1 - doomcom.consoleplayer] = 1;
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);

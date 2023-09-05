@@ -53,6 +53,11 @@
 #define FRAMECHAR_END_PACKET  0x00 /* End of packet - same as SERSETUP. */
 #define FRAMECHAR_HANDOFF     0x04 /* ASCII end of transmission */
 
+struct packet_header
+{
+    uint8_t checksum;
+};
+
 struct packet
 {
     uint8_t data[512];
@@ -75,29 +80,43 @@ static doomcom_t doomcom;
 static enum { STATE_ARBITRATE, STATE_TRANSMIT, STATE_WAIT } state;
 static clock_t last_handoff_time = 0;
 
+// djb2 hash function
+static uint8_t HashData(uint8_t *data, size_t data_len)
+{
+    uint16_t result = 5381;
+    int i;
+
+    for (i = 0; i < data_len; i++)
+    {
+        result = (result << 5) + result + data[i];
+    }
+
+    return (uint8_t) result;
+}
+
 static int PacketReceived(void)
 {
-    struct packet *pkt;
+    struct packet *pkt = &inque.packets[inque.head];
+    struct packet_header *hdr = (struct packet_header *) pkt->data;
     unsigned int next_head = (inque.head + 1) & (QUEUE_LEN - 1);
-    int success;
+    int queue_full = 0;
 
-    if (inque.packets[inque.head].data_len == 0)
+    if (pkt->data_len > sizeof(struct packet_header)
+     && HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum)
     {
-        return 1;
+        // If the queue is full, we just keep overwriting the last packet.
+        queue_full = next_head == inque.tail;
+        if (!queue_full)
+        {
+            pkt->valid = 1;
+            inque.head = next_head;
+            pkt = &inque.packets[next_head];
+        }
     }
 
-    // If the queue is full we just keep overwriting the last packet.
-    success = next_head != inque.tail;
-    if (success)
-    {
-        inque.packets[inque.head].valid = 1;
-        inque.head = next_head;
-    }
-
-    pkt = &inque.packets[inque.head];
     pkt->valid = 0;
     pkt->data_len = 0;
-    return success;
+    return !queue_full;
 }
 
 static void AddInByte(struct packet *pkt, uint8_t c)
@@ -247,6 +266,7 @@ unsigned int SerialMoreTXData(void)
 static void SendPacket(void)
 {
     struct packet *pkt;
+    struct packet_header *hdr;
     unsigned int next_head = (outque.head + 1) & (QUEUE_LEN - 1);
 
     pkt = &outque.packets[outque.head];
@@ -257,8 +277,11 @@ static void SendPacket(void)
         return;
     }
 
-    memcpy(pkt->data, doomcom.data, doomcom.datalength);
-    pkt->data_len = doomcom.datalength;
+    hdr = (struct packet_header *) pkt->data;
+    memcpy(pkt->data + sizeof(struct packet_header),
+           doomcom.data, doomcom.datalength);
+    pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
+    hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
 
     JumpStart();
@@ -282,8 +305,9 @@ static void GetPacket(void)
         return;
     }
 
-    memcpy(doomcom.data, pkt->data, pkt->data_len);
-    doomcom.datalength = pkt->data_len;
+    memcpy(doomcom.data, pkt->data + sizeof(struct packet_header),
+           pkt->data_len - sizeof(struct packet_header));
+    doomcom.datalength = pkt->data_len - sizeof(struct packet_header);
     doomcom.remotenode = 1;
     inque.tail = (inque.tail + 1) & (QUEUE_LEN - 1);
     ResumeReceive();

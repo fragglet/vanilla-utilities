@@ -117,8 +117,10 @@ static int PacketReceived(void)
     unsigned int next_head = (inque.head + 1) & (QUEUE_LEN - 1);
     int queue_full = 0;
 
+    // We only deliver packets addressed to us.
     if (pkt->data_len > sizeof(struct packet_header)
-     && HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum)
+     && HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum
+     && (state == STATE_ARBITRATE || hdr->dest == doomcom.consoleplayer))
     {
         // If the queue is full, we just keep overwriting the last packet.
         queue_full = next_head == inque.tail;

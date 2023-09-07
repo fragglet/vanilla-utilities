@@ -574,6 +574,13 @@ void LookForNodes(void)
         Error("-player value must be in the range 1..%d", nodes_flag);
     }
 
+    // TODO: Remove
+    if (nodes_flag > 2)
+    {
+        LogMessage("Playing with more than two players has not been "
+                   "extensively tested yet. Let me know if it works!");
+    }
+
     // build local setup info
     memcpy(node_data[0].setup_signature, SETUP_SIGNATURE,
            sizeof(SETUP_SIGNATURE));
@@ -636,8 +643,8 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom Serial Infrared network device driver",
                 "%s -com2 doom.exe -deathmatch -nomonsters");
-    //IntFlag("-nodes", &nodes_flag, "n",
-    //        "number of players in game, default 2");
+    IntFlag("-nodes", &nodes_flag, "n",
+            "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
     SerialRegisterFlags();
     NetRegisterFlags();

@@ -101,10 +101,9 @@ static unsigned int tx_offset;
 static doomcom_t doomcom;
 
 // We do addressing based on player number, but the doomcom interface has
-// its own addressing where node 0 is always the local console. These arrays
-// do the mapping between the two; node_to_player maps doomcom.remotenode
-// value to player number, and player_to_node does the opposite.
-static int node_to_player[MAXNETNODES];
+// its own addressing where node 0 is always the local console.
+// node_data[n].player maps doomcom.remotenode value to player number, and
+// player_to_node does the opposite.
 static int player_to_node[MAXNETNODES];
 
 // The handoff partner is the peer we hand off to once we have completed
@@ -324,8 +323,8 @@ static void SendPacket(void)
     memcpy(pkt->data + sizeof(struct packet_header),
            doomcom.data, doomcom.datalength);
     pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
-    hdr->dest = node_to_player[doomcom.remotenode];
-    hdr->src = node_to_player[0];
+    hdr->dest = node_data[doomcom.remotenode].player;
+    hdr->src = node_data[0].player;
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
 
@@ -334,8 +333,8 @@ static void SendPacket(void)
 
 static void GetPacket(void)
 {
-    struct packet_header *hdr;
-    struct packet *pkt;
+    struct packet *pkt = &inque.packets[inque.tail];
+    struct packet_header *hdr = (struct packet_header *) pkt->data;
 
     if (inque.head == inque.tail)
     {
@@ -343,7 +342,6 @@ static void GetPacket(void)
         return;
     }
 
-    pkt = &inque.packets[inque.tail];
     if (!pkt->valid)
     {
         // Haven't finished reading yet.
@@ -351,13 +349,21 @@ static void GetPacket(void)
         return;
     }
 
-    hdr = (struct packet_header *) pkt->data;
-    if (hdr->src < MAXNETNODES)
+    memcpy(doomcom.data, pkt->data + sizeof(struct packet_header),
+           pkt->data_len - sizeof(struct packet_header));
+    doomcom.datalength = pkt->data_len - sizeof(struct packet_header);
+
+    if (state == STATE_ARBITRATE)
     {
-        memcpy(doomcom.data, pkt->data + sizeof(struct packet_header),
-               pkt->data_len - sizeof(struct packet_header));
-        doomcom.datalength = pkt->data_len - sizeof(struct packet_header);
+        doomcom.remotenode = 1;
+    }
+    else if (hdr->src < doomcom.numplayers)
+    {
         doomcom.remotenode = player_to_node[hdr->src];
+    }
+    else
+    {
+        doomcom.remotenode = -1;
     }
 
     inque.tail = (inque.tail + 1) & (QUEUE_LEN - 1);
@@ -442,7 +448,7 @@ static void ProcessSetupPacket(void)
         LogMessage("Found a node with station ID %08lx", setup->station_id);
 
         assert(setup->wanted >= 1 && setup->dup >= 1);
-        assert(setup->found <= setup->wanted);
+        assert(setup->found <= setup->wanted && setup->wanted < MAXNETNODES);
         assert(setup->player >= -1 && setup->player < setup->wanted);
 
         if (node_data[0].player != -1 && node_data[0].player == setup->player)
@@ -648,10 +654,6 @@ void main(int argc, char *argv[])
 
     // TODO: This will become more elaborate once we support >2 players.
     handoff_partner = 1 - doomcom.consoleplayer;
-    node_to_player[0] = doomcom.consoleplayer;
-    node_to_player[1] = 1 - doomcom.consoleplayer;
-    player_to_node[doomcom.consoleplayer] = 0;
-    player_to_node[1 - doomcom.consoleplayer] = 1;
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);

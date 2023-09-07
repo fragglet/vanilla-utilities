@@ -93,7 +93,7 @@ static const uint8_t SETUP_SIGNATURE[16] = {
 
 static struct setup_data node_data[MAXNETNODES];
 
-static int numnetnodes = 2;
+static int nodes_flag = 2;
 static int force_player = -1;
 
 static struct queue inque, outque;
@@ -441,10 +441,18 @@ static void ProcessSetupPacket(void)
 
         LogMessage("Found a node with station ID %08lx", setup->station_id);
 
+        assert(setup->found <= setup->wanted);
+        assert(setup->player >= -1 && setup->player < setup->wanted);
         if (node_data[0].player != -1 && node_data[0].player == setup->player)
         {
             Error("Other node is also using -player %d. One node must "
                   "be changed to avoid clash.", force_player);
+        }
+        if (setup->wanted > node_data[0].wanted)
+        {
+            LogMessage("Other node is using -nodes %d. Adjusting to match.",
+                       setup->wanted);
+            node_data[0].wanted = setup->wanted;
         }
         if (setup->dup > doomnet_dup)
         {
@@ -524,9 +532,9 @@ void LookForNodes(void)
     clock_t now, last_time = 0;
 
     if (force_player != -1
-     && (force_player < 1 || force_player > numnetnodes))
+     && (force_player < 1 || force_player > nodes_flag))
     {
-        Error("-player value must be in the range 1..%d", numnetnodes);
+        Error("-player value must be in the range 1..%d", nodes_flag);
     }
 
     // build local setup info
@@ -535,11 +543,11 @@ void LookForNodes(void)
     node_data[0].station_id = GetEntropy();
     node_data[0].player = force_player == -1 ? -1 : force_player - 1;
     node_data[0].found = 1;
-    node_data[0].wanted = numnetnodes;
+    node_data[0].wanted = nodes_flag;
     node_data[0].dup = doomnet_dup;
     doomcom.numnodes = 1;
 
-    LogMessage("Attempting to find %d players", numnetnodes);
+    LogMessage("Attempting to find %d players", nodes_flag);
     LogMessage("Randomly generated station ID is %08lx",
                node_data[0].station_id);
 
@@ -607,7 +615,7 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom Serial Infrared network device driver",
                 "%s -com2 doom.exe -deathmatch -nomonsters");
-    //IntFlag("-nodes", &numnetnodes, "n",
+    //IntFlag("-nodes", &nodes_flag, "n",
     //        "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
     SerialRegisterFlags();

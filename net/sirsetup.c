@@ -534,6 +534,30 @@ static int AllNodesReady(void)
     return 1;
 }
 
+// Before transitioning out of the STATE_ARBITRATE state, we block for a
+// maximum of one second to ensure the interrupt handler has finished
+// transmitting all packets still buffered for transmit. This is important
+// because we can otherwise end up with a corner-case deadlock where we're in
+// STATE_WAIT waiting for the other side, while it's waiting for our
+// last arbitration packet to launch the game.
+static void FlushArbitrationPackets(void)
+{
+    int end_time = clock() + CLOCKS_PER_SEC;
+
+    while (clock() < end_time && outque.head != outque.tail)
+    {
+        CheckAbort("Arbitration packet flush");
+    }
+}
+
+static void SendSetupPacket(void)
+{
+    node_data[0].found = doomcom.numnodes;
+    memcpy(doomcom.data, &node_data[0], sizeof(struct setup_data));
+    doomcom.datalength = sizeof(struct setup_data);
+    SendPacket();
+}
+
 // Find all nodes for the game and work out player numbers among them
 void LookForNodes(void)
 {
@@ -583,13 +607,15 @@ void LookForNodes(void)
         now = clock();
         if (now - last_time >= CLOCKS_PER_SEC)
         {
-            node_data[0].found = doomcom.numnodes;
-            memcpy(doomcom.data, &node_data[0], sizeof(struct setup_data));
-            doomcom.datalength = sizeof(struct setup_data);
-            SendPacket();
+            SendSetupPacket();
             last_time = now;
         }
     }
+
+    // Send one last setup packet before we launch the game, and block
+    // for up to a second or until it really has been sent.
+    SendSetupPacket();
+    FlushArbitrationPackets();
 
     AssignPlayerNumbers();
 
@@ -599,25 +625,6 @@ void LookForNodes(void)
 
     LogMessage("Console is player %i of %i", doomcom.consoleplayer + 1,
                doomcom.numplayers);
-}
-
-// Before transitioning out of the STATE_ARBITRATE state, we block for a
-// maximum of one second to ensure the interrupt handler has finished
-// transmitting all packets still buffered for transmit. This is important
-// because we can otherwise end up with a corner-case deadlock where we're in
-// STATE_WAIT waiting for the other side, while it's waiting for our
-// arbitration packet to launch the game.
-static void FlushArbitrationPackets(void)
-{
-    int end_time = clock() + CLOCKS_PER_SEC;
-
-    state = STATE_ARBITRATE;
-
-    while (clock() < end_time && outque.head != outque.tail)
-    {
-        CheckAbort("Arbitration packet flush");
-    }
-
     state = doomcom.consoleplayer == 0 ? STATE_TRANSMIT : STATE_WAIT;
 }
 
@@ -654,7 +661,6 @@ void main(int argc, char *argv[])
     atexit(ShutdownPort);
 
     LookForNodes();
-    FlushArbitrationPackets();
 
     // TODO: This will become more elaborate once we support >2 players.
     handoff_partner = 1 - doomcom.consoleplayer;

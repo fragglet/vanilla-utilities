@@ -441,8 +441,10 @@ static void ProcessSetupPacket(void)
 
         LogMessage("Found a node with station ID %08lx", setup->station_id);
 
+        assert(setup->wanted >= 1 && setup->dup >= 1);
         assert(setup->found <= setup->wanted);
         assert(setup->player >= -1 && setup->player < setup->wanted);
+
         if (node_data[0].player != -1 && node_data[0].player == setup->player)
         {
             Error("Other node is also using -player %d. One node must "
@@ -458,7 +460,7 @@ static void ProcessSetupPacket(void)
         {
             LogMessage("Other node is using -dup %d. Adjusting to match.",
                        setup->dup);
-            doomnet_dup = setup->dup;
+            node_data[0].dup = setup->dup;
         }
     }
 
@@ -580,6 +582,8 @@ void LookForNodes(void)
 
     AssignPlayerNumbers();
 
+    doomnet_dup = node_data[0].dup;
+    node_data[0].dup = doomnet_dup;
     doomcom.consoleplayer = node_data[0].player;
     doomcom.numplayers = doomcom.numnodes;
 

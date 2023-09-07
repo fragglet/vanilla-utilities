@@ -539,6 +539,11 @@ void LookForNodes(void)
 {
     clock_t now, last_time = 0;
 
+    if (nodes_flag < 1 || nodes_flag > MAXNETNODES)
+    {
+        Error("-nodes value must be in the range 1..%d", MAXNETNODES);
+    }
+
     if (force_player != -1
      && (force_player < 1 || force_player > nodes_flag))
     {

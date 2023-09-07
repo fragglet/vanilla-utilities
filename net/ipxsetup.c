@@ -54,7 +54,7 @@ static void SendPacket(void)
                   doomcom.datalength);
 }
 
-static int PlayerForAddress(ipx_addr_t *addr)
+static int NodeForAddress(ipx_addr_t *addr)
 {
     int i;
 
@@ -88,7 +88,7 @@ static void GetPacket(void)
         return;               // setup broadcast from other game
     }
 
-    i = PlayerForAddress(&packet->ipx.Src);
+    i = NodeForAddress(&packet->ipx.Src);
     if (i != -1)
     {
         doomcom.remotenode = i;
@@ -140,7 +140,7 @@ static void ProcessSetupPacket(packet_t *packet)
     }
 
     addr = &packet->ipx.Src;
-    n = PlayerForAddress(addr);
+    n = NodeForAddress(addr);
 
     // New node?
     if (n == -1)

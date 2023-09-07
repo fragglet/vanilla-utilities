@@ -12,8 +12,7 @@ IPXSETUP_OBJS = bld\ipxsetup.o bld\doomnet.o bld\ipxnet.o bld\llcall.o &
                 bld\common.lib
 SERSETUP_OBJS = bld\sersetup.o bld\doomnet.o bld\serport.o bld\serarb.o &
                 bld\common.lib
-SIRSETUP_OBJS = bld\sirsetup.o bld\doomnet.o bld\serport.o bld\serarb.o &
-                bld\common.lib
+SIRSETUP_OBJS = bld\sirsetup.o bld\doomnet.o bld\serport.o bld\common.lib
 PARSETUP_OBJS = bld\parsetup.o bld\doomnet.o bld\parport.o bld\plio.o &
                 bld\serarb.o bld\common.lib
 UDPSETUP_OBJS = bld\ipxsetup.o bld\doomnet.o bld\udpipx.o bld\llcall.o &

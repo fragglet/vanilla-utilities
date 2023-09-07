@@ -50,7 +50,7 @@ run_player_tests() {
         "secret=1000" "secret=2000"
 
     # Force player
-    start_node1 $1 -player2
+    start_node1 $1 -player 2
     start_node2 $2
     wait_dosboxes
 
@@ -58,8 +58,8 @@ run_player_tests() {
         "Player 1: secret=2000" "Player 2: secret=1000"
 
     # Force player at both works as long as they're consistent.
-    start_node1 $1 -player2
-    start_node2 $2 -player1
+    start_node1 $1 -player 2
+    start_node2 $2 -player 1
     wait_dosboxes
 
     check_player_secrets "$test_descr, force player at both" \

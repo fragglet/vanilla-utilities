@@ -12,7 +12,7 @@ IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj \
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
                 net\serarb.obj bld\common.lib
 SIRSETUP_OBJS = net\sirsetup.obj net\doomnet.obj net\serport.obj \
-                net\serarb.obj bld\common.lib
+                bld\common.lib
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \
                 net\plio.obj net\serarb.obj bld\common.lib
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj bld\common.lib

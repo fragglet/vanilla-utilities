@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include <assert.h>
 
 #include "lib/inttypes.h"
 
@@ -74,6 +75,26 @@ struct queue
     struct packet packets[QUEUE_LEN];
     unsigned int head, tail;
 };
+
+// setupdata_t is used as doomdata_t during setup
+struct setup_data
+{
+    uint8_t setup_signature[16];
+    int32_t station_id;
+    int16_t wanted, found;
+    int16_t dup;
+    int16_t player;
+};
+
+static const uint8_t SETUP_SIGNATURE[16] = {
+    0xb2, 0x88, 0x2e, 0x28, 0xb1, 0xc4, 0xaa, 0xdb,
+    0x9e, 0xc2, 0x24, 0xec, 0x2c, 0x1f, 0x6c, 0xa2,
+};
+
+static struct setup_data node_data[MAXNETNODES];
+
+static int numnetnodes = 2;
+static int force_player = -1;
 
 static struct queue inque, outque;
 static unsigned int tx_offset;
@@ -284,20 +305,22 @@ unsigned int SerialMoreTXData(void)
 
 static void SendPacket(void)
 {
-    struct packet *pkt;
-    struct packet_header *hdr;
+    struct packet *pkt = &outque.packets[outque.head];
+    struct packet_header *hdr = (struct packet_header *) pkt->data;
     unsigned int next_head = (outque.head + 1) & (QUEUE_LEN - 1);
 
-    pkt = &outque.packets[outque.head];
+    if (state != STATE_ARBITRATE
+     && (doomcom.remotenode == 0 || doomcom.remotenode >= doomcom.numnodes))
+    {
+        return;
+    }
 
-    if (doomcom.remotenode == 0 || doomcom.remotenode >= doomcom.numnodes
-     || doomcom.datalength > sizeof(pkt->data) - sizeof(struct packet_header)
+    if (doomcom.datalength > sizeof(pkt->data) - sizeof(struct packet_header)
      || next_head == outque.tail)
     {
         return;
     }
 
-    hdr = (struct packet_header *) pkt->data;
     memcpy(pkt->data + sizeof(struct packet_header),
            doomcom.data, doomcom.datalength);
     pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
@@ -380,6 +403,182 @@ static void NetCallback(void)
     }
 }
 
+static int NodeForStationID(int32_t station_id)
+{
+    int i;
+
+    for (i = 1; i < doomcom.numnodes; i++)
+    {
+        if (station_id == node_data[i].station_id)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static void ProcessSetupPacket(void)
+{
+    struct setup_data *setup = (struct setup_data *) doomcom.data;
+    int n;
+
+    // Sanity checks.
+    if (doomcom.datalength < sizeof(struct setup_data)
+     || memcmp(setup->setup_signature, SETUP_SIGNATURE,
+               sizeof(SETUP_SIGNATURE) != 0))
+    {
+        return;
+    }
+
+    n = NodeForStationID(setup->station_id);
+
+    // New node?
+    if (n == -1)
+    {
+        n = doomcom.numnodes;
+        ++doomcom.numnodes;
+
+        LogMessage("Found a node with station ID %08lx", setup->station_id);
+
+        if (node_data[0].player != -1 && node_data[0].player == setup->player)
+        {
+            Error("Other node is also using -player %d. One node must "
+                  "be changed to avoid clash.", force_player);
+        }
+        if (setup->dup > doomnet_dup)
+        {
+            LogMessage("Other node is using -dup %d. Adjusting to match.",
+                       setup->dup);
+            doomnet_dup = setup->dup;
+        }
+    }
+
+    // update setup info
+    memcpy(&node_data[n], setup, sizeof(struct setup_data));
+}
+
+static void AssignPlayerNumbers(void)
+{
+    int i, j, best;
+
+    // First of all, populate the player mapping table with those players
+    // that requested a specific player number.
+    for (i = 0; i < doomcom.numnodes; i++)
+    {
+        player_to_node[i] = -1;
+    }
+
+    for (i = 0; i < doomcom.numnodes; i++)
+    {
+        if (node_data[i].player != -1)
+        {
+            player_to_node[node_data[i].player] = i;
+        }
+    }
+
+    // The remaining nodes get their player number automatically.
+    for (i = 0; i < doomcom.numnodes; i++)
+    {
+        if (player_to_node[i] != -1)
+        {
+            continue;
+        }
+
+        // Which unassigned player has the lowest station ID?
+        best = -1;
+        for (j = 0; j < doomcom.numnodes; j++)
+        {
+            if (node_data[j].player == -1
+             && (best == -1
+              || node_data[j].station_id < node_data[best].station_id))
+            {
+                best = j;
+            }
+        }
+        assert(best != -1);
+        player_to_node[i] = best;
+        node_data[best].player = i;
+    }
+}
+
+static int AllNodesReady(void)
+{
+    int i;
+
+    // we are done if all nodes have found all other nodes
+    for (i = 0; i < doomcom.numnodes; i++)
+    {
+        if (node_data[i].found != node_data[i].wanted)
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+// Find all nodes for the game and work out player numbers among them
+void LookForNodes(void)
+{
+    clock_t now, last_time = 0;
+
+    if (force_player != -1
+     && (force_player < 1 || force_player > numnetnodes))
+    {
+        Error("-player value must be in the range 1..%d", numnetnodes);
+    }
+
+    // build local setup info
+    memcpy(node_data[0].setup_signature, SETUP_SIGNATURE,
+           sizeof(SETUP_SIGNATURE));
+    node_data[0].station_id = GetEntropy();
+    node_data[0].player = force_player == -1 ? -1 : force_player - 1;
+    node_data[0].found = 1;
+    node_data[0].wanted = numnetnodes;
+    node_data[0].dup = doomnet_dup;
+    doomcom.numnodes = 1;
+
+    LogMessage("Attempting to find %d players", numnetnodes);
+    LogMessage("Randomly generated station ID is %08lx",
+               node_data[0].station_id);
+
+    while (!AllNodesReady())
+    {
+        CheckAbort("Network game synchronization");
+
+        // listen to the network
+        for (;;)
+        {
+            GetPacket();
+            if (doomcom.remotenode == -1)
+            {
+                break;
+            }
+            ProcessSetupPacket();
+        }
+
+        // send out a broadcast packet every second
+        now = clock();
+        if (now - last_time >= CLOCKS_PER_SEC)
+        {
+            node_data[0].found = doomcom.numnodes;
+            memcpy(doomcom.data, &node_data[0], sizeof(struct setup_data));
+            doomcom.datalength = sizeof(struct setup_data);
+            SendPacket();
+            last_time = now;
+        }
+    }
+
+    AssignPlayerNumbers();
+
+    doomcom.consoleplayer = node_data[0].player;
+    doomcom.numplayers = doomcom.numnodes;
+
+    LogMessage("Console is player %i of %i", doomcom.consoleplayer + 1,
+               doomcom.numplayers);
+}
+
 // Before transitioning out of the STATE_ARBITRATE state, we block for a
 // maximum of one second to ensure the interrupt handler has finished
 // transmitting all packets still buffered for transmit. This is important
@@ -408,7 +607,9 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom Serial Infrared network device driver",
                 "%s -com2 doom.exe -deathmatch -nomonsters");
-    RegisterArbitrationFlags();
+    //IntFlag("-nodes", &numnetnodes, "n",
+    //        "number of players in game, default 2");
+    IntFlag("-player", &force_player, "p", "force this to be player #p");
     SerialRegisterFlags();
     NetRegisterFlags();
 
@@ -430,8 +631,7 @@ void main(int argc, char *argv[])
     InitPort(115200);
     atexit(ShutdownPort);
 
-    ArbitratePlayers(&doomcom, NetCallback);
-
+    LookForNodes();
     FlushArbitrationPackets();
 
     // TODO: This will become more elaborate once we support >2 players.

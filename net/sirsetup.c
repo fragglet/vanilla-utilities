@@ -589,7 +589,6 @@ void LookForNodes(void)
     AssignPlayerNumbers();
 
     doomnet_dup = node_data[0].dup;
-    node_data[0].dup = doomnet_dup;
     doomcom.consoleplayer = node_data[0].player;
     doomcom.numplayers = doomcom.numnodes;
 

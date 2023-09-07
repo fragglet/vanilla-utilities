@@ -662,8 +662,9 @@ void main(int argc, char *argv[])
 
     LookForNodes();
 
-    // TODO: This will become more elaborate once we support >2 players.
-    handoff_partner = 1 - doomcom.consoleplayer;
+    // TODO: Currently, this is only assigned once. When nodes exit the
+    // game, we need to recalculate the handoff partner.
+    handoff_partner = (doomcom.consoleplayer + 1) % doomcom.numplayers;
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);

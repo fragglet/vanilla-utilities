@@ -588,7 +588,7 @@ void LookForNodes(void)
     // build local setup info
     memcpy(node_data[0].setup_signature, SETUP_SIGNATURE,
            sizeof(SETUP_SIGNATURE));
-    node_data[0].station_id = GetEntropy();
+    node_data[0].station_id = ((uint32_t) rand() << 16) | rand();
     node_data[0].player = force_player == -1 ? -1 : force_player - 1;
     node_data[0].found = 1;
     node_data[0].wanted = nodes_flag;

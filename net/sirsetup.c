@@ -49,6 +49,8 @@
 
 #define QUEUE_LEN  8
 
+#define BROADCAST_DEST         0xff
+
 // Escape characters are reused from SERSETUP; we use a common protocol.
 #define FRAMECHAR              0x70
 #define FRAMECHAR_END_PACKET   0x00 /* End of packet - same as SERSETUP. */
@@ -140,7 +142,7 @@ static int PacketReceived(void)
     // We only deliver packets addressed to us.
     if (pkt->data_len > sizeof(struct packet_header)
      && HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum
-     && (state == STATE_ARBITRATE || hdr->dest == doomcom.consoleplayer))
+     && (hdr->dest == BROADCAST_DEST || hdr->dest == doomcom.consoleplayer))
     {
         // If the queue is full, we just keep overwriting the last packet.
         queue_full = next_head == inque.tail;
@@ -308,7 +310,7 @@ static void SendPacket(void)
     struct packet_header *hdr = (struct packet_header *) pkt->data;
     unsigned int next_head = (outque.head + 1) & (QUEUE_LEN - 1);
 
-    if (state != STATE_ARBITRATE
+    if (doomcom.remotenode != MAXNETNODES
      && (doomcom.remotenode == 0 || doomcom.remotenode >= doomcom.numnodes))
     {
         return;
@@ -323,7 +325,8 @@ static void SendPacket(void)
     memcpy(pkt->data + sizeof(struct packet_header),
            doomcom.data, doomcom.datalength);
     pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
-    hdr->dest = node_data[doomcom.remotenode].player;
+    hdr->dest = doomcom.remotenode == MAXNETNODES ? BROADCAST_DEST
+              : node_data[doomcom.remotenode].player;
     hdr->src = node_data[0].player;
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
@@ -554,6 +557,7 @@ static void SendSetupPacket(void)
 {
     node_data[0].found = doomcom.numnodes;
     memcpy(doomcom.data, &node_data[0], sizeof(struct setup_data));
+    doomcom.remotenode = MAXNETNODES;  // Broadcast
     doomcom.datalength = sizeof(struct setup_data);
     SendPacket();
 }

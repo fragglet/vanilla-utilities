@@ -440,6 +440,12 @@ static void ProcessSetupPacket(void)
         return;
     }
 
+    if (node_data[0].station_id == setup->station_id)
+    {
+        Error("Another node also appears to be using station ID %08lx?",
+              setup->station_id);
+    }
+
     n = NodeForStationID(setup->station_id);
 
     // New node?

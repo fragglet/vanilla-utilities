@@ -44,6 +44,7 @@
 #include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
+#include "net/pktaggr.h"
 #include "net/serarb.h"
 #include "net/serport.h"
 
@@ -304,29 +305,27 @@ unsigned int SerialMoreTXData(void)
     return i;
 }
 
-static void SendPacket(void)
+static void SendPacket(int node, void *data, size_t data_len)
 {
     struct packet *pkt = &outque.packets[outque.head];
     struct packet_header *hdr = (struct packet_header *) pkt->data;
     unsigned int next_head = (outque.head + 1) & (QUEUE_LEN - 1);
 
-    if (doomcom.remotenode != MAXNETNODES
-     && (doomcom.remotenode == 0 || doomcom.remotenode >= doomcom.numnodes))
+    if (node != MAXNETNODES && (node == 0 || node >= doomcom.numnodes))
     {
         return;
     }
 
-    if (doomcom.datalength > sizeof(pkt->data) - sizeof(struct packet_header)
+    if (data_len > sizeof(pkt->data) - sizeof(struct packet_header)
      || next_head == outque.tail)
     {
         return;
     }
 
-    memcpy(pkt->data + sizeof(struct packet_header),
-           doomcom.data, doomcom.datalength);
-    pkt->data_len = doomcom.datalength + sizeof(struct packet_header);
-    hdr->dest = doomcom.remotenode == MAXNETNODES ? BROADCAST_DEST
-              : node_data[doomcom.remotenode].player;
+    memcpy(pkt->data + sizeof(struct packet_header), data, data_len);
+    pkt->data_len = data_len + sizeof(struct packet_header);
+    hdr->dest = node == MAXNETNODES ? BROADCAST_DEST
+              : node_data[node].player;
     hdr->src = node_data[0].player;
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
@@ -404,10 +403,13 @@ static void NetCallback(void)
     if (doomcom.command == CMD_SEND)
     {
         CheckTimeout();
-        SendPacket();
+        // This is an indirect way of calling SendPacket() above.
+        AggregatedSendPacket(doomcom.remotenode, doomcom.data,
+                             doomcom.datalength);
     }
     else if (doomcom.command == CMD_GET)
     {
+        FlushPendingPackets();
         GetPacket();
     }
 }
@@ -562,10 +564,8 @@ static void FlushArbitrationPackets(void)
 static void SendSetupPacket(void)
 {
     node_data[0].found = doomcom.numnodes;
-    memcpy(doomcom.data, &node_data[0], sizeof(struct setup_data));
-    doomcom.remotenode = MAXNETNODES;  // Broadcast
-    doomcom.datalength = sizeof(struct setup_data);
-    SendPacket();
+    SendPacket(MAXNETNODES, (uint8_t *) &node_data[0],
+               sizeof(struct setup_data));
 }
 
 // Find all nodes for the game and work out player numbers among them
@@ -678,6 +678,8 @@ void main(int argc, char *argv[])
     atexit(ShutdownPort);
 
     LookForNodes();
+
+    InitAggregation(doomcom.numnodes, SendPacket);
 
     // TODO: Currently, this is only assigned once. When nodes exit the
     // game, we need to recalculate the handoff partner.

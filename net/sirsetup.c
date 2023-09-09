@@ -13,22 +13,20 @@
 //
 
 // Serial Infrared driver.
-// This is identical in many ways to SERSETUP, with one big difference being
-// that the rx/tx queues are queues of packets rather than bytes. It's also
-// much simpler since there's no need to worry about modems.
 //
-// The big challenge with Infrared communications is that both sides cannot
-// transmit at the same time (it's a half-duplex connection). Hence, the
-// normal SERSETUP driver does not work since both sides try to transmit to
-// the other continuously while the game is in progress. For this driver, we
-// use a token-passing scheme where only ever one side is transmitting at a
-// time. Both sides queue up packets to send, and when the transmitting side
-// has finished sending all packets, it sends a handoff indicator that the
-// receiving side uses as a signal to begin transmitting. Because latency is
-// crucial, we do this handoff inside the serial ISR so that it happens
-// instantaneously.
+// The big challenge with Infrared communications is that multiple nodes cannot
+// transmit at the same time (it's a shared/half-duplex connection). Hence, the
+// normal SERSETUP driver does not work since both sides try to transmit to the
+// other continuously while the game is in progress. For this driver, we use a
+// token-passing scheme where only ever one node is transmitting at a time.
+// Each node queues up packets to send, and when the transmitting side has
+// finished sending all packets, it sends a handoff indicator that signals the
+// next node to begin transmitting. Because latency is crucial, we do this
+// handoff inside the serial ISR so that it happens instantaneously.
 //
-// TODO: In theory it should be possible to support more than two players.
+// Since it's a shared medium we can have more than two players participating;
+// the original version of this driver was derived from SERSETUP but it has
+// since diverged in this respect.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +77,6 @@ struct queue
     unsigned int head, tail;
 };
 
-// setupdata_t is used as doomdata_t during setup
 struct setup_data
 {
     uint8_t setup_signature[16];
@@ -176,12 +173,12 @@ static void ReceivedHandoff(void)
         state = STATE_TRANSMIT;
         last_handoff_time = clock();
 
-        // If player 2 has nothing to send, it sends back an empty packet to
-        // hand the token back to player 1 immediately. If player 1 has
-        // nothing to send, it stops until SendPacket() is called to send
-        // something. This stops us bouncing the token back and forth
-        // continually during startup if there's no work to be done. During
-        // the game we will be sending packets regularly anyway.
+        // If a node has nothing to send, it sends an empty packet to hand the
+        // token to the next node immediately. This continues until player 1 is
+        // reached. If player 1 has nothing to send, it stops until
+        // SendPacket() is called to send something. This stops us bouncing the
+        // token back and forth during game startup if there's no work to be
+        // done. During the game we will be sending packets regularly anyway.
         if (doomcom.consoleplayer != 0 && outque.head == outque.tail)
         {
             outque.packets[outque.head].data_len = 0;

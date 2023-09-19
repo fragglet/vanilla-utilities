@@ -178,12 +178,8 @@ static void ReceivedHandoff(void)
         last_handoff_time = clock();
 
         // If a node has nothing to send, it sends an empty packet to hand the
-        // token to the next node immediately. This continues until player 1 is
-        // reached. If player 1 has nothing to send, it stops until
-        // SendPacket() is called to send something. This stops us bouncing the
-        // token back and forth during game startup if there's no work to be
-        // done. During the game we will be sending packets regularly anyway.
-        if (doomcom.consoleplayer != 0 && outque.head == outque.tail)
+        // token to the next node immediately.
+        if (outque.head == outque.tail)
         {
             outque.packets[outque.head].data_len = 0;
             outque.head = (outque.head + 1) & (QUEUE_LEN - 1);

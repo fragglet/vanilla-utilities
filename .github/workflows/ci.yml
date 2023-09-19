@@ -11,7 +11,9 @@ jobs:
       with:
         submodules: true
     - name: Install dependencies
-      run: sudo apt -q install dosbox dos2unix
+      run: |
+        sudo apt update
+        sudo apt -q install dosbox dos2unix
     - name: build
       run: |
         ./build/watbuild.sh

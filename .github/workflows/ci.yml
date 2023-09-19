@@ -45,7 +45,9 @@ jobs:
       with:
         submodules: true
     - name: Install dependencies
-      run: sudo apt -q install dosbox
+      run: |
+        sudo apt update
+        sudo apt -q install dosbox
     - name: build
       run: |
         ./build/tcbuild.sh

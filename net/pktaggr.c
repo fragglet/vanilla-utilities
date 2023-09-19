@@ -38,6 +38,34 @@ static uint8_t pending_buffer[PENDING_BUFFER_LEN];
 static size_t pending_buffer_len;
 static int pending_count;
 
+// Vanilla Doom for whatever transmits empty packets with no ticcmds. This
+// conveys no useful information but does waste bandwidth, so we detect and
+// drop them.
+static int IsEmptyPacket(uint8_t *data, size_t data_len)
+{
+    unsigned long csgot, cswant;
+
+    // Must be exactly the size of the doomdata_t header with zero tics,
+    // and numtics field must = 0 tics too.
+    if (data_len != 8 || data[7] != 0)
+    {
+        return 0;
+    }
+
+    // Check the checksum is a Doom game packet like we expect, and that
+    // none of the other special bits are set (NCMD_RETRANSMIT, NCMD_SETUP...)
+    csgot = 0x1234567
+          + (((unsigned long) data[6]) << 16)
+          + (((unsigned long) data[5]) << 8)
+          + ((unsigned long) data[4]);
+    cswant = (((unsigned long) data[3]) << 24)
+           | (((unsigned long) data[2]) << 16)
+           | (((unsigned long) data[1]) << 8)
+           | ((unsigned long) data[0]);
+
+    return (csgot & NCMD_CHECKSUM) == cswant;
+}
+
 // FlushPendingPackets sends the currently pending packet to any nodes for
 // which it was held back - if any.
 void FlushPendingPackets(void)
@@ -97,6 +125,11 @@ static int TryBroadcastStore(int node, void *data, size_t data_len)
 
 void AggregatedSendPacket(int node, void *data, size_t data_len)
 {
+    if (IsEmptyPacket(data, data_len))
+    {
+        return;
+    }
+
     if (node > 0 && node < aggr_numnodes
      && TryBroadcastStore(node, data, data_len))
     {

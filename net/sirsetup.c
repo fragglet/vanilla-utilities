@@ -154,7 +154,11 @@ static int PacketReceived(void)
 
     pkt->valid = 0;
     pkt->data_len = 0;
-    return !queue_full;
+
+    // For two player games, we can stop receiving once the queue is full.
+    // For three or more, it's vital to keep receiving so that we keep passing
+    // the transmit token, even if we can't receive anything ourself.
+    return !queue_full || doomcom.numnodes > 2;
 }
 
 static void AddInByte(struct packet *pkt, uint8_t c)

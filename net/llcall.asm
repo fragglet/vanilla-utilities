@@ -39,11 +39,11 @@ _ll_funcptr    dd          0
 ; As used by the "new-style" IPX API.
 public _LowLevelCall
 _LowLevelCall:
+    push bp
     push bx
-    push cx
-    push dx
     push es
     push si
+    push di
     mov ax, _ll_regs.llr_ax
     mov bx, _ll_regs.llr_bx
     mov cx, _ll_regs.llr_cx
@@ -57,11 +57,11 @@ _LowLevelCall:
     mov _ll_regs.llr_dx, dx
     mov _ll_regs.llr_es, es
     mov _ll_regs.llr_si, si
+    pop di
     pop si
     pop es
-    pop dx
-    pop cx
     pop bx
+    pop bp
     ret
 
     end

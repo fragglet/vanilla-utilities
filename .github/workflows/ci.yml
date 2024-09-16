@@ -33,7 +33,7 @@ jobs:
         fi
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
     - name: Upload EXEs
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         path: "dist"
         name: vanilla-utilities-${{steps.version.outputs.VERSION}}

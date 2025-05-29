@@ -20,6 +20,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/pktaggr.h"
+#include "net/pktstats.h"
 
 #define MAXDRIVERS 8
 
@@ -99,31 +100,36 @@ static int num_nodes = 1;
 // forward packets between interfaces.
 static int forwarder = 0;
 
-static unsigned long stats_rx_packets, stats_tx_packets;
-static unsigned long stats_rx_broadcasts, stats_tx_broadcasts;
-static unsigned long stats_wrong_magic, stats_too_many_hops, stats_invalid_dest;
-static unsigned long stats_node_limit, stats_bad_send, stats_unknown_type;
-static unsigned long stats_forwarded, stats_unknown_src, stats_setup_packets;
+DECLARE_COUNTER(rx_packets);
+DECLARE_COUNTER(tx_packets);
+DECLARE_COUNTER(rx_broadcasts);
+DECLARE_COUNTER(tx_broadcasts);
+DECLARE_COUNTER(wrong_magic);
+DECLARE_COUNTER(too_many_hops);
+DECLARE_COUNTER(invalid_dest);
+DECLARE_COUNTER(node_limit);
+DECLARE_COUNTER(bad_send);
+DECLARE_COUNTER(unknown_type);
+DECLARE_COUNTER(forwarded);
+DECLARE_COUNTER(unknown_src);
+DECLARE_COUNTER(setup_packets);
 
-static const struct
+static void RegisterCounters(void)
 {
-    unsigned long *ptr;
-    const char *name;
-} stats[] = {
-    { &stats_rx_packets,    "rx_packets" },
-    { &stats_tx_packets,    "tx_packets" },
-    { &stats_rx_broadcasts, "rx_broadcasts" },
-    { &stats_tx_broadcasts, "tx_broadcasts" },
-    { &stats_wrong_magic,   "wrong_magic" },
-    { &stats_too_many_hops, "too_many_hops" },
-    { &stats_invalid_dest,  "invalid_dest" },
-    { &stats_node_limit,    "node_limit" },
-    { &stats_bad_send,      "bad_send" },
-    { &stats_unknown_type,  "unknown_type" },
-    { &stats_forwarded,     "forwarded" },
-    { &stats_unknown_src,   "unknown_src" },
-    { &stats_setup_packets, "setup_packets" },
-};
+    REGISTER_COUNTER(rx_packets);
+    REGISTER_COUNTER(tx_packets);
+    REGISTER_COUNTER(rx_broadcasts);
+    REGISTER_COUNTER(tx_broadcasts);
+    REGISTER_COUNTER(wrong_magic);
+    REGISTER_COUNTER(too_many_hops);
+    REGISTER_COUNTER(invalid_dest);
+    REGISTER_COUNTER(node_limit);
+    REGISTER_COUNTER(bad_send);
+    REGISTER_COUNTER(unknown_type);
+    REGISTER_COUNTER(forwarded);
+    REGISTER_COUNTER(unknown_src);
+    REGISTER_COUNTER(setup_packets);
+}
 
 static void SendBroadcast(doomcom_t far *src, node_addr_t src_addr,
                           void far *data, size_t data_len)
@@ -164,7 +170,7 @@ static int PrependPreviousHop(uint8_t far *result, uint8_t prev_hop,
 {
     if (old_addr[sizeof(node_addr_t) - 1] != 0)
     {
-        ++stats_too_many_hops;
+        INCREMENT_COUNTER(too_many_hops);
         return 0;
     }
 
@@ -180,7 +186,7 @@ static void ForwardBroadcast(int driver_index)
     struct meta_header far *hdr;
     node_addr_t src_addr;
 
-    ++stats_rx_broadcasts;
+    INCREMENT_COUNTER(rx_broadcasts);
 
     // Fast path: leaf nodes just deliver broadcast packets locally.
     if (num_drivers < 2)
@@ -221,7 +227,7 @@ static void ForwardPacket(int driver_index)
     if (ddriver >= num_drivers || drivers[ddriver] == src
      || dnode == 0 || dnode >= drivers[ddriver]->numnodes)
     {
-        ++stats_invalid_dest;
+        INCREMENT_COUNTER(invalid_dest);
         return;
     }
 
@@ -234,7 +240,7 @@ static void ForwardPacket(int driver_index)
     drivers[ddriver]->remotenode = dnode;
     far_memmove(drivers[ddriver]->data, src->data, src->datalength);
     NetSendPacket(drivers[ddriver]);
-    ++stats_forwarded;
+    INCREMENT_COUNTER(forwarded);
 }
 
 // Read packets from the given interface, forwarding them to other
@@ -250,12 +256,12 @@ static int GetAndForward(int driver_index)
         hdr = (struct meta_header far *) dc->data;
         if ((hdr->magic & ~NCMD_CHECKSUM) == NCMD_SETUP)
         {
-            ++stats_setup_packets;
+            INCREMENT_COUNTER(setup_packets);
             continue;
         }
         if ((hdr->magic & META_MAGIC_MASK) != META_MAGIC)
         {
-            ++stats_wrong_magic;
+            INCREMENT_COUNTER(wrong_magic);
             continue;
         }
         // Packet for ourself?
@@ -306,7 +312,7 @@ static int AppendNextHop(node_addr_t addr, uint8_t next_hop)
             return 1;
         }
     }
-    ++stats_too_many_hops;
+    INCREMENT_COUNTER(too_many_hops);
     return 0;
 }
 
@@ -322,7 +328,7 @@ static struct node_data *NodeOrAddNode(uint8_t first_hop, node_addr_t addr)
     }
     else if (num_nodes >= MAXNETNODES)
     {
-        ++stats_node_limit;
+        INCREMENT_COUNTER(node_limit);
         return NULL;
     }
 
@@ -470,12 +476,12 @@ static int HandlePacket(uint8_t first_hop, doomcom_t far *dc)
             doomcom.remotenode = NodeForAddr(first_hop, addr);
             if (doomcom.remotenode < 0)
             {
-                ++stats_unknown_src;
+                INCREMENT_COUNTER(unknown_src);
                 return 0;
             }
             doomcom.datalength = dc->datalength - sizeof(struct meta_header);
             far_memmove(doomcom.data, msg->data, doomcom.datalength);
-            ++stats_rx_packets;
+            INCREMENT_COUNTER(rx_packets);
             return 1;
 
         case META_PACKET_DISCOVER:
@@ -487,7 +493,7 @@ static int HandlePacket(uint8_t first_hop, doomcom_t far *dc)
             break;
 
         default:
-            ++stats_unknown_type;
+            INCREMENT_COUNTER(unknown_type);
             break;
     }
 
@@ -544,7 +550,7 @@ static void SendFromBuffer(int dest, void *data, size_t data_len)
         node_addr_t src_addr;
         memset(src_addr, 0, sizeof(node_addr_t));
         SendBroadcast(NULL, src_addr, data, data_len);
-        ++stats_tx_broadcasts;
+        INCREMENT_COUNTER(tx_broadcasts);
         return;
     }
 
@@ -560,14 +566,14 @@ static void SendFromBuffer(int dest, void *data, size_t data_len)
     far_memmove(msg->data, data, data_len);
 
     NetSendPacket(dc);
-    ++stats_tx_packets;
+    INCREMENT_COUNTER(tx_packets);
 }
 
 static void SendPacket(void)
 {
     if (doomcom.remotenode < 0 || doomcom.remotenode >= num_nodes)
     {
-        ++stats_bad_send;
+        INCREMENT_COUNTER(bad_send);
         return;
     }
 
@@ -813,20 +819,6 @@ static void DiscoverNodes(void)
     nodes[0].flags |= NODE_STATUS_LAUNCHED;
 }
 
-static void PrintStats(void)
-{
-    int i;
-
-    LogMessage("Statistics:");
-    for (i = 0; i < sizeof(stats) / sizeof(*stats); ++i)
-    {
-        if (*stats[i].ptr != 0)
-        {
-            LogMessage("%16s %6ld", stats[i].name, *stats[i].ptr);
-        }
-    }
-}
-
 static void NetCallback(void)
 {
     switch (doomcom.command)
@@ -938,6 +930,7 @@ int main(int argc, char *argv[])
     BoolFlag("-forward", &forwarder,
              "Don't launch game, just forward packets.");
     NetRegisterFlags();
+    PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);
 
     if (forwarder)
@@ -963,6 +956,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    RegisterCounters();
     SeedRandom();
     DiscoverNodes();
     RearrangeNodes();
@@ -982,7 +976,6 @@ int main(int argc, char *argv[])
     }
 
     SendQuit();
-    PrintStats();
 
     return 0;
 }

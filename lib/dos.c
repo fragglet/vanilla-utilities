@@ -14,6 +14,23 @@
 #include "lib/dos.h"
 #include "lib/inttypes.h"
 
+int SetKeyboardLEDs(int value)
+{
+    int keyboard_leds = 0xff;
+
+    if (keyboard_leds == value)
+    {
+        return 1;
+    }
+
+    // We write to the keyboard controller on port 60h; ED=set keyboard LEDs
+    OUTPUT(0x60, 0xed);
+    OUTPUT(0x60, value);
+    keyboard_leds = value;
+
+    return INPUT(0x60) == 0xfa;
+}
+
 long GetEntropy(void)
 {
     long result;

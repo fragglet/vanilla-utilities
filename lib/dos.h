@@ -27,6 +27,11 @@ typedef int ssize_t;
 #define INPUT( port )        inp( port )
 #define OUTPUT( port, data ) (void) outp( port, data )
 
+#define LED_SCROLL_LOCK  0x01
+#define LED_NUM_LOCK     0x02
+#define LED_CAPS_LOCK    0x04
+
+int SetKeyboardLEDs(int value);
 long GetEntropy(void);
 
 void far_memcpy(void far *dest, void far *src, size_t nbytes);

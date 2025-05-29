@@ -89,6 +89,7 @@ static const uint8_t SETUP_SIGNATURE[16] = {
 
 static struct setup_data node_data[MAXNETNODES];
 
+static int led_debug_mode = 0;
 static int nodes_flag = 2;
 static int force_player = -1;
 
@@ -111,6 +112,26 @@ static int handoff_partner;
 // the handoff token between nodes.
 static enum { STATE_ARBITRATE, STATE_TRANSMIT, STATE_WAIT } state;
 static clock_t last_handoff_time = 0;
+
+static void SetDebugLEDs(void)
+{
+    int value = 0;
+
+    if (!led_debug_mode)
+    {
+        return;
+    }
+    if (inque.head != inque.tail)
+    {
+        value |= LED_CAPS_LOCK;
+    }
+    if (outque.head != outque.tail)
+    {
+        value |= LED_NUM_LOCK;
+    }
+
+    SetKeyboardLEDs(value);
+}
 
 // djb2 hash function
 static uint8_t HashData(uint8_t *data, size_t data_len)
@@ -147,6 +168,8 @@ static int PacketReceived(void)
             pkt = &inque.packets[next_head];
         }
     }
+
+    SetDebugLEDs();
 
     pkt->valid = 0;
     pkt->data_len = 0;
@@ -271,6 +294,7 @@ unsigned int SerialMoreTXData(void)
             serial_tx_buffer[1] = FRAMECHAR_END_PACKET;
         }
 
+        SetDebugLEDs();
         return 2;
     }
 
@@ -323,6 +347,7 @@ static void SendPacket(int node, void *data, size_t data_len)
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
 
+    SetDebugLEDs();
     JumpStart();
 }
 
@@ -363,6 +388,7 @@ static void GetPacket(void)
 
     inque.tail = (inque.tail + 1) & (QUEUE_LEN - 1);
     ResumeReceive();
+    SetDebugLEDs();
 }
 
 // CheckTimeout is called before packets to detect the case where no handoff
@@ -649,6 +675,8 @@ void main(int argc, char *argv[])
     IntFlag("-nodes", &nodes_flag, "n",
             "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
+    BoolFlag("-led", &led_debug_mode, NULL);
+
     SerialRegisterFlags();
     NetRegisterFlags();
 

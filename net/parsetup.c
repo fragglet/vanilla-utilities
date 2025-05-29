@@ -28,18 +28,28 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/parport.h"
+#include "net/pktstats.h"
 #include "net/serarb.h"
 
 #define MAXPACKET	512
 
 static doomcom_t doomcom;
 
-extern unsigned int errors_wrong_checksum;
-extern unsigned int errors_packet_overwritten;
-extern unsigned int errors_timeout;
+DECLARE_COUNTER(errors_wrong_checksum);
+DECLARE_COUNTER(errors_timeout);
 
 extern int __stdcall PLIOWritePacket(void);
 extern unsigned recv_count;
+
+void __stdcall ErrorWrongChecksum(void)
+{
+    INCREMENT_COUNTER(errors_wrong_checksum);
+}
+
+void __stdcall ErrorTimeout(void)
+{
+    INCREMENT_COUNTER(errors_timeout);
+}
 
 int WritePacket(uint8_t *data, unsigned len)
 {
@@ -85,11 +95,15 @@ void main(int argc, char *argv[])
     RegisterArbitrationFlags();
     ParallelRegisterFlags();
     NetRegisterFlags();
+    PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
     {
         ErrorPrintUsage("No command given to run.");
     }
+
+    REGISTER_COUNTER(errors_wrong_checksum);
+    REGISTER_COUNTER(errors_timeout);
 
     // set network characteristics
     doomcom.ticdup = 1;
@@ -107,12 +121,5 @@ void main(int argc, char *argv[])
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);
-
-    if (printstats)
-    {
-        printf("timeouts: %d overwritten: %d wrong checksum: %d",
-               errors_timeout, errors_packet_overwritten,
-               errors_wrong_checksum);
-    }
 }
 

@@ -13,8 +13,8 @@ SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
                 net\serarb.obj bld\common.lib
 SIRSETUP_OBJS = net\sirsetup.obj net\doomnet.obj net\serport.obj \
                 net\pktaggr.obj bld\common.lib
-PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\parport.obj \
-                net\plio.obj net\serarb.obj bld\common.lib
+PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\serarb.obj \
+                bld\par.lib bld\common.lib
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj bld\common.lib
 SOLO_NET_OBJS = net\solo-net.obj net\doomnet.obj bld\common.lib
 METANET_OBJS = net\metanet.obj net\doomnet.obj bld\common.lib \
@@ -47,6 +47,9 @@ bld\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj \
 	del $@
 	tlib $@ +net\udpipx.obj +net\llcall.obj +net\dossock.obj
 	tlib $@ +net\dbserver.obj +net\pktstats.obj
+bld\par.lib: net\parport.obj net\plio.obj net\pktstats.obj
+	del $@
+	tlib $@ +net\parport.obj +net\plio.obj +net\pktstats.obj
 bld\replay.exe: $(REPLAY_OBJS)
 	tcc -e$* -oreplay $(REPLAY_OBJS)
 bld\analogjs.exe: $(ANALOGJS_OBJS)

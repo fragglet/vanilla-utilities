@@ -26,6 +26,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/parport.h"
+#include "net/pktstats.h"
 
 #define NUM_RX_BUFFERS 16
 #define BUFSIZE 512
@@ -40,12 +41,10 @@ static int irq = 7;
 
 static struct irq_hook parport_interrupt;
 
-unsigned int errors_wrong_checksum = 0;
-unsigned int errors_packet_overwritten = 0;
-unsigned int errors_timeout = 0;
-
 static struct rx_buffer rx_buffers[NUM_RX_BUFFERS];
 static unsigned int rx_buffer_head, rx_buffer_tail;
+
+DECLARE_COUNTER(errors_packet_overwritten);
 
 unsigned int bufseg = 0;
 unsigned int bufofs = 0;
@@ -67,7 +66,7 @@ void __stdcall PacketReceived(void)
 
     if (buf->len != 0)
     {
-        ++errors_packet_overwritten;
+        INCREMENT_COUNTER(errors_packet_overwritten);
     }
 
     buf->len = recv_count;
@@ -122,6 +121,8 @@ void ParallelRegisterFlags(void)
     BoolFlag("-lpt3", &lpt3, NULL);
     IntFlag("-port", &port_flag, "port number", NULL);
     IntFlag("-irq", &irq_flag, "irq", NULL);
+
+    REGISTER_COUNTER(errors_packet_overwritten);
 }
 
 void GetPort(void)

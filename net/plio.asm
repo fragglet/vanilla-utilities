@@ -45,14 +45,13 @@ NO_SPACE	equ	9		;operation failed because of
 					;insufficient space
 
 extrn   _PacketReceived: near
+extrn   _ErrorWrongChecksum: near
+extrn   _ErrorTimeout: near
 
 extrn   _bufseg:word
 extrn   _bufofs:word
 extrn   _recv_count:word
 extrn   _portbase:word
-extrn   _errors_wrong_checksum:word
-extrn   _errors_packet_overwritten:word
-extrn   _errors_timeout:word
 
 ;put into the public domain by Russell Nelson, nelson@crynwr.com
 
@@ -254,11 +253,11 @@ recv_1:
 	jmp	short recv_free
 
 recv_wrong_checksum:
-	inc     _errors_wrong_checksum
+	call    _ErrorWrongChecksum
 	jmp     short recv_free
 
 recv_timeout:
-	inc     _errors_timeout
+	call    _ErrorTimeout
 	jmp     short recv_free
 
 recv_free:

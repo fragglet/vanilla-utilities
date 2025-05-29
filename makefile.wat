@@ -15,7 +15,7 @@ SERSETUP_OBJS = bld\sersetup.o bld\doomnet.o bld\serport.o bld\serarb.o &
 SIRSETUP_OBJS = bld\sirsetup.o bld\doomnet.o bld\serport.o bld\pktaggr.o &
                 bld\common.lib
 PARSETUP_OBJS = bld\parsetup.o bld\doomnet.o bld\parport.o bld\plio.o &
-                bld\serarb.o bld\common.lib
+                bld\serarb.o bld\pktstats.o bld\common.lib
 UDPSETUP_OBJS = bld\ipxsetup.o bld\doomnet.o bld\udpipx.lib bld\common.lib
 PASSTHRU_OBJS = bld\passthru.o bld\doomnet.o bld\common.lib
 SOLO_NET_OBJS = bld\solo-net.o bld\doomnet.o bld\common.lib

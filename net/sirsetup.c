@@ -332,11 +332,26 @@ static void SendPacket(int node, void *data, size_t data_len)
     {
         return;
     }
-
-    if (data_len > sizeof(pkt->data) - sizeof(struct packet_header)
-     || next_head == outque.tail)
+    if (data_len > sizeof(pkt->data) - sizeof(struct packet_header))
     {
         return;
+    }
+
+    // When Doom gets into a "stuck" state it has a tendency to send a flood of
+    // identical, zero-tic packets. If we're trying to send a retransmit, it
+    // might not be possible because of the spam. As a workaround, when the
+    // send queue is full, check the last packet. If the packet we want to send
+    // is longer, send it instead as higher priority.
+    if (next_head == outque.tail)
+    {
+        pkt = &outque.packets[(outque.head + QUEUE_LEN - 1) & (QUEUE_LEN - 1)];
+        hdr = (struct packet_header *) pkt->data;
+        next_head = outque.head;
+
+        if (data_len + sizeof(struct packet_header) <= pkt->data_len)
+        {
+            return;
+        }
     }
 
     memcpy(pkt->data + sizeof(struct packet_header), data, data_len);

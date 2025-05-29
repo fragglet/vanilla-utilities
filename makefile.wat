@@ -16,8 +16,7 @@ SIRSETUP_OBJS = bld\sirsetup.o bld\doomnet.o bld\serport.o bld\pktaggr.o &
                 bld\common.lib
 PARSETUP_OBJS = bld\parsetup.o bld\doomnet.o bld\parport.o bld\plio.o &
                 bld\serarb.o bld\common.lib
-UDPSETUP_OBJS = bld\ipxsetup.o bld\doomnet.o bld\udpipx.o bld\llcall.o &
-                bld\common.lib bld\dossock.o bld\dbserver.o
+UDPSETUP_OBJS = bld\ipxsetup.o bld\doomnet.o bld\udpipx.lib bld\common.lib
 PASSTHRU_OBJS = bld\passthru.o bld\doomnet.o bld\common.lib
 SOLO_NET_OBJS = bld\solo-net.o bld\doomnet.o bld\common.lib
 METANET_OBJS = bld\metanet.o bld\doomnet.o bld\common.lib bld\pktaggr.o &
@@ -43,6 +42,9 @@ all: $(EXES) $(TESTS)
 
 bld\common.lib: bld\flag.o bld\log.o bld\dos.o bld\ints.o
 	wlib -q -n $@ +bld\flag.o +bld\log.o +bld\dos.o +bld\ints.o
+bld\udpipx.lib: bld\udpipx.o bld\llcall.o bld\dossock.o bld\dbserver.o bld\pktstats.o
+	wlib -q -n $@ +bld\udpipx.o +bld\llcall.o +bld\dossock.o &
+                      +bld\dbserver.o +bld\pktstats.o
 bld\replay.exe: $(REPLAY_OBJS)
 	wcl -q -fe=$@ $(REPLAY_OBJS)
 bld\analogjs.exe: $(ANALOGJS_OBJS)

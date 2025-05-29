@@ -42,10 +42,11 @@ tests: test\fakedoom.exe
 bld\common.lib: lib\flag.obj lib\log.obj lib\dos.obj lib\ints.obj
 	del $@
 	tlib $@ +lib\flag.obj +lib\log.obj +lib\dos.obj +lib\ints.obj
-bld\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj net\dbserver.obj
+bld\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj \
+                net\dbserver.obj net\pktstats.obj
 	del $@
 	tlib $@ +net\udpipx.obj +net\llcall.obj +net\dossock.obj
-	tlib $@ +net\dbserver.obj
+	tlib $@ +net\dbserver.obj +net\pktstats.obj
 bld\replay.exe: $(REPLAY_OBJS)
 	tcc -e$* -oreplay $(REPLAY_OBJS)
 bld\analogjs.exe: $(ANALOGJS_OBJS)

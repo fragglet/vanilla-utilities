@@ -26,6 +26,7 @@
 #include "net/dbserver.h"
 #include "net/dossock.h"
 #include "net/ipxnet.h"
+#include "net/pktstats.h"
 
 #define DEFAULT_UDP_PORT  213  /* as used by dosbox */
 
@@ -66,6 +67,7 @@ void IPXRegisterFlags(void)
     UnsignedIntFlag("-ipxsocket", &ipxsocket, "socket", NULL);
     UnsignedIntFlag("-udpport", &udpport, "port",
                     "UDP port that server should use, default 213");
+    PacketStatsRegisterFlags();
 }
 
 static void ParseServerAddress(const char *addr)

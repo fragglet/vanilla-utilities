@@ -19,6 +19,7 @@
 #include "net/doomnet.h"
 #include "net/dossock.h"
 #include "net/ipxnet.h"
+#include "net/pktstats.h"
 
 extern const ipx_addr_t broadcast_addr;
 const ipx_addr_t null_addr = {0, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
@@ -28,6 +29,36 @@ static int server_num_clients = 0;
 
 static packet_t packet;
 static SOCKET server_sock = INVALID_SOCKET;
+
+DECLARE_COUNTER(server_rx_packets);
+DECLARE_COUNTER(server_rx_errors);
+DECLARE_COUNTER(server_tx_packets);
+DECLARE_COUNTER(server_tx_errors);
+
+static void RegisterCounters(void)
+{
+    REGISTER_COUNTER(server_rx_packets);
+    REGISTER_COUNTER(server_rx_errors);
+    REGISTER_COUNTER(server_tx_packets);
+    REGISTER_COUNTER(server_tx_errors);
+}
+
+static ssize_t SendtoOrLog(SOCKET socket, const void far *msg, size_t len,
+                           int flags, const struct sockaddr_in far *to)
+{
+    ssize_t result = sendto(socket, msg, len, flags, to);
+
+    if (result < 0)
+    {
+        INCREMENT_COUNTER(server_tx_errors);
+    }
+    else
+    {
+        INCREMENT_COUNTER(server_tx_packets);
+    }
+
+    return result;
+}
 
 static void SockaddrToIPX(struct sockaddr_in *inaddr, ipx_addr_t *ipxaddr)
 {
@@ -66,21 +97,16 @@ static void ForwardPacket(struct sockaddr_in *src_addr, int len)
     if (memcmp(&packet.ipx.Dest, &broadcast_addr, sizeof(ipx_addr_t)) != 0)
     {
         IPXToSockaddr(&packet.ipx.Dest, &dest_addr);
-        if (sendto(server_sock, &packet, len, 0, &dest_addr) < 0)
-        {
-            // TODO: log error
-        }
+        SendtoOrLog(server_sock, &packet, len, 0, &dest_addr);
         return;
     }
 
     for (i = 0; i < server_num_clients; i++)
     {
         if (memcmp(&server_client_addrs[i], src_addr,
-                   sizeof(struct sockaddr_in)) != 0
-         && sendto(server_sock, &packet, len, 0,
-                   &server_client_addrs[i]) < 0)
+                   sizeof(struct sockaddr_in)) != 0)
         {
-            // TODO: log error
+            SendtoOrLog(server_sock, &packet, len, 0, &server_client_addrs[i]);
         }
     }
 }
@@ -118,10 +144,7 @@ static void NewClient(struct sockaddr_in *addr)
     reply.Src.Network = htonl(1);
     reply.SrcSocket = htons(2);
 
-    if (sendto(server_sock, &reply, sizeof(ipx_header_t), 0, addr) < 0)
-    {
-        // TODO: log error
-    }
+    SendtoOrLog(server_sock, &reply, sizeof(ipx_header_t), 0, addr);
 }
 
 static void SendShutdown(void)
@@ -145,8 +168,8 @@ static void SendShutdown(void)
 
         for (i = 0; i < 3; i++)
         {
-            if (sendto(server_sock, &msg, sizeof(ipx_header_t), 0,
-                       &server_client_addrs[c]) < 0)
+            if (SendtoOrLog(server_sock, &msg, sizeof(ipx_header_t), 0,
+                            &server_client_addrs[c]) < 0)
             {
                 LogMessage("Error sending shutdown packet: errno=%d",
                            DosSockLastError);
@@ -171,9 +194,10 @@ void RunServer(void)
         len = recvfrom(server_sock, &packet, sizeof(packet), 0, &addr);
         if (len < 0)
         {
-            // TODO: WSAEWOULDBLOCK is expected, other errors are not.
-            break;
+            INCREMENT_COUNTER(server_rx_errors);
+            continue;
         }
+        INCREMENT_COUNTER(server_rx_packets);
         if (IsRegistrationPacket(&packet.ipx))
         {
             NewClient(&addr);
@@ -200,6 +224,8 @@ void StartServer(uint16_t port)
 {
     unsigned long trueval = 1;
     struct sockaddr_in bind_addr = {AF_INET, 0, {INADDR_ANY}};
+
+    RegisterCounters();
 
     server_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (server_sock == INVALID_SOCKET)

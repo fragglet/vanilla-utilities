@@ -42,6 +42,12 @@ static unsigned int udpport = DEFAULT_UDP_PORT;
 static unsigned int ipxsocket = DEFAULT_IPX_SOCKET;
 static SOCKET sock;
 
+DECLARE_COUNTER(rx_packets);
+DECLARE_COUNTER(rx_wrong_src);
+DECLARE_COUNTER(rx_wrong_dest);
+DECLARE_COUNTER(tx_packets);
+DECLARE_COUNTER(tx_errors);
+
 long ipx_localtime;                 // for time stamp in packets
 
 unsigned short ShortSwap(unsigned short i)
@@ -68,6 +74,11 @@ void IPXRegisterFlags(void)
     UnsignedIntFlag("-udpport", &udpport, "port",
                     "UDP port that server should use, default 213");
     PacketStatsRegisterFlags();
+    REGISTER_COUNTER(rx_packets);
+    REGISTER_COUNTER(rx_wrong_src);
+    REGISTER_COUNTER(rx_wrong_dest);
+    REGISTER_COUNTER(tx_packets);
+    REGISTER_COUNTER(tx_errors);
 }
 
 static void ParseServerAddress(const char *addr)
@@ -273,7 +284,11 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
     memcpy(packet.payload, data, data_len);
     if (sendto(sock, &packet, packet_len, 0, &server_addr) < 0)
     {
-        // TODO: Log error.
+        INCREMENT_COUNTER(tx_errors);
+    }
+    else
+    {
+        INCREMENT_COUNTER(tx_packets);
     }
 
     // If we're running a server, we just sent our packet to it via loopback.
@@ -300,14 +315,18 @@ packet_t *IPXGetPacket(void)
         // Not from the server?
         if (!SameServerAddr(&server_addr, &addr))
         {
+            INCREMENT_COUNTER(rx_wrong_src);
             continue;
         }
         // Check destination address is for us.
         if (memcmp(&packet.ipx.Dest, &local_addr, sizeof(ipx_addr_t)) != 0
          && memcmp(&packet.ipx.Dest, &broadcast_addr, sizeof(ipx_addr_t)) != 0)
         {
+            INCREMENT_COUNTER(rx_wrong_dest);
             continue;
         }
+
+        INCREMENT_COUNTER(rx_packets);
 
         // Check destination IPX socket#, since we only care about our
         // specific port. If there are other games in progress on the

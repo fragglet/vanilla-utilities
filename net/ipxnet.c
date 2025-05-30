@@ -25,6 +25,7 @@
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
 #include "net/llcall.h"
+#include "net/pktstats.h"
 
 typedef struct {
     void far *Link;                /* offset-segment */
@@ -42,6 +43,9 @@ typedef struct {
     void far *f2Address;           /* offset-segment */
     uint16_t f2Size;               /* low-high */
 } ECB;
+
+DECLARE_COUNTER(rx_packets);
+DECLARE_COUNTER(tx_packets);
 
 static packet_t packets[NUMPACKETS];
 static ECB ecbs[NUMPACKETS];
@@ -106,6 +110,9 @@ void IPXRegisterFlags(void)
     UnsignedIntFlag("-port", &socket_flag, "socket", NULL);
     UnsignedIntFlag("-socket", &socket_flag, "socket",
                     "(or -port) use alternate IPX socket number");
+
+    REGISTER_COUNTER(rx_packets);
+    REGISTER_COUNTER(tx_packets);
 }
 
 static void InitIPX(void)
@@ -202,6 +209,8 @@ void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
         ll_regs.x.bx = 10;
         LowLevelCall();
     }
+
+    INCREMENT_COUNTER(tx_packets);
 }
 
 unsigned short ShortSwap(unsigned short i)
@@ -247,6 +256,7 @@ packet_t *IPXGetPacket(void)
         Error("GetPacket: ecb.CompletionCode = 0x%x", ecb->CompletionCode);
     }
 
+    INCREMENT_COUNTER(rx_packets);
     return &packets[packetnum];
 }
 

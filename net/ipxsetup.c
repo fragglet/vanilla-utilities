@@ -20,6 +20,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/ipxnet.h"
+#include "net/pktstats.h"
 
 // setupdata_t is used as doomdata_t during setup
 typedef struct {
@@ -31,6 +32,8 @@ typedef struct {
     int16_t dupwanted;
     int16_t plnumwanted;
 } setupdata_t;
+
+DECLARE_COUNTER(rx_unknown_src);
 
 doomcom_t doomcom;
 static int numnetnodes;
@@ -90,6 +93,10 @@ static void GetPacket(void)
         doomcom.remotenode = i;
         doomcom.datalength = ShortSwap(packet->ipx.PacketLength) - 38;
         memcpy(doomcom.data, packet->payload, doomcom.datalength);
+    }
+    else
+    {
+        INCREMENT_COUNTER(rx_unknown_src);
     }
 
     // repost the ECB
@@ -342,6 +349,7 @@ void main(int argc, char *argv[])
     IntFlag("-player", &force_player, "p", "force this to be player #p");
     IPXRegisterFlags();
     NetRegisterFlags();
+    PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
     {

@@ -73,7 +73,7 @@ void IPXRegisterFlags(void)
     UnsignedIntFlag("-ipxsocket", &ipxsocket, "socket", NULL);
     UnsignedIntFlag("-udpport", &udpport, "port",
                     "UDP port that server should use, default 213");
-    PacketStatsRegisterFlags();
+
     REGISTER_COUNTER(rx_packets);
     REGISTER_COUNTER(rx_wrong_src);
     REGISTER_COUNTER(rx_wrong_dest);

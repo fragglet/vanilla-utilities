@@ -8,7 +8,7 @@ REPLAY_OBJS = ctrl\replay.obj ctrl\control.obj bld\common.lib
 ANALOGJS_OBJS = ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj \
                 bld\common.lib
 IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj \
-                net\llcall.obj bld\common.lib
+                net\llcall.obj net\pktstats.obj bld\common.lib
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
                 net\serarb.obj bld\common.lib net\pktstats.obj
 SIRSETUP_OBJS = net\sirsetup.obj net\doomnet.obj net\serport.obj \
@@ -26,7 +26,8 @@ VROTTCOM_OBJS = adapters\vrottcom.obj adapters\fragment.obj net\doomnet.obj \
 VCOMMIT_OBJS = adapters\vcommit.obj adapters\fragment.obj net\doomnet.obj \
                adapters\nodemap.obj bld\common.lib
 VSETARGS_OBJS = lib\vsetargs.obj
-UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj bld\common.lib bld\udpipx.lib
+UDPSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\pktstats.obj \
+                bld\common.lib bld\udpipx.lib
 FAKEDOOM_OBJS = test\fakedoom.obj net\doomnet.obj ctrl\control.obj \
                 stat\stats.obj bld\common.lib
 
@@ -43,10 +44,10 @@ bld\common.lib: lib\flag.obj lib\log.obj lib\dos.obj lib\ints.obj
 	del $@
 	tlib $@ +lib\flag.obj +lib\log.obj +lib\dos.obj +lib\ints.obj
 bld\udpipx.lib: net\udpipx.obj net\llcall.obj net\dossock.obj \
-                net\dbserver.obj net\pktstats.obj
+                net\dbserver.obj
 	del $@
 	tlib $@ +net\udpipx.obj +net\llcall.obj +net\dossock.obj
-	tlib $@ +net\dbserver.obj +net\pktstats.obj
+	tlib $@ +net\dbserver.obj
 bld\par.lib: net\parport.obj net\plio.obj net\pktstats.obj
 	del $@
 	tlib $@ +net\parport.obj +net\plio.obj +net\pktstats.obj

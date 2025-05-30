@@ -504,6 +504,7 @@ void main(int argc, char *argv[])
                "specify config file for modem");
     SerialRegisterFlags();
     NetRegisterFlags();
+    PacketStatsRegisterFlags();
 
     args = ParseCommandLine(argc, argv);
     if (args == NULL)

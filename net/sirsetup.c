@@ -713,6 +713,7 @@ void main(int argc, char *argv[])
 
     SerialRegisterFlags();
     NetRegisterFlags();
+    PacketStatsRegisterFlags();
 
     args = ParseCommandLine(argc, argv);
     if (args == NULL)

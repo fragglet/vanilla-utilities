@@ -74,7 +74,6 @@ void SerialRegisterFlags(void)
 
     REGISTER_COUNTER(rx_bytes);
     REGISTER_COUNTER(tx_bytes);
-    PacketStatsRegisterFlags();
 }
 
 void GetUart(void)

@@ -39,6 +39,7 @@
 #include "lib/log.h"
 #include "net/doomnet.h"
 #include "net/pktaggr.h"
+#include "net/pktstats.h"
 #include "net/serarb.h"
 #include "net/serport.h"
 
@@ -86,6 +87,13 @@ static const uint8_t SETUP_SIGNATURE[16] = {
     0xb2, 0x88, 0x2e, 0x28, 0xb1, 0xc4, 0xaa, 0xdb,
     0x9e, 0xc2, 0x24, 0xec, 0x2c, 0x1f, 0x6c, 0xa2,
 };
+
+DECLARE_COUNTER(rx_packets);
+DECLARE_COUNTER(rx_packets_dropped);
+DECLARE_COUNTER(rx_handoffs);
+DECLARE_COUNTER(tx_packets);
+DECLARE_COUNTER(tx_packets_dropped);
+DECLARE_COUNTER(tx_handoffs);
 
 static struct setup_data node_data[MAXNETNODES];
 
@@ -166,6 +174,11 @@ static int PacketReceived(void)
             pkt->valid = 1;
             inque.head = next_head;
             pkt = &inque.packets[next_head];
+            INCREMENT_COUNTER(rx_packets);
+        }
+        else
+        {
+            INCREMENT_COUNTER(rx_packets_dropped);
         }
     }
 
@@ -191,6 +204,8 @@ static void AddInByte(struct packet *pkt, uint8_t c)
 
 static void ReceivedHandoff(void)
 {
+    INCREMENT_COUNTER(rx_handoffs);
+
     if (state == STATE_WAIT)
     {
         state = STATE_TRANSMIT;
@@ -277,6 +292,7 @@ unsigned int SerialMoreTXData(void)
     {
         outque.tail = (outque.tail + 1) & (QUEUE_LEN - 1);
         tx_offset = 0;
+        INCREMENT_COUNTER(tx_packets);
 
         // If it's the last packet, hand off back to the other node.
         if (outque.head == outque.tail)
@@ -287,6 +303,7 @@ unsigned int SerialMoreTXData(void)
             {
                 state = STATE_WAIT;
             }
+            INCREMENT_COUNTER(tx_handoffs);
         }
         else
         {
@@ -344,6 +361,8 @@ static void SendPacket(int node, void *data, size_t data_len)
     // is longer, send it instead as higher priority.
     if (next_head == outque.tail)
     {
+        INCREMENT_COUNTER(tx_packets_dropped);
+
         pkt = &outque.packets[(outque.head + QUEUE_LEN - 1) & (QUEUE_LEN - 1)];
         hdr = (struct packet_header *) pkt->data;
         next_head = outque.head;
@@ -700,6 +719,13 @@ void main(int argc, char *argv[])
     {
         ErrorPrintUsage("No command given to run.");
     }
+
+    REGISTER_COUNTER(rx_packets);
+    REGISTER_COUNTER(rx_packets_dropped);
+    REGISTER_COUNTER(rx_handoffs);
+    REGISTER_COUNTER(tx_packets);
+    REGISTER_COUNTER(tx_packets_dropped);
+    REGISTER_COUNTER(tx_handoffs);
 
     // set network characteristics
     doomcom.ticdup = 1;

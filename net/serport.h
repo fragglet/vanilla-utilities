@@ -93,3 +93,4 @@ void JumpStart(void);
 // previously returned zero.
 void ResumeReceive(void);
 
+void SetDTR(int dtr);

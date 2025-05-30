@@ -35,9 +35,8 @@ static struct SREGS sregs;
 
 static struct irq_hook uart_interrupt;
 
-int uart;                       // io address
 static enum { UART_8250, UART_16550 } uart_type;
-static int irq;
+static int irq, uart;
 
 static int modem_status = -1;
 static int line_status = -1;
@@ -453,3 +452,17 @@ void ResumeReceive(void)
     }
 }
 
+void SetDTR(int dtr)
+{
+    int mcr = INPUT(uart + MODEM_CONTROL_REGISTER);
+
+    if (dtr)
+    {
+        mcr |= MCR_DTR;
+    }
+    else
+    {
+        mcr &= ~MCR_DTR;
+    }
+    OUTPUT(uart + MODEM_CONTROL_REGISTER, mcr);
+}

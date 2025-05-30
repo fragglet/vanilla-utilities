@@ -49,7 +49,6 @@ static struct
 static que_t inque, outque;
 
 void JumpStart(void);
-extern int uart;
 
 static int in_game = 0;
 static doomcom_t doomcom;
@@ -340,11 +339,9 @@ static void ISRCallback(void)
 static void HangupModem(void)
 {
     LogMessage("Dropping DTR");
-    OUTPUT(uart + MODEM_CONTROL_REGISTER,
-           INPUT(uart + MODEM_CONTROL_REGISTER) & ~MCR_DTR);
+    SetDTR(0);
     delay(1250);
-    OUTPUT(uart + MODEM_CONTROL_REGISTER,
-           INPUT(uart + MODEM_CONTROL_REGISTER) | MCR_DTR);
+    SetDTR(1);
     ModemCommand("+++");
     delay(1250);
     ModemCommand(shutdown);

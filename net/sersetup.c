@@ -21,6 +21,7 @@
 #include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
+#include "net/pktstats.h"
 #include "net/serarb.h"
 #include "net/serport.h"
 
@@ -49,6 +50,11 @@ static struct
 static que_t inque, outque;
 
 void JumpStart(void);
+
+DECLARE_COUNTER(rx_packets);
+DECLARE_COUNTER(tx_packets);
+DECLARE_COUNTER(rx_overlength_bytes);
+DECLARE_COUNTER(tx_overlength_packets);
 
 static int in_game = 0;
 static doomcom_t doomcom;
@@ -251,6 +257,7 @@ int ReadPacket(void)
             {
                 // got a good packet
                 newpacket = 1;
+                INCREMENT_COUNTER(rx_packets);
                 return 1;
             }
         }
@@ -264,6 +271,7 @@ int ReadPacket(void)
         if (packetlen >= MAXPACKET)
         {
             // oversize packet
+            INCREMENT_COUNTER(rx_overlength_bytes);
             continue;
         }
         packet[packetlen] = c;
@@ -279,6 +287,7 @@ void WritePacket(char *buffer, int len)
     b = 0;
     if (len > MAXPACKET)
     {
+        INCREMENT_COUNTER(tx_overlength_packets);
         return;
     }
 
@@ -296,6 +305,7 @@ void WritePacket(char *buffer, int len)
     localbuffer[b++] = 0;
 
     WriteBuffer(localbuffer, b);
+    INCREMENT_COUNTER(tx_packets);
 }
 
 static void NetCallback(void)
@@ -500,6 +510,11 @@ void main(int argc, char *argv[])
     {
         ErrorPrintUsage("No command given to run.");
     }
+
+    REGISTER_COUNTER(rx_packets);
+    REGISTER_COUNTER(rx_overlength_bytes);
+    REGISTER_COUNTER(tx_packets);
+    REGISTER_COUNTER(tx_overlength_packets);
 
     // set network characteristics
     doomcom.ticdup = 1;

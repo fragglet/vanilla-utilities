@@ -21,10 +21,14 @@
 #include "lib/ints.h"
 #include "lib/log.h"
 #include "net/doomnet.h"
+#include "net/pktstats.h"
 #include "net/serport.h"
 
 static void interrupt far ISR8250(void);
 static void interrupt far ISR16550(void);
+
+DECLARE_COUNTER(rx_bytes);
+DECLARE_COUNTER(tx_bytes);
 
 uint8_t serial_tx_buffer[SERIAL_TX_BUFFER_LEN];
 static unsigned int serial_tx_index, serial_tx_bytes;
@@ -67,6 +71,10 @@ void SerialRegisterFlags(void)
     BoolFlag("-8250", &force_8250, NULL);
     IntFlag("-port", &port_flag, "port", NULL);
     IntFlag("-irq", &irq_flag, "irq", NULL);
+
+    REGISTER_COUNTER(rx_bytes);
+    REGISTER_COUNTER(tx_bytes);
+    PacketStatsRegisterFlags();
 }
 
 void GetUart(void)
@@ -304,6 +312,7 @@ static inline void TransmitNextByte(void)
     ++serial_tx_index;
     OUTPUT(uart + TRANSMIT_HOLDING_REGISTER, c);
     transmitting = 1;
+    INCREMENT_COUNTER(tx_bytes);
 }
 
 // DisableReceive is called when SerialByteReceived returns failure,
@@ -319,6 +328,17 @@ static inline void DisableReceive(void)
         receiving = 0;
         OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
                IER_TX_HOLDING_REGISTER_EMPTY);
+    }
+}
+
+static void DoReceiveByte(void)
+{
+    uint8_t b = INPUT(uart + RECEIVE_BUFFER_REGISTER);
+    INCREMENT_COUNTER(rx_bytes);
+
+    if (!SerialByteReceived(b))
+    {
+        DisableReceive();
     }
 }
 
@@ -352,11 +372,7 @@ static void interrupt far ISR8250(void)
                 break;
 
             case IIR_RX_DATA_READY_INTERRUPT:
-                // receive
-                if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
-                {
-                    DisableReceive();
-                }
+                DoReceiveByte();
                 break;
 
             default:
@@ -371,11 +387,7 @@ void PollSerialReceive(void)
 {
     while (INPUT(uart + LINE_STATUS_REGISTER) & LSR_DATA_READY)
     {
-        if (!SerialByteReceived(INPUT(uart + RECEIVE_BUFFER_REGISTER)))
-        {
-            DisableReceive();
-            break;
-        }
+        DoReceiveByte();
     }
 }
 

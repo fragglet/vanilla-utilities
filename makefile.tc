@@ -10,9 +10,9 @@ ANALOGJS_OBJS = ctrl\analogjs.obj ctrl\control.obj ctrl\joystick.obj \
 IPXSETUP_OBJS = net\ipxsetup.obj net\doomnet.obj net\ipxnet.obj \
                 net\llcall.obj bld\common.lib
 SERSETUP_OBJS = net\sersetup.obj net\doomnet.obj net\serport.obj \
-                net\serarb.obj bld\common.lib
+                net\serarb.obj bld\common.lib net\pktstats.obj
 SIRSETUP_OBJS = net\sirsetup.obj net\doomnet.obj net\serport.obj \
-                net\pktaggr.obj bld\common.lib
+                net\pktaggr.obj bld\common.lib net\pktstats.obj
 PARSETUP_OBJS = net\parsetup.obj net\doomnet.obj net\serarb.obj \
                 bld\par.lib bld\common.lib
 PASSTHRU_OBJS = net\passthru.obj net\doomnet.obj bld\common.lib

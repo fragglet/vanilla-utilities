@@ -30,17 +30,17 @@ static int server_num_clients = 0;
 static packet_t packet;
 static SOCKET server_sock = INVALID_SOCKET;
 
-DECLARE_COUNTER(server_rx_packets);
-DECLARE_COUNTER(server_rx_errors);
-DECLARE_COUNTER(server_tx_packets);
-DECLARE_COUNTER(server_tx_errors);
+DECLARE_COUNTER(srv_rx_packets);
+DECLARE_COUNTER(srv_rx_errors);
+DECLARE_COUNTER(srv_tx_packets);
+DECLARE_COUNTER(srv_tx_errors);
 
 static void RegisterCounters(void)
 {
-    REGISTER_COUNTER(server_rx_packets);
-    REGISTER_COUNTER(server_rx_errors);
-    REGISTER_COUNTER(server_tx_packets);
-    REGISTER_COUNTER(server_tx_errors);
+    REGISTER_COUNTER(srv_rx_packets);
+    REGISTER_COUNTER(srv_rx_errors);
+    REGISTER_COUNTER(srv_tx_packets);
+    REGISTER_COUNTER(srv_tx_errors);
 }
 
 static ssize_t SendtoOrLog(SOCKET socket, const void far *msg, size_t len,
@@ -50,11 +50,11 @@ static ssize_t SendtoOrLog(SOCKET socket, const void far *msg, size_t len,
 
     if (result < 0)
     {
-        INCREMENT_COUNTER(server_tx_errors);
+        INCREMENT_COUNTER(srv_tx_errors);
     }
     else
     {
-        INCREMENT_COUNTER(server_tx_packets);
+        INCREMENT_COUNTER(srv_tx_packets);
     }
 
     return result;
@@ -198,11 +198,11 @@ void RunServer(void)
             // process; other errors are not.
             if (DosSockLastError != WSAEWOULDBLOCK)
             {
-                INCREMENT_COUNTER(server_rx_errors);
+                INCREMENT_COUNTER(srv_rx_errors);
             }
             break;
         }
-        INCREMENT_COUNTER(server_rx_packets);
+        INCREMENT_COUNTER(srv_rx_packets);
         if (IsRegistrationPacket(&packet.ipx))
         {
             NewClient(&addr);

@@ -20,6 +20,7 @@ static int print_stats_on_exit = 0;
 
 static void PrintStats(void)
 {
+    int printed_header = 0;
     struct counter *c;
 
     if (!print_stats_on_exit)
@@ -27,13 +28,18 @@ static void PrintStats(void)
         return;
     }
 
-    LogMessage("Statistics:");
     for (c = counters; c != NULL; c = c->next)
     {
-        if (c->i != 0)
+        if (c->i == 0)
         {
-            LogMessage("%16s %6ld", c->name, c->i);
+            continue;
         }
+        if (!printed_header)
+        {
+            LogMessage("Statistics:");
+            printed_header = 1;
+        }
+        LogMessage("%16s %6ld", c->name, c->i);
     }
 }
 

@@ -194,8 +194,13 @@ void RunServer(void)
         len = recvfrom(server_sock, &packet, sizeof(packet), 0, &addr);
         if (len < 0)
         {
-            INCREMENT_COUNTER(server_rx_errors);
-            continue;
+            // WSAEWOULDBLOCK is expected when there are no more packets to
+            // process; other errors are not.
+            if (DosSockLastError != WSAEWOULDBLOCK)
+            {
+                INCREMENT_COUNTER(server_rx_errors);
+            }
+            break;
         }
         INCREMENT_COUNTER(server_rx_packets);
         if (IsRegistrationPacket(&packet.ipx))

@@ -1,3 +1,10 @@
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/fragglet/vanilla-utilities/ci.yml)
+![Static Badge](https://img.shields.io/badge/OS-MS--DOS-red)
+[![CodeFactor](https://www.codefactor.io/repository/github/fragglet/vanilla-utilities/badge)](https://www.codefactor.io/repository/github/fragglet/vanilla-utilities)
+![GitHub License](https://img.shields.io/github/license/fragglet/vanilla-utilities)
+![GitHub Release](https://img.shields.io/github/v/release/fragglet/vanilla-utilities)
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/fragglet/vanilla-utilities/latest/total)
+![GitHub repo size](https://img.shields.io/github/repo-size/fragglet/vanilla-utilities)
 
 ![vutils icon](vutils.png)
 

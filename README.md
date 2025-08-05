@@ -5,6 +5,7 @@
 ![GitHub Release](https://img.shields.io/github/v/release/fragglet/vanilla-utilities)
 ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/fragglet/vanilla-utilities/latest/total)
 ![GitHub repo size](https://img.shields.io/github/repo-size/fragglet/vanilla-utilities)
+[![GitHub Repo stars](https://img.shields.io/github/stars/fragglet/vanilla-utilities)](https://github.com/fragglet/vanilla-utilities/stargazers)
 
 ![vutils icon](vutils.png)
 

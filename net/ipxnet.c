@@ -178,7 +178,6 @@ void ShutdownNetwork(void)
 }
 
 // Send packet to the given destination.
-// A destination of MAXNETNODES is a broadcast.
 void IPXSendPacket(const ipx_addr_t *addr, void *data, size_t data_len)
 {
     // set the time

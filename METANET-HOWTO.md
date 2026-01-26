@@ -17,37 +17,41 @@ Firstly, some basic principles:
 daisy-chaining computers together, there cannot be more than four links in
 the chain.
 
-## Example 1: Three player serial game
+## Example 1: Daisy-chaining three laptops
 
-In this example, three computers (*A*, *B* and *C*) do not have network
-cards, but do have serial ports that they can use to communicate with each
-other. *A* and *C* are both connected to *B* with null-modem cables; if *A*
-wants to send a message to *C*, it must send it to *B*, which will then
-forward it on to *C*.
+Almost all '90s-era laptops had at least one serial port and one parallel
+port. If you have three such laptops and the appropriate cables, you can
+use `metanet` to daisy-chain them together and create a three-player game.
+What you'll need:
 
-Setting up `metanet` in this scenario is fairly straightforward. *A* and
-*C* are both started with the following command (it is assumed the cable is
-connected to *COM1:* on each machine):
+ * Machine *A*, with at least one serial port
+ * Machine *B*, with at least one serial port and one parallel port
+ * Machine *C*, with at least one parallel port
+ * Null-modem (serial cable)
+ * Straight-through parallel port cable
+   (aka [laplink cable](https://en.wikipedia.org/wiki/Laplink_cable)).
+
+Connect machine *A* to machine *B* with the null-modem cable, and machine
+*B* to machine *C* with the parallel port cable.
+
+Start machine *A* with the following command:
 ```
 sersetup.exe -com1 metanet.exe doom.exe
 ```
-Machine *B* must communicate on two ports (*COM1:* and *COM2:*), so the
+Machine *B* must communicate on two ports (*COM1:* and *LPT1:*), so the
 command line looks like this:
 ```
-sersetup.exe -com1 sersetup.exe -com2 metanet.exe doom.exe
+sersetup.exe -com1 parsetup.exe -lpt1 metanet.exe doom.exe
 ```
-On startup, the serial link is established by `sersetup.exe` on *COM1:*,
-then a second `sersetup.exe` is invoked to establish the link on *COM2:*.
-This then invokes `metanet.exe` which discovers all nodes in the network.
-Finally, `metanet.exe` on all three machines launches `doom.exe` to start
-the game.
-
-This fairly simple example could be expanded to include a fourth machine
-connected to any of the three machines. Note that there are trade-offs: for
-example, machine *D* could be connected to *B*, but *B* would need a third
-COM port for this to work. Alternatively, *D* could be connected to *C*,
-but this would increase the number of hops in the network, potentially
-affecting performance (since *A* to *D* would require three hops).
+For Machine *C*:
+```
+parsetup.exe -lpt1 metanet.exe doom.exe
+```
+This example can be expanded to include a fourth machine, connecting it either
+to machine *A* using a second parallel port cable, or to machine *C* using a
+second null-modem cable. Note however that this increases the number of hops in
+the network, potentially affecting performance (since sending a message from
+*A* to *D* requires three hops).
 
 ### Example 2: Four player mixed IPX/serial game
 

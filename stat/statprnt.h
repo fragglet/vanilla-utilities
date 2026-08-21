@@ -11,6 +11,8 @@
 #ifndef STATPRNT_H
 #define STATPRNT_H
 
+#include "stat/stats.h"
+
 void DiscoverGamemode(wbstartstruct_t *stats, int num_stats);
 void PrintStats(FILE *stream, wbstartstruct_t *stats);
 

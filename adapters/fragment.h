@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include "lib/inttypes.h"
+#include "net/doomnet.h"
+
 #define MAX_REASSEMBLED_PACKET 2048
 
 struct reassembled_packet

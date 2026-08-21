@@ -46,23 +46,18 @@ static void interrupt far NetISR(void)
     RESTORE_ISR_STACK;
 }
 
-/*
-=============
-=
-= NetLaunchDoom
-=
-These fields in doomcom should be filled in before calling:
-
-	short	numnodes;		// console is always node 0
-	short	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
-	short	extratics;		// 1 = send a backup tic in every packet
-
-	short	consoleplayer;	// 0-3 = player number
-	short	numplayers;		// 1-4
-	short	angleoffset;	// 1 = left, 0 = center, -1 = right
-	short	drone;			// 1 = drone
-=============
-*/
+/* Launch the game.
+ *
+ * These fields in doomcom should be filled in before calling:
+ *
+ *   short numnodes;      // console is always node 0
+ *   short ticdup;        // 1 = no duplication, 2-5 = dup for slow nets
+ *   short extratics;     // 1 = send a backup tic in every packet
+ *   short consoleplayer; // 0-3 = player number
+ *   short numplayers;    // 1-4
+ *   short angleoffset;   // 1 = left, 0 = center, -1 = right
+ *   short drone;         // 1 = drone
+ */
 
 void NetLaunchDoom(doomcom_t far *doomcom, char **args,
                    void (*callback)(void))

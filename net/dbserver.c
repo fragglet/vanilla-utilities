@@ -133,7 +133,7 @@ static void NewClient(struct sockaddr_in *addr)
     }
 
     reply.PacketCheckSum = htons(0xffff);
-    reply.PacketLength = htons(sizeof(ipx_header_t));;
+    reply.PacketLength = htons(sizeof(ipx_header_t));
     reply.PacketTransportControl = 0;
     reply.PacketType = 0;
 

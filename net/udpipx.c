@@ -172,7 +172,7 @@ static void Connect(void)
     clock_t start_time, last_send_time, now;
 
     start_time = clock();
-    last_send_time = start_time - 2 * CLOCKS_PER_SEC;;
+    last_send_time = start_time - 2 * CLOCKS_PER_SEC;
 
     if (!run_server_flag)
     {

@@ -11,9 +11,9 @@
 // Alternative implementation of ipxnet.h interface that sends packets
 // over UDP, implementing the DOSbox tunnelling protocol.
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 #include <time.h>
 
@@ -28,7 +28,7 @@
 #include "net/ipxnet.h"
 #include "net/pktstats.h"
 
-#define DEFAULT_UDP_PORT  213  /* as used by dosbox */
+#define DEFAULT_UDP_PORT 213 /* as used by dosbox */
 
 const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 
@@ -48,7 +48,7 @@ DECLARE_COUNTER(rx_wrong_dest);
 DECLARE_COUNTER(tx_packets);
 DECLARE_COUNTER(tx_errors);
 
-long ipx_localtime;                 // for time stamp in packets
+long ipx_localtime; // for time stamp in packets
 
 unsigned short ShortSwap(unsigned short i)
 {
@@ -90,7 +90,8 @@ static void ParseServerAddress(const char *addr)
         Error("Not a valid server address: %s\n"
               "DNS names are not supported; you must specify an IP "
               "address.\nTo resolve a name, try using the 'ping' "
-              "command.", addr);
+              "command.",
+              addr);
     }
 
     server_addr.sin_family = AF_INET;
@@ -117,8 +118,7 @@ static void SendRegistration(void)
 
     if (sendto(sock, &tmphdr, sizeof(ipx_header_t), 0, &server_addr) < 0)
     {
-        Error("Error sending registration packet: errno=%d",
-              DosSockLastError);
+        Error("Error sending registration packet: errno=%d", DosSockLastError);
     }
 }
 
@@ -128,8 +128,8 @@ static int SameServerAddr(struct sockaddr_in *a, struct sockaddr_in *b)
     // even though we send to 127.0.0.1, the replies come back from a
     // different address. What we should do instead is use getsockname(),
     // but that's going to require more reverse engineering work.
-    return 1 //a->sin_addr.s_addr == b->sin_addr.s_addr
-        && a->sin_port == b->sin_port;
+    return 1 // a->sin_addr.s_addr == b->sin_addr.s_addr
+           && a->sin_port == b->sin_port;
 }
 
 static int CheckRegistrationReply(void)
@@ -158,8 +158,8 @@ static int CheckRegistrationReply(void)
             continue;
         }
 
-        if (ntohs(packet.ipx.SrcSocket) == 2
-         && ntohs(packet.ipx.DestSocket) == 2)
+        if (ntohs(packet.ipx.SrcSocket) == 2 &&
+            ntohs(packet.ipx.DestSocket) == 2)
         {
             memcpy(&local_addr, &packet.ipx.Dest, sizeof(ipx_addr_t));
             return 1;
@@ -319,8 +319,8 @@ packet_t *IPXGetPacket(void)
             continue;
         }
         // Check destination address is for us.
-        if (memcmp(&packet.ipx.Dest, &local_addr, sizeof(ipx_addr_t)) != 0
-         && memcmp(&packet.ipx.Dest, &broadcast_addr, sizeof(ipx_addr_t)) != 0)
+        if (memcmp(&packet.ipx.Dest, &local_addr, sizeof(ipx_addr_t)) != 0 &&
+            memcmp(&packet.ipx.Dest, &broadcast_addr, sizeof(ipx_addr_t)) != 0)
         {
             INCREMENT_COUNTER(rx_wrong_dest);
             continue;
@@ -335,8 +335,8 @@ packet_t *IPXGetPacket(void)
         {
             return &packet;
         }
-        else if (ntohs(packet.ipx.DestSocket) == 86
-              && ntohs(packet.ipx.SrcSocket) == 86 && !in_game)
+        else if (ntohs(packet.ipx.DestSocket) == 86 &&
+                 ntohs(packet.ipx.SrcSocket) == 86 && !in_game)
         {
             // We don't abort the program if the game's in progress.
             Error("Server has shut down");

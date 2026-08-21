@@ -8,11 +8,11 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include <assert.h>
+#include <bios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bios.h>
-#include <assert.h>
 
 #include "lib/dos.h"
 #include "lib/ints.h"
@@ -23,8 +23,8 @@
 // we grab it. Note that the original Doom ipxsetup/sersetup only ever went
 // up to 0x66, but we use the full range up to 0x80, which is consistent
 // with what DOS packet drivers do.
-#define MIN_USER_INTERRUPT  0x60
-#define MAX_USER_INTERRUPT  0x80
+#define MIN_USER_INTERRUPT 0x60
+#define MAX_USER_INTERRUPT 0x80
 
 unsigned char isr_stack_space[ISR_STACK_SIZE];
 
@@ -48,8 +48,7 @@ static int FindFreeInterrupt(void)
     return 0;
 }
 
-int FindAndHookInterrupt(struct interrupt_hook *state,
-                         interrupt_handler_t isr)
+int FindAndHookInterrupt(struct interrupt_hook *state, interrupt_handler_t isr)
 {
     if (state->force_vector != 0)
     {
@@ -91,13 +90,11 @@ static int CheckChainedIRQ(unsigned int irq)
 
 static void SetChainedIRQ(struct irq_hook *state, int enable)
 {
-    sprintf(state->env_string, "CHAIN_IRQ%d=%s", state->irq,
-            enable ? "1" : "");
+    sprintf(state->env_string, "CHAIN_IRQ%d=%s", state->irq, enable ? "1" : "");
     putenv(state->env_string);
 }
 
-void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
-             unsigned int irq)
+void HookIRQ(struct irq_hook *state, interrupt_handler_t isr, unsigned int irq)
 {
     assert(irq < 8);
 
@@ -160,9 +157,9 @@ void ClearIRQMask(struct irq_hook *irq)
     OUTPUT(PIC_DATA_PORT, INPUT(PIC_DATA_PORT) & ~(1 << irq->irq));
 }
 
-#define DOS_INTERRUPT_API  0x21
-#define DOS_API_SET_CURRENT_PROCESS  0x50
-#define DOS_API_GET_CURRENT_PROCESS  0x51
+#define DOS_INTERRUPT_API           0x21
+#define DOS_API_SET_CURRENT_PROCESS 0x50
+#define DOS_API_GET_CURRENT_PROCESS 0x51
 
 void RestorePSP(unsigned int psp)
 {
@@ -184,4 +181,3 @@ unsigned int SwitchPSP(void)
 
     return regs.x.bx;
 }
-

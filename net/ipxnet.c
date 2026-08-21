@@ -11,9 +11,9 @@
 
 // Interface code to IPX network API
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <string.h>
 
 #include "lib/inttypes.h"
@@ -28,20 +28,20 @@
 #include "net/pktstats.h"
 
 typedef struct {
-    void far *Link;                /* offset-segment */
-    void far *ESRAddress;          /* offset-segment */
+    void far *Link;       /* offset-segment */
+    void far *ESRAddress; /* offset-segment */
     uint8_t InUseFlag;
     uint8_t CompletionCode;
-    uint16_t ECBSocket;            /* high-low */
-    uint8_t IPXWorkspace[4];       /* N/A */
-    uint8_t DriverWorkspace[12];   /* N/A */
-    uint8_t ImmediateAddress[6];   /* high-low */
-    uint16_t FragmentCount;        /* low-high */
+    uint16_t ECBSocket;          /* high-low */
+    uint8_t IPXWorkspace[4];     /* N/A */
+    uint8_t DriverWorkspace[12]; /* N/A */
+    uint8_t ImmediateAddress[6]; /* high-low */
+    uint16_t FragmentCount;      /* low-high */
 
-    void far *fAddress;            /* offset-segment */
-    uint16_t fSize;                /* low-high */
-    void far *f2Address;           /* offset-segment */
-    uint16_t f2Size;               /* low-high */
+    void far *fAddress;  /* offset-segment */
+    uint16_t fSize;      /* low-high */
+    void far *f2Address; /* offset-segment */
+    uint16_t f2Size;     /* low-high */
 } ECB;
 
 DECLARE_COUNTER(rx_packets);
@@ -55,12 +55,12 @@ const ipx_addr_t broadcast_addr = {0, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 static unsigned int socket_flag = DEFAULT_IPX_SOCKET;
 static int socketid;
 
-long ipx_localtime;                 // for time stamp in packets
+long ipx_localtime; // for time stamp in packets
 
 int OpenSocket(unsigned short socketNumber)
 {
     ll_regs.x.bx = 0;
-    ll_regs.h.al = 0;              // longevity
+    ll_regs.h.al = 0; // longevity
     ll_regs.x.dx = socketNumber;
     LowLevelCall();
     if (ll_regs.h.al != 0)
@@ -244,7 +244,7 @@ packet_t *IPXGetPacket(void)
 
     if (besttic == LONG_MAX)
     {
-        return NULL;               // no packets
+        return NULL; // no packets
     }
 
     ecb = &ecbs[packetnum];

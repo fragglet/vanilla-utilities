@@ -73,8 +73,8 @@ static int TryBroadcastStore(int node, void *data, size_t data_len)
         pending_count = 0;
     }
     // The packet must exactly match the previous ones, and be in sequence.
-    else if (node != pending_count + 1 || pending_buffer_len != data_len
-          || memcmp(pending_buffer, data, data_len) != 0)
+    else if (node != pending_count + 1 || pending_buffer_len != data_len ||
+             memcmp(pending_buffer, data, data_len) != 0)
     {
         FlushPendingPackets();
         return 0;
@@ -93,8 +93,8 @@ static int TryBroadcastStore(int node, void *data, size_t data_len)
 
 void AggregatedSendPacket(int node, void *data, size_t data_len)
 {
-    if (node > 0 && node < aggr_numnodes
-     && TryBroadcastStore(node, data, data_len))
+    if (node > 0 && node < aggr_numnodes &&
+        TryBroadcastStore(node, data, data_len))
     {
         return;
     }
@@ -109,4 +109,3 @@ void InitAggregation(int numnodes,
     aggr_numnodes = numnodes;
     aggr_sendpkt = send;
 }
-

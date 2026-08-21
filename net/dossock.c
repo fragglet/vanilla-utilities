@@ -43,12 +43,12 @@
 //   implementation that calls into that driver. Some reverse engineering of
 //   that helped to fill in the gaps missing from MSSOCKS.PAS.
 
+#include <dos.h>
+#include <fcntl.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <process.h>
-#include <dos.h>
-#include <fcntl.h>
 
 #include "lib/dos.h"
 #include "lib/inttypes.h"
@@ -58,13 +58,13 @@
 
 #pragma pack(1)
 
-#define WSOCK_BIND_CMD              0x0101
-#define WSOCK_CLOSESOCKET_CMD       0x0102
-#define WSOCK_GETPEERNAME_CMD       0x0104
-#define WSOCK_IOCTLSOCKET_CMD       0x0107
-#define WSOCK_RECV_CMD              0x0109
-#define WSOCK_SEND_CMD              0x010d
-#define WSOCK_SOCKET_CMD            0x0110
+#define WSOCK_BIND_CMD        0x0101
+#define WSOCK_CLOSESOCKET_CMD 0x0102
+#define WSOCK_GETPEERNAME_CMD 0x0104
+#define WSOCK_IOCTLSOCKET_CMD 0x0107
+#define WSOCK_RECV_CMD        0x0109
+#define WSOCK_SEND_CMD        0x010d
+#define WSOCK_SOCKET_CMD      0x0110
 
 #define SOCKADDR_SIZE 16 /* bytes = sizeof struct sockaddr */
 
@@ -72,9 +72,9 @@
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
 
-#define VXD_ID_VXDLDR    0x0027
-#define VXD_ID_WSOCK     0x003e
-#define VXD_ID_WSOCK2    0x3b0a
+#define VXD_ID_VXDLDR 0x0027
+#define VXD_ID_WSOCK  0x003e
+#define VXD_ID_WSOCK2 0x3b0a
 
 typedef void __stdcall far (*vxd_entrypoint)();
 
@@ -139,14 +139,14 @@ static SOCKET WS_socket(int domain, int type, int protocol)
 {
     static DWORD handle_counter = 999900UL;
     struct {
-        DWORD   AddressFamily;
-        DWORD   SocketType;
-        DWORD   Protocol;
-        SOCKET  NewSocket;
-        DWORD   NewSocketHandle;  // ___  ^ Winsock1 only uses these
-        DWORD   ProtocolCatalogID;
-        DWORD   GroupID;
-        DWORD   Flags;
+        DWORD AddressFamily;
+        DWORD SocketType;
+        DWORD Protocol;
+        SOCKET NewSocket;
+        DWORD NewSocketHandle; // ___  ^ Winsock1 only uses these
+        DWORD ProtocolCatalogID;
+        DWORD GroupID;
+        DWORD Flags;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -179,8 +179,8 @@ static DWORD MapFlatPointer(const void far *msg)
 {
     struct {
         const void far *Address;
-        SOCKET          Socket;
-        DWORD           AddressLength;
+        SOCKET Socket;
+        DWORD AddressLength;
     } params;
 
     // Trick found inside ws2dos code:
@@ -200,11 +200,11 @@ static int WS_bind(SOCKET socket, struct sockaddr_in far *addr)
 {
     struct {
         const void far *Address;
-        SOCKET    Socket;
-        DWORD     AddressLength;
+        SOCKET Socket;
+        DWORD AddressLength;
         void far *ApcRoutine;
-        DWORD     ApcContext;
-        DWORD     ConnFamily;
+        DWORD ApcContext;
+        DWORD ConnFamily;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -222,15 +222,15 @@ static ssize_t WS_sendto1(SOCKET socket, const void far *msg, size_t len,
 {
     struct {
         const void far *Buffer;
-        const void far *Address;      // ___ ^ Addresses translated by VxD
-        SOCKET          Socket;
-        DWORD           BufferLength;
-        DWORD           Flags;
-        DWORD           AddressLength;
-        DWORD           BytesSent;
-        void far       *ApcRoutine;
-        DWORD           ApcContext;
-        DWORD           Timeout;
+        const void far *Address; // ___ ^ Addresses translated by VxD
+        SOCKET Socket;
+        DWORD BufferLength;
+        DWORD Flags;
+        DWORD AddressLength;
+        DWORD BytesSent;
+        void far *ApcRoutine;
+        DWORD ApcContext;
+        DWORD Timeout;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -262,16 +262,16 @@ static ssize_t WS_sendto2(SOCKET socket, const void far *msg, size_t len,
     struct WSABuffer buffer;
     struct {
         struct WSABuffer far *Buffers;
-        const void far *Address;     // ___ ^ Addresses translated by VxD
-        SOCKET          Socket;
-        DWORD           BufferCount;
-        void far       *AddrLenPtr; //?
-        DWORD           Flags;
-        DWORD           AddressLength;
-        DWORD           BytesSent;
-        void far       *ApcRoutine;
-        DWORD           ApcContext;
-        DWORD           Unknown[3];
+        const void far *Address; // ___ ^ Addresses translated by VxD
+        SOCKET Socket;
+        DWORD BufferCount;
+        void far *AddrLenPtr; //?
+        DWORD Flags;
+        DWORD AddressLength;
+        DWORD BytesSent;
+        void far *ApcRoutine;
+        DWORD ApcContext;
+        DWORD Unknown[3];
     } params;
 
     // wsock2.vxd translates the params.Buffers pointer (below) into a flat
@@ -303,16 +303,16 @@ static ssize_t WS_recvfrom1(SOCKET socket, void far *buf, size_t len, int flags,
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     struct {
-        void far  *Buffer;
-        void far  *Address;      // ___ ^ Addresses translated by VxD
-        SOCKET     Socket;
-        DWORD      BufferLength;
-        DWORD      Flags;
-        DWORD      AddressLength;
-        DWORD      BytesReceived;
-        void far  *ApcRoutine;
-        DWORD      ApcContext;
-        DWORD      Timeout;
+        void far *Buffer;
+        void far *Address; // ___ ^ Addresses translated by VxD
+        SOCKET Socket;
+        DWORD BufferLength;
+        DWORD Flags;
+        DWORD AddressLength;
+        DWORD BytesReceived;
+        void far *ApcRoutine;
+        DWORD ApcContext;
+        DWORD Timeout;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -339,20 +339,20 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
 {
     static uint8_t frombuf[SOCKADDR_SIZE];
     struct WSABuffer buffer;
-    DWORD unused = SOCKADDR_SIZE;  // for AddrLenPtr
+    DWORD unused = SOCKADDR_SIZE; // for AddrLenPtr
     struct {
         struct WSABuffer far *Buffers;
         void far *Address;
-        void far *AddrLenPtr;   // ___ ^ Addresses translated by VxD
-        SOCKET    Socket;
-        DWORD     BufferCount;
-        DWORD     AddressLength;
-        DWORD     Flags;
-        DWORD     BytesReceived;
+        void far *AddrLenPtr; // ___ ^ Addresses translated by VxD
+        SOCKET Socket;
+        DWORD BufferCount;
+        DWORD AddressLength;
+        DWORD Flags;
+        DWORD BytesReceived;
         void far *ApcRoutine;
-        DWORD     ApcContext;
-        DWORD     Unknown[2];
-        DWORD     Overlapped;
+        DWORD ApcContext;
+        DWORD Unknown[2];
+        DWORD Overlapped;
     } params;
 
     // See comment in WS_sendto2 above.
@@ -382,9 +382,9 @@ static ssize_t WS_recvfrom2(SOCKET socket, void far *buf, size_t len, int flags,
 static int WS_ioctlsocket1(SOCKET socket, unsigned long cmd, void far *value)
 {
     struct {
-        SOCKET  Socket;
-        DWORD   Command;
-        DWORD   Param;
+        SOCKET Socket;
+        DWORD Command;
+        DWORD Param;
     } params;
 
     if (cmd != FIONBIO && cmd != FIONREAD && cmd != SIOCATMARK)
@@ -412,15 +412,15 @@ static int WS_ioctlsocket2(SOCKET socket, unsigned long cmd, void far *value)
 {
     // To make sense of this, take a look at the documentation for WSPIoctl().
     struct {
-        SOCKET    Socket;
-        DWORD     Command;
-        DWORD     ParamPointer;
-        DWORD     Unknown1;      // lpvOutBuffer?
-        DWORD     Unknown2;      // lpcbBytesReturned?
-        DWORD     ParamBufLen;
+        SOCKET Socket;
+        DWORD Command;
+        DWORD ParamPointer;
+        DWORD Unknown1; // lpvOutBuffer?
+        DWORD Unknown2; // lpcbBytesReturned?
+        DWORD ParamBufLen;
         // This looks like it may be: cbOutBuffer, lpOverlapped,
         // lpCompletionRoutine, lpThreadId...
-        DWORD     Unknown3[6];
+        DWORD Unknown3[6];
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -500,34 +500,34 @@ struct mssock_header {
 };
 
 static const int msclient_to_winsock_err[] = {
-    WSAENOTSOCK,         // 100 - Socket operation on non-socket
-    WSAEDESTADDRREQ,     // 101 - Destination address required
-    WSAEMSGSIZE,         // 102 - Message too long
-    WSAEPROTOTYPE,       // 103 - Protocol wrong type for socket
-    WSAENOPROTOOPT,      // 104 - Protocol not available
-    WSAEPROTONOSUPPORT,  // 105 - Protocol not supported
-    WSAESOCKTNOSUPPORT,  // 106 - Socket type not supported
-    WSAEOPNOTSUPP,       // 107 - Operation not supported on socket
-    WSAEPFNOSUPPORT,     // 108 - Protocol family not supported
-    WSAEAFNOSUPPORT,     // 109 - Address family not supported
-    WSAEADDRINUSE,       // 110 - Address already in use
-    WSAEADDRNOTAVAIL,    // 111 - Can't assign requested address
-    WSAENETDOWN,         // 112 - Network is down
-    WSAENETUNREACH,      // 113 - Network is unreachable
-    WSAENETRESET,        // 114 - Network dropped connection or reset
-    WSAECONNABORTED,     // 115 - Software caused connection abort
-    WSAECONNRESET,       // 116 - Connection reset by peer
-    WSAENOBUFS,          // 117 - No buffer space available
-    WSAEISCONN,          // 118 - Socket is already connected
-    WSAENOTCONN,         // 119 - Socket is not connected
-    WSAESHUTDOWN,        // 120 - Can't send after socket shutdown
-    WSAETIMEDOUT,        // 121 - Connection timed out
-    WSAECONNREFUSED,     // 122 - Connection refused
-    WSAEHOSTDOWN,        // 123 - Networking subsystem not started
-    WSAEHOSTUNREACH,     // 124 - No route to host
-    WSAEWOULDBLOCK,      // 125 - Operation would block
-    WSAEINPROGRESS,      // 126 - Operation now in progress
-    WSAEALREADY,         // 127 - Operation already in progress
+    WSAENOTSOCK,        // 100 - Socket operation on non-socket
+    WSAEDESTADDRREQ,    // 101 - Destination address required
+    WSAEMSGSIZE,        // 102 - Message too long
+    WSAEPROTOTYPE,      // 103 - Protocol wrong type for socket
+    WSAENOPROTOOPT,     // 104 - Protocol not available
+    WSAEPROTONOSUPPORT, // 105 - Protocol not supported
+    WSAESOCKTNOSUPPORT, // 106 - Socket type not supported
+    WSAEOPNOTSUPP,      // 107 - Operation not supported on socket
+    WSAEPFNOSUPPORT,    // 108 - Protocol family not supported
+    WSAEAFNOSUPPORT,    // 109 - Address family not supported
+    WSAEADDRINUSE,      // 110 - Address already in use
+    WSAEADDRNOTAVAIL,   // 111 - Can't assign requested address
+    WSAENETDOWN,        // 112 - Network is down
+    WSAENETUNREACH,     // 113 - Network is unreachable
+    WSAENETRESET,       // 114 - Network dropped connection or reset
+    WSAECONNABORTED,    // 115 - Software caused connection abort
+    WSAECONNRESET,      // 116 - Connection reset by peer
+    WSAENOBUFS,         // 117 - No buffer space available
+    WSAEISCONN,         // 118 - Socket is already connected
+    WSAENOTCONN,        // 119 - Socket is not connected
+    WSAESHUTDOWN,       // 120 - Can't send after socket shutdown
+    WSAETIMEDOUT,       // 121 - Connection timed out
+    WSAECONNREFUSED,    // 122 - Connection refused
+    WSAEHOSTDOWN,       // 123 - Networking subsystem not started
+    WSAEHOSTUNREACH,    // 124 - No route to host
+    WSAEWOULDBLOCK,     // 125 - Operation would block
+    WSAEINPROGRESS,     // 126 - Operation now in progress
+    WSAEALREADY,        // 127 - Operation already in progress
 
     // There are more msclient-specific errors that follow WSAEALREADY, but
     // they don't have winsock equivalents.
@@ -575,9 +575,9 @@ static int MSClientInitIoctl(int func_code, void far **entrypoint)
 {
     union REGS regs;
     static struct {
-        uint8_t   FuncCode;
-        uint8_t   Error;
-        uint16_t  Signature;
+        uint8_t FuncCode;
+        uint8_t Error;
+        uint16_t Signature;
         void far *Entrypoint;
     } params;
 
@@ -586,7 +586,7 @@ static int MSClientInitIoctl(int func_code, void far **entrypoint)
     // We specifically want to talk to SOCKETS.EXE.
     params.Signature = ('O' << 8) | 'S';
 
-    regs.x.ax = 0x4402;  // DOS IOCTL
+    regs.x.ax = 0x4402; // DOS IOCTL
     regs.x.bx = msclient_handle;
     regs.x.cx = 0x0019;
     // ds is supposed to contain FP_SEG(&params), and since params is
@@ -611,18 +611,19 @@ static int MSClientInit(void)
         return 0;
     }
 
-    err = MSClientInitIoctl(2, &entrypoint);  // "bind"
+    err = MSClientInitIoctl(2, &entrypoint); // "bind"
     if (err != 0)
     {
         _dos_close(msclient_handle);
         Error("MSClientInit: bind ioctl failed for TCPDRV$ file: err=%d.\n"
-              "You might need to load SOCKETS.EXE before running this.", err);
+              "You might need to load SOCKETS.EXE before running this.",
+              err);
         return 0;
     }
 
     msclient_entrypoint = entrypoint;
 
-    MSClientInitIoctl(3, &entrypoint);  // "unbind"
+    MSClientInitIoctl(3, &entrypoint); // "unbind"
 
     return 1;
 }
@@ -631,9 +632,9 @@ static SOCKET MSC_socket(int domain, int type, int protocol)
 {
     struct {
         struct mssock_header Header;
-        uint16_t             SockFamily;
-        uint16_t             SockType;
-        uint16_t             SockProtocol;
+        uint16_t SockFamily;
+        uint16_t SockType;
+        uint16_t SockProtocol;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -648,7 +649,7 @@ static int MSC_closesocket(SOCKET socket)
 {
     struct {
         struct mssock_header Header;
-        uint16_t             Socket;
+        uint16_t Socket;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -661,9 +662,9 @@ static int MSC_bind(SOCKET socket, struct sockaddr_in far *addr)
 {
     struct {
         struct mssock_header Header;
-        uint16_t             Socket;
-        void far            *Addr;
-        uint16_t             AddrLen;
+        uint16_t Socket;
+        void far *Addr;
+        uint16_t AddrLen;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -679,13 +680,13 @@ static ssize_t MSC_sendto(SOCKET socket, const void far *msg, size_t len,
 {
     struct {
         struct mssock_header Header;
-        uint16_t             Socket;
-        const void far      *Buffer;
-        uint16_t             BufferLen;
-        uint16_t             Flags;
-        const void far      *Addr;
-        uint16_t             AddrLen;
-        uint16_t             CallType;
+        uint16_t Socket;
+        const void far *Buffer;
+        uint16_t BufferLen;
+        uint16_t Flags;
+        const void far *Addr;
+        uint16_t AddrLen;
+        uint16_t CallType;
     } params;
 
     memset(&params, 0, sizeof(params));
@@ -695,23 +696,23 @@ static ssize_t MSC_sendto(SOCKET socket, const void far *msg, size_t len,
     params.Flags = flags;
     params.Addr = to;
     params.AddrLen = SOCKADDR_SIZE;
-    params.CallType = to != NULL;  // sendto(), not send()?
+    params.CallType = to != NULL; // sendto(), not send()?
 
     return MSClientCall(0x0d, &params.Header);
 }
 
-static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
-                           int flags, struct sockaddr_in far *from)
+static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
+                            struct sockaddr_in far *from)
 {
     struct {
         struct mssock_header Header;
-        uint16_t             Socket;
-        void far            *Buffer;
-        uint16_t             BufferLen;
-        uint16_t             Flags;
-        void far            *Addr;
-        uint16_t far        *AddrLen;
-        uint8_t              CallType;
+        uint16_t Socket;
+        void far *Buffer;
+        uint16_t BufferLen;
+        uint16_t Flags;
+        void far *Addr;
+        uint16_t far *AddrLen;
+        uint8_t CallType;
     } params;
     uint16_t addr_len = SOCKADDR_SIZE;
 
@@ -722,7 +723,7 @@ static ssize_t MSC_recvfrom(SOCKET socket, void far *buf, size_t len,
     params.Flags = flags;
     params.Addr = from;
     params.AddrLen = &addr_len;
-    params.CallType = from != NULL ? 3 : 2;  // recvfrom(), not recv()?
+    params.CallType = from != NULL ? 3 : 2; // recvfrom(), not recv()?
 
     return MSClientCall(0x0b, &params.Header);
 }
@@ -731,17 +732,21 @@ static int MSC_ioctlsocket(SOCKET socket, unsigned long cmd, void far *value)
 {
     struct {
         struct mssock_header Header;
-        uint16_t             Socket;
-        uint16_t             Command;
-        void far            *Value;
+        uint16_t Socket;
+        uint16_t Command;
+        void far *Value;
     } params;
     int result;
 
     // Winsock ioctl command# -> MSClient equivalent.
     switch (cmd)
     {
-        case FIONBIO:  cmd = 1; break;
-        case FIONREAD: cmd = 2; break;
+        case FIONBIO:
+            cmd = 1;
+            break;
+        case FIONREAD:
+            cmd = 2;
+            break;
         default:
             DosSockLastError = WSAEOPNOTSUPP;
             return -1;
@@ -824,7 +829,7 @@ ssize_t recvfrom(SOCKET socket, void far *buf, size_t len, int flags,
     switch (stack)
     {
         case MSCLIENT:
-            return MSC_recvfrom(socket,buf, len, flags, from);
+            return MSC_recvfrom(socket, buf, len, flags, from);
         case WINSOCK1:
             return WS_recvfrom1(socket, buf, len, flags, from);
         case WINSOCK2:
@@ -859,10 +864,8 @@ int inet_aton(const char *cp, struct in_addr *inp)
     }
 
     // Network byte order.
-    inp->s_addr = (((unsigned long) d) << 24)
-                | (((unsigned long) c) << 16)
-                | (((unsigned long) b) << 8)
-                | ((unsigned long) a);
+    inp->s_addr = (((unsigned long) d) << 24) | (((unsigned long) c) << 16) |
+                  (((unsigned long) b) << 8) | ((unsigned long) a);
     return 1;
 }
 
@@ -884,9 +887,8 @@ void DosSockInit(void)
     {
         LogMessage("Failed to get VxD entrypoint for VXDLDR.");
     }
-    else if (!VXDLDR_LoadDevice("WSOCK2.VXD")
-          && !VXDLDR_LoadDevice("WSOCK.VXD")
-          && !VXDLDR_LoadDevice("WSOCK.386"))
+    else if (!VXDLDR_LoadDevice("WSOCK2.VXD") &&
+             !VXDLDR_LoadDevice("WSOCK.VXD") && !VXDLDR_LoadDevice("WSOCK.386"))
     {
         LogMessage("Failed to load either WSOCK or WSOCK2 VxD.");
     }
@@ -921,8 +923,8 @@ void DosSockInit(void)
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         // TODO: Check socket created ok
 
-        if (sendto(s, buf, 0, 0, &nowhere) < 0
-         && DosSockLastError == WSAENOTSOCK)
+        if (sendto(s, buf, 0, 0, &nowhere) < 0 &&
+            DosSockLastError == WSAENOTSOCK)
         {
             closesocket(s);
             Error("You have Winsock2 installed but its VxD bug has not been "
@@ -932,4 +934,3 @@ void DosSockInit(void)
         closesocket(s);
     }
 }
-

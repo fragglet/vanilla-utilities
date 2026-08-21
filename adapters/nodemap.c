@@ -15,9 +15,9 @@
 // are just designed around player numbers. To be able to implement
 // these interfaces we therefore need to discover players.
 
+#include "lib/inttypes.h"
 #include <string.h>
 #include <time.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/log.h"
@@ -27,8 +27,7 @@
 
 #define MAGIC_STRING "V~UTiLS!"
 
-struct discover_packet
-{
+struct discover_packet {
     char magic_string[8];
     uint8_t is_reply;
     uint8_t player;
@@ -75,8 +74,8 @@ int CheckLateDiscover(doomcom_t far *doomcom)
 
     // We may receive a late discover packet from another node still stuck
     // in the DiscoverPlayers() loop. If we do, send a reply.
-    if (doomcom->datalength == sizeof(struct discover_packet)
-     && HasMagicString(pkt) && !pkt->is_reply)
+    if (doomcom->datalength == sizeof(struct discover_packet) &&
+        HasMagicString(pkt) && !pkt->is_reply)
     {
         SendDiscover(doomcom, doomcom->remotenode, 1);
         return 1;
@@ -111,8 +110,8 @@ void DiscoverPlayers(doomcom_t far *doomcom)
             continue;
         }
 
-        if (doomcom->datalength == sizeof(struct discover_packet)
-         && HasMagicString(pkt) && pkt->player < MAXPLAYERS)
+        if (doomcom->datalength == sizeof(struct discover_packet) &&
+            HasMagicString(pkt) && pkt->player < MAXPLAYERS)
         {
             nodetoplayer[doomcom->remotenode] = pkt->player;
             playertonode[pkt->player] = doomcom->remotenode;
@@ -122,4 +121,3 @@ void DiscoverPlayers(doomcom_t far *doomcom)
 
     SendDiscoverToAll(doomcom);
 }
-

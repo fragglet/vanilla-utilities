@@ -15,16 +15,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stat/stats.h"
 #include "stat/statprnt.h"
+#include "stat/stats.h"
 
 #define TICRATE 35
 
-typedef enum {
-    doom1,
-    doom2,
-    indetermined
-} GameMode_t;
+typedef enum { doom1, doom2, indetermined } GameMode_t;
 
 /* Par times for E1M1-E1M9. */
 static const int doom1_par_times[] = {
@@ -37,13 +33,11 @@ static const int doom2_par_times[] = {
 };
 
 /* Player colors. */
-static const char *player_colors[] = {
-    "Green", "Indigo", "Brown", "Red"
-};
+static const char *player_colors[] = {"Green", "Indigo", "Brown", "Red"};
 
 static GameMode_t gamemode = indetermined;
 
-/* Try to work out whether this is a Doom 1 or Doom 2 game, by looking 
+/* Try to work out whether this is a Doom 1 or Doom 2 game, by looking
  * at the episode and map, and the par times.  This is used to decide
  * how to format the level name.  Unfortunately, in some cases it is
  * impossible to determine whether this is Doom 1 or Doom 2. */
@@ -85,15 +79,15 @@ void DiscoverGamemode(wbstartstruct_t *stats, int num_stats)
 
         partime = stats[i].partime;
 
-        if (partime == doom1_par_times[level] * TICRATE
-            && partime != doom2_par_times[level] * TICRATE)
+        if (partime == doom1_par_times[level] * TICRATE &&
+            partime != doom2_par_times[level] * TICRATE)
         {
             gamemode = doom1;
             return;
         }
 
-        if (partime != doom1_par_times[level] * TICRATE
-            && partime == doom2_par_times[level] * TICRATE)
+        if (partime != doom1_par_times[level] * TICRATE &&
+            partime == doom2_par_times[level] * TICRATE)
         {
             gamemode = doom2;
             return;
@@ -141,7 +135,7 @@ static void PrintPercentage(FILE *stream, int amount, int total)
 /* Display statistics for a single player. */
 
 static void PrintPlayerStats(FILE *stream, wbstartstruct_t *stats,
-                               int player_num)
+                             int player_num)
 {
     wbplayerstruct_t *player = &stats->plyr[player_num];
 
@@ -231,16 +225,16 @@ static void PrintLevelName(FILE *stream, int episode, int level)
     switch (gamemode)
     {
 
-    case doom1:
-        fprintf(stream, "E%iM%i\n", episode + 1, level + 1);
-        break;
-    case doom2:
-        fprintf(stream, "MAP%02i\n", level + 1);
-        break;
-    case indetermined:
-        fprintf(stream, "E%iM%i / MAP%02i\n",
-                episode + 1, level + 1, level + 1);
-        break;
+        case doom1:
+            fprintf(stream, "E%iM%i\n", episode + 1, level + 1);
+            break;
+        case doom2:
+            fprintf(stream, "MAP%02i\n", level + 1);
+            break;
+        case indetermined:
+            fprintf(stream, "E%iM%i / MAP%02i\n", episode + 1, level + 1,
+                    level + 1);
+            break;
     }
 
     PrintBanner(stream);

@@ -15,24 +15,24 @@
 #include <dos.h>
 
 #if defined(__TURBOC__)
-#define cmdline_argc  _argc
-#define cmdline_argv  _argv
+#define cmdline_argc _argc
+#define cmdline_argv _argv
 #define __stdcall
 typedef int ssize_t;
 #else
-#define cmdline_argc  __argc
-#define cmdline_argv  __argv
+#define cmdline_argc __argc
+#define cmdline_argv __argv
 #endif
 
-#define strcasecmp stricmp
+#define strcasecmp  stricmp
 #define strncasecmp strnicmp
 
-#define INPUT( port )        inp( port )
-#define OUTPUT( port, data ) (void) outp( port, data )
+#define INPUT(port)        inp(port)
+#define OUTPUT(port, data) (void) outp(port, data)
 
-#define LED_SCROLL_LOCK  0x01
-#define LED_NUM_LOCK     0x02
-#define LED_CAPS_LOCK    0x04
+#define LED_SCROLL_LOCK 0x01
+#define LED_NUM_LOCK    0x02
+#define LED_CAPS_LOCK   0x04
 
 int SetKeyboardLEDs(int value);
 long GetEntropy(void);

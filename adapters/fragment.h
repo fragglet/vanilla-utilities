@@ -16,8 +16,7 @@
 
 #define MAX_REASSEMBLED_PACKET 2048
 
-struct reassembled_packet
-{
+struct reassembled_packet {
     int remotenode;
     uint8_t seq;
     uint16_t received;

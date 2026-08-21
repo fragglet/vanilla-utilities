@@ -61,7 +61,7 @@ static void CalculateChecksum(doompacket_t *sendpacket)
     // Length in 32-bit words. We do not include the checksum field,
     // or there is a bootstrapping problem.
     l = (PacketSize(sendpacket) - 4) / 4;
-    p = ((unsigned long *)sendpacket) + 1;
+    p = ((unsigned long *) sendpacket) + 1;
 
     for (i = 0; i < l; ++i)
     {
@@ -187,8 +187,7 @@ int main(int argc, char *argv[])
     char **args;
     int nodes = 1;
 
-    SetHelpText("Doom single player network driver",
-                "%s doom2.exe");
+    SetHelpText("Doom single player network driver", "%s doom2.exe");
     IntFlag("-nodes", &nodes, "n",
             "total number of players (other players are simulated)");
     NetRegisterFlags();

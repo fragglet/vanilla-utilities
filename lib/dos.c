@@ -8,8 +8,8 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
-#include <stdlib.h>
 #include <bios.h>
+#include <stdlib.h>
 
 #include "lib/dos.h"
 #include "lib/inttypes.h"
@@ -52,7 +52,8 @@ void far_memcpy(void far *dest, void far *src, size_t nbytes)
     for (i = 0; i < nbytes; ++i)
     {
         *dest_p = *src_p;
-        ++dest_p; ++src_p;
+        ++dest_p;
+        ++src_p;
     }
 }
 
@@ -75,7 +76,8 @@ int far_memcmp(void far *a, void far *b, size_t nbytes)
                 return 1;
             }
         }
-        ++a_p; ++b_p;
+        ++a_p;
+        ++b_p;
     }
     return 0;
 }
@@ -91,7 +93,8 @@ void far_memmove(void far *dest, void far *src, size_t nbytes)
         for (i = 0; i < nbytes; ++i)
         {
             *dest_p = *src_p;
-            ++dest_p; ++src_p;
+            ++dest_p;
+            ++src_p;
         }
     }
     else
@@ -101,7 +104,8 @@ void far_memmove(void far *dest, void far *src, size_t nbytes)
         for (i = 0; i < nbytes; ++i)
         {
             *dest_p = *src_p;
-            --dest_p; --src_p;
+            --dest_p;
+            --src_p;
         }
     }
 }
@@ -117,4 +121,3 @@ void far_bzero(void far *dest, size_t nbytes)
         ++dest_p;
     }
 }
-

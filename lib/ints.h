@@ -34,72 +34,71 @@
 #if defined(__TURBOC__)
 
 #define RESTORE_ISR_STACK \
-    do { \
-        asm pop bp; \
-        asm pop cx; \
-        asm pop bx; \
-        asm mov ss, bx; \
-        asm mov sp, cx; \
-    } while(0)
+    do                    \
+    {                     \
+        asm pop bp;       \
+        asm pop cx;       \
+        asm pop bx;       \
+        asm mov ss, bx;   \
+        asm mov sp, cx;   \
+    } while (0)
 
-#define SWITCH_ISR_STACK \
-    do { \
-        unsigned int nsp = \
+#define SWITCH_ISR_STACK                                              \
+    do                                                                \
+    {                                                                 \
+        unsigned int nsp =                                            \
             (FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
-        asm mov ax, nsp; \
-        asm mov bx, ss; \
-        asm mov cx, sp; \
-        asm mov dx, ds; \
-        asm mov ss, dx; \
-        asm mov sp, ax; \
-        asm push bx; \
-        asm push cx; \
-        asm push bp; \
-        asm mov bp, sp; \
-    } while(0)
+        asm mov ax, nsp;                                              \
+        asm mov bx, ss;                                               \
+        asm mov cx, sp;                                               \
+        asm mov dx, ds;                                               \
+        asm mov ss, dx;                                               \
+        asm mov sp, ax;                                               \
+        asm push bx;                                                  \
+        asm push cx;                                                  \
+        asm push bp;                                                  \
+        asm mov bp, sp;                                               \
+    } while (0)
 
 #elif defined(__WATCOMC__)
 
 extern void SwitchStack(unsigned int);
-#pragma aux SwitchStack = \
-    "mov bx, ss" \
-    "mov cx, sp" \
-    "mov dx, ds" \
-    "mov ss, dx" \
-    "mov sp, ax" \
-    "push bx" \
-    "push cx" \
-    "push bp" \
-    "mov bp, sp" \
-    parm [ax] \
-    modify [bx cx dx];
+#pragma aux SwitchStack = "mov bx, ss" \
+                          "mov cx, sp" \
+                          "mov dx, ds" \
+                          "mov ss, dx" \
+                          "mov sp, ax" \
+                          "push bx"    \
+                          "push cx"    \
+                          "push bp"    \
+                          "mov bp, sp" parm[ax] modify[bx cx dx];
 
 extern void RestoreStack(void);
-#pragma aux RestoreStack = \
-    "pop bp" \
-    "pop cx" \
-    "pop bx" \
-    "mov ss, bx" \
-    "mov sp, cx" \
-    modify [bx cx];
+#pragma aux RestoreStack = "pop bp"     \
+                           "pop cx"     \
+                           "pop bx"     \
+                           "mov ss, bx" \
+                           "mov sp, cx" modify[bx cx];
 
 extern unsigned int old_stacklow;
-extern unsigned int _STACKLOW;  // Watcom-internal
+extern unsigned int _STACKLOW; // Watcom-internal
 
 // For Watcom we must override the _STACKLOW variable to point to the bottom
 // of the new stack, in order to play nice with Watcom's stack overflow
 // detection code that gets included in function headers.
-#define SWITCH_ISR_STACK \
-    do { \
+#define SWITCH_ISR_STACK                                                     \
+    do                                                                       \
+    {                                                                        \
         SwitchStack(FP_OFF(isr_stack_space + sizeof(isr_stack_space) - 32)); \
-        old_stacklow = _STACKLOW; \
-        _STACKLOW = FP_OFF(isr_stack_space); \
-    } while(0)
-#define RESTORE_ISR_STACK \
-    do { \
-        RestoreStack(); \
+        old_stacklow = _STACKLOW;                                            \
+        _STACKLOW = FP_OFF(isr_stack_space);                                 \
+    } while (0)
+#define RESTORE_ISR_STACK         \
+    do                            \
+    {                             \
+        RestoreStack();           \
         _STACKLOW = old_stacklow; \
-    } while(0)
+    } while (0)
 
 #else
 
@@ -107,35 +106,31 @@ extern unsigned int _STACKLOW;  // Watcom-internal
 
 #endif
 
-typedef void (interrupt far *interrupt_handler_t)();
+typedef void(interrupt far *interrupt_handler_t)();
 
-struct interrupt_hook
-{
+struct interrupt_hook {
     int force_vector;
     int interrupt_num;
     interrupt_handler_t old_isr;
 };
 
-int FindAndHookInterrupt(struct interrupt_hook *state,
-                         interrupt_handler_t isr);
+int FindAndHookInterrupt(struct interrupt_hook *state, interrupt_handler_t isr);
 void RestoreInterrupt(struct interrupt_hook *state);
 unsigned int SwitchPSP(void);
 void RestorePSP(unsigned int old_psp);
 
-#define PIC_COMMAND_PORT  0x20
-#define PIC_DATA_PORT     0x21
+#define PIC_COMMAND_PORT 0x20
+#define PIC_DATA_PORT    0x21
 
-struct irq_hook
-{
+struct irq_hook {
     unsigned int irq;
     interrupt_handler_t old_isr;
     char env_string[14];
-    unsigned int was_masked :1;
-    unsigned int chained    :1;
+    unsigned int was_masked : 1;
+    unsigned int chained    : 1;
 };
 
-void HookIRQ(struct irq_hook *state, interrupt_handler_t isr,
-             unsigned int irq);
+void HookIRQ(struct irq_hook *state, interrupt_handler_t isr, unsigned int irq);
 void RestoreIRQ(struct irq_hook *state);
 void SetIRQMask(struct irq_hook *irq);
 void ClearIRQMask(struct irq_hook *irq);
@@ -144,10 +139,13 @@ void ClearIRQMask(struct irq_hook *irq);
 // to the PIC. Otherwise we send it ourselves. It is important that
 // the interrupt is only acknowledged once, otherwise we can end up
 // acknowledging the wrong interrupt.
-#define END_OF_IRQ(irq_hook) \
-    if ((irq_hook).chained) { \
-        _chain_intr((irq_hook).old_isr); \
-    } else { \
+#define END_OF_IRQ(irq_hook)                             \
+    if ((irq_hook).chained)                              \
+    {                                                    \
+        _chain_intr((irq_hook).old_isr);                 \
+    }                                                    \
+    else                                                 \
+    {                                                    \
         OUTPUT(PIC_COMMAND_PORT, 0x60 + (irq_hook).irq); \
     }
 

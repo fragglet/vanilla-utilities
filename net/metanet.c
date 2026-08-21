@@ -8,12 +8,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include "lib/inttypes.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -27,47 +27,43 @@
 // Magic number field overlaps with the normal Doom checksum field.
 // We ignore the top nybble so we can ignore NCMD_SETUP packets from
 // the underlying driver, and use the bottom nybble for packet type.
-#define META_MAGIC        0x01C26440L
-#define META_MAGIC_MASK   0x0FFFFFF0L
+#define META_MAGIC      0x01C26440L
+#define META_MAGIC_MASK 0x0FFFFFF0L
 
-#define NODE_STATUS_GOT_DISCOVER  0x01
-#define NODE_STATUS_READY         0x02
-#define NODE_STATUS_LAUNCHED      0x04
-#define NODE_STATUS_FORWARDER     0x08
-#define NODE_STATUS_QUIT          0x10
+#define NODE_STATUS_GOT_DISCOVER 0x01
+#define NODE_STATUS_READY        0x02
+#define NODE_STATUS_LAUNCHED     0x04
+#define NODE_STATUS_FORWARDER    0x08
+#define NODE_STATUS_QUIT         0x10
 
-#define ADDR_DRIVER(x)  (((x) >> 5) & 0x07)
-#define ADDR_NODE(x)    ((x) & 0x1f)
-#define MAKE_ADDRESS(driver, node)  (((driver) << 5) | node)
+#define ADDR_DRIVER(x)             (((x) >> 5) & 0x07)
+#define ADDR_NODE(x)               ((x) & 0x1f)
+#define MAKE_ADDRESS(driver, node) (((driver) << 5) | node)
 
 // A node_addr_t is a routing path to take through the network
 // to reach the destination node. Each byte specifies the driver#
 // and node# for next hop. There can be up to four hops.
 typedef uint8_t node_addr_t[4];
 
-enum meta_packet_type
-{
+enum meta_packet_type {
     META_PACKET_DATA,
     META_PACKET_DISCOVER,
     META_PACKET_STATUS,
     META_PACKET_QUIT,
 };
 
-struct meta_header
-{
+struct meta_header {
     // See META_MAGIC above.
     unsigned long magic;
     node_addr_t src, dest;
 };
 
-struct meta_data_msg
-{
+struct meta_data_msg {
     struct meta_header header;
-    uint8_t data[1];  // [...]
+    uint8_t data[1]; // [...]
 };
 
-struct meta_discover_msg
-{
+struct meta_discover_msg {
     struct meta_header header;
     unsigned int status;
     int num_neighbors;
@@ -76,8 +72,7 @@ struct meta_discover_msg
     uint8_t neighbors[MAXNETNODES];
 };
 
-struct node_data
-{
+struct node_data {
     uint8_t first_hop;
     node_addr_t addr;
     uint8_t flags;
@@ -197,7 +192,7 @@ static void ForwardBroadcast(int driver_index)
     hdr = (struct meta_header far *) src->data;
 
     if (PrependPreviousHop(
-        src_addr, MAKE_ADDRESS(driver_index, src->remotenode), hdr->src))
+            src_addr, MAKE_ADDRESS(driver_index, src->remotenode), hdr->src))
     {
         SendBroadcast(src, src_addr, src->data + sizeof(struct meta_header),
                       src->datalength - sizeof(struct meta_header));
@@ -224,8 +219,8 @@ static void ForwardPacket(int driver_index)
     // Decode next hop from first byte of routing dest:
     ddriver = ADDR_DRIVER(hdr->dest[0]);
     dnode = ADDR_NODE(hdr->dest[0]);
-    if (ddriver >= num_drivers || drivers[ddriver] == src
-     || dnode == 0 || dnode >= drivers[ddriver]->numnodes)
+    if (ddriver >= num_drivers || drivers[ddriver] == src || dnode == 0 ||
+        dnode >= drivers[ddriver]->numnodes)
     {
         INCREMENT_COUNTER(invalid_dest);
         return;
@@ -291,8 +286,8 @@ static int NodeForAddr(uint8_t first_hop, node_addr_t addr)
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (first_hop == nodes[i].first_hop
-         && !memcmp(nodes[i].addr, addr, sizeof(node_addr_t)))
+        if (first_hop == nodes[i].first_hop &&
+            !memcmp(nodes[i].addr, addr, sizeof(node_addr_t)))
         {
             return i;
         }
@@ -398,8 +393,8 @@ static void HandleDiscover(uint8_t first_hop, struct meta_discover_msg far *dsc)
         return;
     }
 
-    if ((nodes[0].flags & NODE_STATUS_LAUNCHED) != 0
-     && (dsc->status & NODE_STATUS_LAUNCHED) == 0)
+    if ((nodes[0].flags & NODE_STATUS_LAUNCHED) != 0 &&
+        (dsc->status & NODE_STATUS_LAUNCHED) == 0)
     {
         // We've launched but this other node hasn't, and is still sending us
         // discover messages and has fallen behind. Since we're no longer in
@@ -452,8 +447,8 @@ static void NodeQuit(uint8_t first_hop, struct meta_header far *hdr)
 
     for (i = 0; i < num_nodes; ++i)
     {
-        if (first_hop == node->first_hop
-         && !memcmp(node->addr, nodes[i].addr, prefix_len))
+        if (first_hop == node->first_hop &&
+            !memcmp(node->addr, nodes[i].addr, prefix_len))
         {
             nodes[i].flags |= NODE_STATUS_QUIT;
         }
@@ -842,7 +837,7 @@ static int AllPlayersQuit(void)
     // circular dependency.
     for (i = 1; i < num_nodes; ++i)
     {
-        if ((nodes[i].flags & (NODE_STATUS_FORWARDER|NODE_STATUS_QUIT)) == 0)
+        if ((nodes[i].flags & (NODE_STATUS_FORWARDER | NODE_STATUS_QUIT)) == 0)
         {
             return 0;
         }
@@ -885,9 +880,8 @@ static void SeedRandom(void)
     {
         // So that different drivers started at the same time
         // do not generate the same random seed.
-        entropy ^= (entropy << 8)
-                 | (drivers[i]->numnodes << 4)
-                 | drivers[i]->consoleplayer;
+        entropy ^= (entropy << 8) | (drivers[i]->numnodes << 4) |
+                   drivers[i]->consoleplayer;
     }
 
     srand(entropy);
@@ -979,4 +973,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

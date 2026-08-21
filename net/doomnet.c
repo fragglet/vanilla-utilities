@@ -9,11 +9,11 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include <assert.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <process.h>
-#include <assert.h>
 
 #include "lib/flag.h"
 #include "lib/ints.h"
@@ -59,8 +59,7 @@ static void interrupt far NetISR(void)
  *   short drone;         // 1 = drone
  */
 
-void NetLaunchDoom(doomcom_t far *doomcom, char **args,
-                   void (*callback)(void))
+void NetLaunchDoom(doomcom_t far *doomcom, char **args, void (*callback)(void))
 {
     char addrstring[10];
     long flataddr;
@@ -133,5 +132,3 @@ int NetGetPacket(doomcom_t far *doomcom)
     int86(doomcom->intnum, &regs, &regs);
     return doomcom->remotenode != -1;
 }
-
-

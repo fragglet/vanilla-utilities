@@ -15,13 +15,13 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
+#include "lib/inttypes.h"
+#include <mem.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mem.h>
-#include <time.h>
 #include <string.h>
-#include "lib/inttypes.h"
+#include <time.h>
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -31,7 +31,7 @@
 #include "net/pktstats.h"
 #include "net/serarb.h"
 
-#define MAXPACKET	512
+#define MAXPACKET 512
 
 static doomcom_t doomcom;
 
@@ -66,7 +66,7 @@ static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        WritePacket((char *)doomcom.data, doomcom.datalength);
+        WritePacket((char *) doomcom.data, doomcom.datalength);
     }
     else if (doomcom.command == CMD_GET)
     {
@@ -122,4 +122,3 @@ void main(int argc, char *argv[])
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);
 }
-

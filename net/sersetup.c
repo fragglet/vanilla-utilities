@@ -9,12 +9,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include "lib/inttypes.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <time.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -25,22 +25,20 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
-#define	QUESIZE	2048
+#define QUESIZE 2048
 
 typedef struct {
-    long head, tail;            // bytes are put on head and pulled from tail
+    long head, tail; // bytes are put on head and pulled from tail
     uint8_t data[QUESIZE];
 } que_t;
 
-static struct
-{
+static struct {
     int (*poll_func)(void);
     void (*callback)(void);
     const char *check_abort_message;
 } eventloop;
 
-static struct
-{
+static struct {
     const char *expected_response;
     char buf[80];
     int buf_len;
@@ -214,9 +212,8 @@ static void ModemResponse(char *resp)
     EventLoop();
 }
 
-
-#define MAXPACKET	512
-#define	FRAMECHAR	0x70
+#define MAXPACKET 512
+#define FRAMECHAR 0x70
 
 char packet[MAXPACKET];
 static int packetlen;
@@ -225,7 +222,7 @@ static int newpacket;
 
 int ReadPacket(void)
 {
-   int c;
+    int c;
 
     // if the buffer has overflowed, throw everything out
     if (inque.head - inque.tail > QUESIZE - 4)
@@ -246,10 +243,10 @@ int ReadPacket(void)
         c = ReadByte();
         if (c < 0)
         {
-           // haven't read a complete packet
+            // haven't read a complete packet
             return 0;
         }
-        //printf ("%c",c);
+        // printf ("%c",c);
         if (inescape)
         {
             inescape = 0;
@@ -312,7 +309,7 @@ static void NetCallback(void)
 {
     if (doomcom.command == CMD_SEND)
     {
-        WritePacket((char *)doomcom.data, doomcom.datalength);
+        WritePacket((char *) doomcom.data, doomcom.datalength);
     }
     else if (doomcom.command == CMD_GET)
     {
@@ -368,16 +365,17 @@ static void ReadModemCfg(void)
     {
         LogMessage("Couldn't read modem config from '%s'. Using generic modem "
                    "settings; if these don't work well, you should supply a "
-                   "configuration file with '-modemcfg'.", modem_config_file);
+                   "configuration file with '-modemcfg'.",
+                   modem_config_file);
         // These are the settings from modem.str for "GENERIC 14.4 MODEM":
         strncpy(startup, "AT &F &C1 &D2 &Q5 &K0 S46=0", sizeof(startup));
         strncpy(shutdown, "AT Z H0", sizeof(shutdown));
         baudrate = 14400;
         return;
     }
-    if (fgets(startup, sizeof(startup), f) == NULL
-     || fgets(shutdown, sizeof(shutdown), f) == NULL
-     || fgets(baudline, sizeof(baudline), f) == NULL)
+    if (fgets(startup, sizeof(startup), f) == NULL ||
+        fgets(shutdown, sizeof(shutdown), f) == NULL ||
+        fgets(baudline, sizeof(baudline), f) == NULL)
     {
         Error("Unexpected error reading from '%s'", modem_config_file);
     }
@@ -409,7 +407,8 @@ static void SetBackgroundPlayer(int fallback)
     if (!force_player1 && !force_player2)
     {
         LogMessage("-bg flag requires -player1 or -player2; "
-                   "assuming -player%d", fallback);
+                   "assuming -player%d",
+                   fallback);
         if (fallback == 1)
         {
             force_player1 = 1;
@@ -494,8 +493,7 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom serial port network device driver",
                 "%s -dial 555-1212 doom.exe -deathmatch -nomonsters");
-    StringFlag("-dial", &dial_no, "phone#",
-               "dial the given phone number");
+    StringFlag("-dial", &dial_no, "phone#", "dial the given phone number");
     BoolFlag("-answer", &answer, "listen for incoming call");
     BoolFlag("-bg", &background_flag,
              "launch game and answer call in the background");

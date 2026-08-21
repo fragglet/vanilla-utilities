@@ -11,12 +11,12 @@
 // Adapter that converts a Doom network driver into a COMMIT driver
 // used by various 3D Realms games.
 
+#include "lib/inttypes.h"
+#include <assert.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <process.h>
-#include <assert.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -129,4 +129,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

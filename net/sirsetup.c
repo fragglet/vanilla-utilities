@@ -24,12 +24,12 @@
 // the original version of this driver was derived from SERSETUP but it has
 // since diverged in this respect.
 
+#include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <time.h>
-#include <assert.h>
 
 #include "lib/inttypes.h"
 
@@ -43,39 +43,35 @@
 #include "net/serarb.h"
 #include "net/serport.h"
 
-#define QUEUE_LEN  8
+#define QUEUE_LEN 8
 
-#define BROADCAST_DEST         0xff
+#define BROADCAST_DEST 0xff
 
 // Escape characters are reused from SERSETUP; we use a common protocol.
-#define FRAMECHAR              0x70
-#define FRAMECHAR_END_PACKET   0x00 /* End of packet - same as SERSETUP. */
+#define FRAMECHAR            0x70
+#define FRAMECHAR_END_PACKET 0x00 /* End of packet - same as SERSETUP. */
 
 // 0x10 ... 0x1f indicate a handoff to a peer, with the byte indicating which
 // peer. 0x10 is player 1, 0x11 is player 2, etc.
 #define FRAMECHAR_HANDOFF_BASE 0x10
 
-struct packet_header
-{
+struct packet_header {
     uint8_t checksum;
     uint8_t dest, src;
 };
 
-struct packet
-{
+struct packet {
     uint8_t data[512];
     size_t data_len;
     int valid;
 };
 
-struct queue
-{
+struct queue {
     struct packet packets[QUEUE_LEN];
     unsigned int head, tail;
 };
 
-struct setup_data
-{
+struct setup_data {
     uint8_t setup_signature[16];
     int32_t station_id;
     int16_t wanted, found;
@@ -163,9 +159,9 @@ static int PacketReceived(void)
     int queue_full = 0;
 
     // We only deliver packets addressed to us.
-    if (pkt->data_len > sizeof(struct packet_header)
-     && HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum
-     && (hdr->dest == BROADCAST_DEST || hdr->dest == doomcom.consoleplayer))
+    if (pkt->data_len > sizeof(struct packet_header) &&
+        HashData(pkt->data + 1, pkt->data_len - 1) == hdr->checksum &&
+        (hdr->dest == BROADCAST_DEST || hdr->dest == doomcom.consoleplayer))
     {
         // If the queue is full, we just keep overwriting the last packet.
         queue_full = next_head == inque.tail;
@@ -238,9 +234,9 @@ int SerialByteReceived(uint8_t c)
         {
             AddInByte(pkt, FRAMECHAR);
         }
-        else if (c == FRAMECHAR_END_PACKET
-              || (c >= FRAMECHAR_HANDOFF_BASE
-               && c < FRAMECHAR_HANDOFF_BASE + MAXNETNODES))
+        else if (c == FRAMECHAR_END_PACKET ||
+                 (c >= FRAMECHAR_HANDOFF_BASE &&
+                  c < FRAMECHAR_HANDOFF_BASE + MAXNETNODES))
         {
             success = PacketReceived();
         }
@@ -322,7 +318,8 @@ unsigned int SerialMoreTXData(void)
         ++tx_offset;
         if (c != FRAMECHAR)
         {
-            serial_tx_buffer[i] = c; i++;
+            serial_tx_buffer[i] = c;
+            i++;
         }
         else if (i == sizeof(serial_tx_buffer) - 1)
         {
@@ -331,8 +328,10 @@ unsigned int SerialMoreTXData(void)
         }
         else
         {
-            serial_tx_buffer[i] = FRAMECHAR; i++;
-            serial_tx_buffer[i] = FRAMECHAR; i++;
+            serial_tx_buffer[i] = FRAMECHAR;
+            i++;
+            serial_tx_buffer[i] = FRAMECHAR;
+            i++;
         }
     }
 
@@ -375,8 +374,7 @@ static void SendPacket(int node, void *data, size_t data_len)
 
     memcpy(pkt->data + sizeof(struct packet_header), data, data_len);
     pkt->data_len = data_len + sizeof(struct packet_header);
-    hdr->dest = node == MAXNETNODES ? BROADCAST_DEST
-              : node_data[node].player;
+    hdr->dest = node == MAXNETNODES ? BROADCAST_DEST : node_data[node].player;
     hdr->src = node_data[0].player;
     hdr->checksum = HashData(pkt->data + 1, pkt->data_len - 1);
     outque.head = next_head;
@@ -431,7 +429,7 @@ static void GetPacket(void)
 // up in a state where both sides are waiting for the other. After a long
 // enough timeout of not receiving a handoff, player 1 breaks the deadlock by
 // resuming transmit.
-#define HANDOFF_EXPIRY_TIME  (CLOCKS_PER_SEC / 4)
+#define HANDOFF_EXPIRY_TIME (CLOCKS_PER_SEC / 4)
 static void CheckTimeout(void)
 {
     clock_t now;
@@ -488,8 +486,8 @@ static void ProcessSetupPacket(void)
     int n;
 
     // Sanity checks.
-    if (doomcom.datalength < sizeof(struct setup_data)
-     || memcmp(setup->setup_signature, SETUP_SIGNATURE,
+    if (doomcom.datalength < sizeof(struct setup_data) ||
+        memcmp(setup->setup_signature, SETUP_SIGNATURE,
                sizeof(SETUP_SIGNATURE) != 0))
     {
         return;
@@ -518,7 +516,8 @@ static void ProcessSetupPacket(void)
         if (node_data[0].player != -1 && node_data[0].player == setup->player)
         {
             Error("Other node is also using -player %d. One node must "
-                  "be changed to avoid clash.", force_player);
+                  "be changed to avoid clash.",
+                  force_player);
         }
         if (setup->wanted > node_data[0].wanted)
         {
@@ -569,9 +568,9 @@ static void AssignPlayerNumbers(void)
         best = -1;
         for (j = 0; j < doomcom.numnodes; j++)
         {
-            if (node_data[j].player == -1
-             && (best == -1
-              || node_data[j].station_id < node_data[best].station_id))
+            if (node_data[j].player == -1 &&
+                (best == -1 ||
+                 node_data[j].station_id < node_data[best].station_id))
             {
                 best = j;
             }
@@ -631,8 +630,7 @@ void LookForNodes(void)
         Error("-nodes value must be in the range 1..%d", MAXNETNODES);
     }
 
-    if (force_player != -1
-     && (force_player < 1 || force_player > nodes_flag))
+    if (force_player != -1 && (force_player < 1 || force_player > nodes_flag))
     {
         Error("-player value must be in the range 1..%d", nodes_flag);
     }
@@ -706,8 +704,7 @@ void main(int argc, char *argv[])
 
     SetHelpText("Doom Serial Infrared network device driver",
                 "%s -com2 doom.exe -deathmatch -nomonsters");
-    IntFlag("-nodes", &nodes_flag, "n",
-            "number of players in game, default 2");
+    IntFlag("-nodes", &nodes_flag, "n", "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
     BoolFlag("-led", &led_debug_mode, NULL);
 

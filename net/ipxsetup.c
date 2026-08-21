@@ -9,12 +9,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include "lib/inttypes.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <time.h>
-#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "lib/log.h"
@@ -24,7 +24,7 @@
 
 // setupdata_t is used as doomdata_t during setup
 typedef struct {
-    int16_t gameid;               // so multiple games can setup at once
+    int16_t gameid; // so multiple games can setup at once
     int16_t drone;
     int16_t nodesfound;
     int16_t nodeswanted;
@@ -84,7 +84,7 @@ static void GetPacket(void)
     if (packet->time == -1)
     {
         IPXReleasePacket(packet);
-        return;               // setup broadcast from other game
+        return; // setup broadcast from other game
     }
 
     i = NodeForAddress(&packet->ipx.Src);
@@ -131,8 +131,8 @@ static void ProcessSetupPacket(packet_t *packet)
     }
 
     setup = (setupdata_t *) packet->payload;
-    old_protocol = (ShortSwap(packet->ipx.PacketLength) - 38)
-                 < sizeof(setupdata_t);
+    old_protocol =
+        (ShortSwap(packet->ipx.PacketLength) - 38) < sizeof(setupdata_t);
 
     // We support the xttl setup extensions but we still maintain compatibility
     // with the original IPXSETUP.
@@ -154,8 +154,8 @@ static void ProcessSetupPacket(packet_t *packet)
         memcpy(&nodeaddr[n], addr, sizeof(ipx_addr_t));
 
         LogMessage("Found a node at %02x:%02x:%02x:%02x:%02x:%02x",
-                   addr->Node[0], addr->Node[1], addr->Node[2],
-                   addr->Node[3], addr->Node[4], addr->Node[5]);
+                   addr->Node[0], addr->Node[1], addr->Node[2], addr->Node[3],
+                   addr->Node[4], addr->Node[5]);
 
         if (force_player != -1 && old_protocol)
         {
@@ -192,9 +192,8 @@ static int DetermineConsolePlayer(void)
     cnt = 0;
     for (i = 0; i < numnetnodes; i++)
     {
-        if (!nodesetup[i].drone
-         && nodesetup[i].plnumwanted == -1
-         && memcmp(&nodeaddr[i], &nodeaddr[0], sizeof(nodeaddr[0])) < 0)
+        if (!nodesetup[i].drone && nodesetup[i].plnumwanted == -1 &&
+            memcmp(&nodeaddr[i], &nodeaddr[0], sizeof(nodeaddr[0])) < 0)
         {
             cnt++;
         }
@@ -237,8 +236,7 @@ void LookForNodes(void)
     clock_t now, last_time = 0;
     int total;
 
-    if (force_player != -1
-     && (force_player < 1 || force_player > numnetnodes))
+    if (force_player != -1 && (force_player < 1 || force_player > numnetnodes))
     {
         Error("-player value must be in the range 1..%d", numnetnodes);
     }
@@ -253,7 +251,7 @@ void LookForNodes(void)
                nodeaddr[0].Node[0], nodeaddr[0].Node[1], nodeaddr[0].Node[2],
                nodeaddr[0].Node[3], nodeaddr[0].Node[4], nodeaddr[0].Node[5]);
 
-    ipx_localtime = -1;             // in setup time, not game time
+    ipx_localtime = -1; // in setup time, not game time
 
     // build local setup info
     nodesetup[0].nodesfound = 1;
@@ -364,9 +362,8 @@ void main(int argc, char *argv[])
     LookForNodes();
 
     IPXStartGame();
-    ipx_localtime = 0;              // no longer in setup
+    ipx_localtime = 0; // no longer in setup
 
     // launch DOOM
     NetLaunchDoom(&doomcom, args, NetCallback);
 }
-

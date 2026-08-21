@@ -16,8 +16,7 @@
 
 #define COMMIT_MAXPACKETSIZE 2048
 
-enum
-{
+enum {
     COMMIT_CMD_SEND = 1,
     COMMIT_CMD_GET = 2,
     COMMIT_CMD_SENDTOALL = 3,
@@ -25,19 +24,17 @@ enum
     COMMIT_CMD_SCORE = 5,
 };
 
-enum
-{
+enum {
     COMMIT_GAME_SERIAL = 1,
     COMMIT_GAME_MODEM = 2,
     COMMIT_GAME_NETWORK = 3,
 };
 
 #if __WATCOMC__
-#pragma pack (1)
+#pragma pack(1)
 #endif
 
-typedef struct
-{
+typedef struct {
     int16_t intnum;
 
     int16_t command;
@@ -54,7 +51,7 @@ typedef struct
 } gamecom_t;
 
 #if __WATCOMC__
-#pragma pack (4)
+#pragma pack(4)
 #endif
 
 #endif /* #ifndef VUTILS_ADAPTERS_COMMIT_H */

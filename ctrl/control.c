@@ -9,20 +9,19 @@
 
 // Functions for interacting with the Doom -control API.
 
+#include <assert.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <process.h>
-#include <assert.h>
 
 #include "ctrl/control.h"
 #include "lib/dos.h"
-#include "lib/ints.h"
 #include "lib/flag.h"
+#include "lib/ints.h"
 #include "lib/log.h"
 
-struct control_handle_s
-{
+struct control_handle_s {
     long intnum;
     ticcmd_t ticcmd;
 };
@@ -128,4 +127,3 @@ void ControlInvoke(control_handle_t far *handle, ticcmd_t *ticcmd)
     int86((int) handle->intnum, &regs, &regs);
     far_memcpy(ticcmd, &handle->ticcmd, sizeof(ticcmd_t));
 }
-

@@ -113,8 +113,8 @@ static void ForwardPacket(struct sockaddr_in *src_addr, int len)
 
 static int IsRegistrationPacket(ipx_header_t *hdr)
 {
-    return !memcmp(&hdr->Dest, &null_addr, sizeof(ipx_addr_t))
-        && ntohs(hdr->DestSocket) == 2;
+    return !memcmp(&hdr->Dest, &null_addr, sizeof(ipx_addr_t)) &&
+           ntohs(hdr->DestSocket) == 2;
 }
 
 static void NewClient(struct sockaddr_in *addr)

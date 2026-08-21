@@ -35,8 +35,8 @@ long FindConfigPosition(FILE *fstream)
     for (;;)
     {
         memmove(buf, buf + magic_len, sizeof(buf) - magic_len);
-        if (fread(&buf[sizeof(buf) - magic_len], 1, magic_len,
-                  fstream) != magic_len)
+        if (fread(&buf[sizeof(buf) - magic_len], 1, magic_len, fstream) !=
+            magic_len)
         {
             return 0;
         }
@@ -155,8 +155,7 @@ void PrintHelpText(char *cmdname)
         "    COPY ipxsetup.exe 3player.exe\n"
         "    %s 3player.exe -nodes 3\n"
         "\n",
-        cmdname, cmdname, cmdname, cmdname, cmdname, cmdname, cmdname
-    );
+        cmdname, cmdname, cmdname, cmdname, cmdname, cmdname, cmdname);
 }
 
 enum command {
@@ -220,4 +219,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

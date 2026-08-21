@@ -11,19 +11,15 @@
 #ifndef VUTILS_NET_PKTSTATS_H
 #define VUTILS_NET_PKTSTATS_H
 
-struct counter
-{
+struct counter {
     const char *name;
     unsigned long i;
     struct counter *next;
 };
 
-#define DECLARE_COUNTER(name) \
-    static struct counter stats_ ## name = { #name, 0, 0 }
-#define REGISTER_COUNTER(name) \
-    RegisterCounter(&stats_ ## name)
-#define INCREMENT_COUNTER(name) \
-    ++stats_ ## name.i
+#define DECLARE_COUNTER(name)   static struct counter stats_##name = {#name, 0, 0}
+#define REGISTER_COUNTER(name)  RegisterCounter(&stats_##name)
+#define INCREMENT_COUNTER(name) ++stats_##name.i
 
 void RegisterCounter(struct counter *ctr);
 void PacketStatsRegisterFlags(void);

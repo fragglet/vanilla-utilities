@@ -9,12 +9,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include "lib/inttypes.h"
+#include <bios.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <bios.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -80,10 +80,10 @@ void GetUart(void)
 {
     char far *system_data;
     char portname[5];
-    static int ISA_uarts[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-    static int ISA_IRQs[] = { 4, 3, 4, 3 };
-    static int MCA_uarts[] = { 0x03f8, 0x02f8, 0x3220, 0x3228 };
-    static int MCA_IRQs[] = { 4, 3, 3, 3 };
+    static int ISA_uarts[] = {0x3f8, 0x2f8, 0x3e8, 0x2e8};
+    static int ISA_IRQs[] = {4, 3, 4, 3};
+    static int MCA_uarts[] = {0x03f8, 0x02f8, 0x3220, 0x3228};
+    static int MCA_IRQs[] = {4, 3, 3, 3};
 
     if (com2)
     {
@@ -117,7 +117,7 @@ void GetUart(void)
         return;
     }
 
-    system_data = (char far *)(((long)sregs.es << 16) + regs.x.bx);
+    system_data = (char far *) (((long) sregs.es << 16) + regs.x.bx);
     if ((system_data[5] & 0x02) != 0)
     {
         irq = MCA_IRQs[comport - 1];
@@ -150,12 +150,8 @@ static long OverrideBaudRate(long baudrate)
         int *flag;
         long baud;
     } bauds[] = {
-        {&baud_9600,   9600L},
-        {&baud_14400,  14400L},
-        {&baud_19200,  19200L},
-        {&baud_38400,  38400L},
-        {&baud_57600,  57600L},
-        {&baud_115200, 115200L},
+        {&baud_9600, 9600L},   {&baud_14400, 14400L}, {&baud_19200, 19200L},
+        {&baud_38400, 38400L}, {&baud_57600, 57600L}, {&baud_115200, 115200L},
     };
 
     for (i = 0; i < sizeof(bauds) / sizeof(*bauds); ++i)
@@ -271,7 +267,7 @@ void InitPort(long baudrate)
     // Well, if IRQ2 is the bottom priority, then IRQs 3 and 4 become the
     // top priority, and those are the IRQs used by the COM1 and COM2
     // UARTs. So this potentially gives a little bit of priority boost to
-    // the ISR. 
+    // the ISR.
     // Note the original comment attached to this line, "enable interrupts
     // through the interrupt controller", is entirely misleading.
     OUTPUT(0x20, 0xc2);
@@ -293,7 +289,7 @@ void ShutdownPort(void)
     RestoreIRQ(&uart_interrupt);
 
     // init com port settings to defaults
-    regs.x.ax = 0xf3;           //f3= 9600 n 8 1
+    regs.x.ax = 0xf3; // f3= 9600 n 8 1
     regs.x.dx = comport - 1;
     int86(0x14, &regs, &regs);
 }
@@ -325,8 +321,7 @@ static inline void DisableReceive(void)
     if (receiving)
     {
         receiving = 0;
-        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER,
-               IER_TX_HOLDING_REGISTER_EMPTY);
+        OUTPUT(uart + INTERRUPT_ENABLE_REGISTER, IER_TX_HOLDING_REGISTER_EMPTY);
     }
 }
 

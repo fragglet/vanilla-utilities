@@ -8,14 +8,14 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lib/bakedin.h"
 #include "lib/dos.h"
@@ -23,7 +23,7 @@
 #include "lib/log.h"
 
 #define MAX_COMMAND_LINE_LEN 126
-#define MAX_FLAGS 24
+#define MAX_FLAGS            24
 
 // "Baked in" config contains command line arguments that are always added
 // to the command line. The .exe can be modified to change them.
@@ -81,8 +81,8 @@ void BoolFlag(const char *name, int *ptr, const char *help_text)
     f->value.i = ptr;
 }
 
-void IntFlag(const char *name, int *ptr,
-             const char *param_name, const char *help_text)
+void IntFlag(const char *name, int *ptr, const char *param_name,
+             const char *help_text)
 {
     struct flag *f = NewFlag(name, help_text);
     f->type = FLAG_INT;
@@ -99,8 +99,8 @@ void UnsignedIntFlag(const char *name, unsigned int *ptr,
     f->value.i = (int *) ptr;
 }
 
-void StringFlag(const char *name, char **ptr,
-                const char *param_name, const char *help_text)
+void StringFlag(const char *name, char **ptr, const char *param_name,
+                const char *help_text)
 {
     struct flag *f = NewFlag(name, help_text);
     f->type = FLAG_STRING;
@@ -213,7 +213,8 @@ static int MustParseInt(const char *flag_name, char *val, long min, long max)
     if (result < min || result > max)
     {
         ErrorPrintUsage("Value out of range for flag '%s': %li not "
-                        "in range %li - %li.", flag_name, result, min, max);
+                        "in range %li - %li.",
+                        flag_name, result, min, max);
     }
     return (int) result;
 }
@@ -234,7 +235,8 @@ static char **ReadResponseFile(char *filename)
     }
 
     // Will be lazily allocated:
-    readbuf = NULL; readbuf_len = 0;
+    readbuf = NULL;
+    readbuf_len = 0;
 
     for (;;)
     {
@@ -430,8 +432,7 @@ static char **ExpandResponseArgs(char **args)
         response_args_len = ArgListLength(response_args);
 
         new_args = AppendArgList(NULL, i, args),
-        new_args = AppendArgList(
-            new_args, response_args_len, response_args),
+        new_args = AppendArgList(new_args, response_args_len, response_args),
         new_args = AppendArgList(new_args, argc - i - 1, args + i + 1);
 
         free(args);
@@ -499,8 +500,7 @@ static char **DoParseArgs(int argc, char **argv)
             return AppendArgList(NULL, argc - i, argv + i);
         }
         f = MustFindFlagForName(argv[i]);
-        if (f->type != FLAG_BOOL &&
-            (i + 1 >= argc || argv[i + 1][0] == '-'))
+        if (f->type != FLAG_BOOL && (i + 1 >= argc || argv[i + 1][0] == '-'))
         {
             ErrorPrintUsage("No value given for '%s'.", f->name);
         }
@@ -512,8 +512,8 @@ static char **DoParseArgs(int argc, char **argv)
                 break;
 
             case FLAG_INT:
-                *f->value.i = MustParseInt(f->name, argv[i + 1],
-                                           INT_MIN, INT_MAX);
+                *f->value.i =
+                    MustParseInt(f->name, argv[i + 1], INT_MIN, INT_MAX);
                 break;
 
             case FLAG_UNSIGNED_INT:
@@ -547,8 +547,8 @@ char **ParseCommandLine(int argc, char **argv)
 
     for (i = 1; i < argc; i++)
     {
-        if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help")
-         || !strcasecmp(argv[i], "--help") || !strcmp(argv[i], "/?"))
+        if (!strcasecmp(argv[i], "-h") || !strcasecmp(argv[i], "-help") ||
+            !strcasecmp(argv[i], "--help") || !strcmp(argv[i], "/?"))
         {
             PrintProgramUsage(stdout);
             exit(0);
@@ -706,4 +706,3 @@ void SquashToResponseFile(char **args)
     args[i] = response_file_arg;
     args[i + 1] = NULL;
 }
-

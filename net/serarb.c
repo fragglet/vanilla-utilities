@@ -65,8 +65,7 @@ static void ProcessPackets(void)
         if (sscanf(packet, "ID%6c_%d", remoteid, &remotestage) == 2)
         {
             arb.new_protocol = 1;
-            arb.doomcom->consoleplayer =
-                memcmp(arb.localid, remoteid, 6) > 0;
+            arb.doomcom->consoleplayer = memcmp(arb.localid, remoteid, 6) > 0;
             if (!memcmp(arb.localid, remoteid, 6))
             {
                 // TODO: Don't use Error() here because this can occur inside
@@ -176,7 +175,8 @@ int PollArbitratePlayers(void)
         }
         else
         {
-            sprintf(str, "PLAY%i_%i", arb.doomcom->consoleplayer, arb.localstage);
+            sprintf(str, "PLAY%i_%i", arb.doomcom->consoleplayer,
+                    arb.localstage);
         }
         DoSendPacket(str, strlen(str));
     }
@@ -199,4 +199,3 @@ void RegisterArbitrationFlags(void)
     BoolFlag("-player1", &force_player1, "(or -player2) force player#");
     BoolFlag("-player2", &force_player2, NULL);
 }
-

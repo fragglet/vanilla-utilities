@@ -15,17 +15,16 @@
 
 #include <stdlib.h>
 
-#include "lib/dos.h"
-#include "net/doomnet.h"
 #include "adapters/fragment.h"
 #include "adapters/nodemap.h"
+#include "lib/dos.h"
+#include "net/doomnet.h"
 
-#define FRAGMENT_SIZE 500
-#define REASSEMBLY_BUFFERS 8
+#define FRAGMENT_SIZE        500
+#define REASSEMBLY_BUFFERS   8
 #define FRAGMENT_HEADER_SIZE (sizeof(struct fragment) - FRAGMENT_SIZE)
 
-struct fragment
-{
+struct fragment {
     uint8_t seq;
     uint8_t fragment;
     uint8_t payload[FRAGMENT_SIZE];
@@ -40,8 +39,8 @@ void InitFragmentReassembly(doomcom_t far *d)
     driver = d;
 }
 
-static struct reassembled_packet *FindOrAllocateBuffer(
-    int remotenode, uint8_t seq)
+static struct reassembled_packet *FindOrAllocateBuffer(int remotenode,
+                                                       uint8_t seq)
 {
     int i;
 
@@ -97,8 +96,8 @@ struct reassembled_packet *FragmentGetPacket(void)
         result->remotenode = driver->remotenode;
         if (fnum == num_fragments - 1)
         {
-            result->datalength = (num_fragments - 1) * FRAGMENT_SIZE
-                               + driver->datalength - FRAGMENT_HEADER_SIZE;
+            result->datalength = (num_fragments - 1) * FRAGMENT_SIZE +
+                                 driver->datalength - FRAGMENT_HEADER_SIZE;
         }
         far_memcpy(result->data + fnum * FRAGMENT_SIZE, f->payload,
                    driver->datalength - FRAGMENT_HEADER_SIZE);
@@ -147,4 +146,3 @@ void FragmentSendPacket(int remotenode, uint8_t *buf, size_t len)
 
     ++send_seq;
 }
-

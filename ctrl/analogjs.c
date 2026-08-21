@@ -18,10 +18,9 @@
 #include "lib/flag.h"
 #include "lib/log.h"
 
-#define JOYSTICK_PORT  0x201
+#define JOYSTICK_PORT 0x201
 
-struct axis
-{
+struct axis {
     int min, max, center;
     int deadzone_pct;
 };
@@ -48,27 +47,26 @@ static int joyb_use = 3;
 static int joyb_speed = 2;
 static int joyb_forward = -1;
 
-static struct
-{
+static struct {
     const char *name;
     int *var;
 } config_vars[] = {
-    {"always_run",          &always_run},
-    {"turn_speed",          &turn_speed},
-    {"novert",              &novert},
-    {"cal_x_min",           &x_axis.min},
-    {"cal_x_max",           &x_axis.max},
-    {"cal_x_center",        &x_axis.center},
-    {"cal_x_deadzone_pct",  &x_axis.deadzone_pct},
-    {"cal_y_min",           &y_axis.min},
-    {"cal_y_max",           &y_axis.max},
-    {"cal_y_center",        &y_axis.center},
-    {"cal_y_deadzone_pct",  &y_axis.deadzone_pct},
-    {"joyb_fire",           &joyb_fire},
-    {"joyb_strafe",         &joyb_strafe},
-    {"joyb_use",            &joyb_use},
-    {"joyb_speed",          &joyb_speed},
-    {"joyb_forward",        &joyb_forward},
+    {"always_run", &always_run},
+    {"turn_speed", &turn_speed},
+    {"novert", &novert},
+    {"cal_x_min", &x_axis.min},
+    {"cal_x_max", &x_axis.max},
+    {"cal_x_center", &x_axis.center},
+    {"cal_x_deadzone_pct", &x_axis.deadzone_pct},
+    {"cal_y_min", &y_axis.min},
+    {"cal_y_max", &y_axis.max},
+    {"cal_y_center", &y_axis.center},
+    {"cal_y_deadzone_pct", &y_axis.deadzone_pct},
+    {"joyb_fire", &joyb_fire},
+    {"joyb_strafe", &joyb_strafe},
+    {"joyb_use", &joyb_use},
+    {"joyb_speed", &joyb_speed},
+    {"joyb_forward", &joyb_forward},
 };
 
 static int ParseConfigFile(char *filename)
@@ -145,17 +143,20 @@ static void CalibrateJoystick(void)
     LogMessage("CENTER the joystick and press button 1:");
     WaitButtonPress();
     ReadJoystick();
-    x_axis.center = joystickx; y_axis.center = joysticky;
+    x_axis.center = joystickx;
+    y_axis.center = joysticky;
 
     LogMessage("Push the joystick to the UPPER LEFT and press button 1:");
     WaitButtonPress();
     ReadJoystick();
-    x_axis.min = joystickx; y_axis.min = joysticky;
+    x_axis.min = joystickx;
+    y_axis.min = joysticky;
 
     LogMessage("Push the joystick to the LOWER RIGHT and press button 1:");
     WaitButtonPress();
     ReadJoystick();
-    x_axis.max = joystickx; y_axis.max = joysticky;
+    x_axis.max = joystickx;
+    y_axis.max = joysticky;
 }
 
 static int16_t AdjustAxisValue(struct axis *a, int v, int speed)
@@ -196,8 +197,7 @@ static int16_t AdjustAxisValue(struct axis *a, int v, int speed)
 }
 
 #define IS_PRESSED(buttons, b) \
-    (b < 0 ? 0 : \
-     b > 20 ? 1 : (buttons & (1 << b)) == 0)
+    (b < 0 ? 0 : b > 20 ? 1 : (buttons & (1 << b)) == 0)
 
 static void far ControlCallback(ticcmd_t *ticcmd)
 {
@@ -211,8 +211,7 @@ static void far ControlCallback(ticcmd_t *ticcmd)
 
     if (IS_PRESSED(buttons, joyb_strafe))
     {
-        ticcmd->sidemove += AdjustAxisValue(
-            &x_axis, joystickx, -sidemove[run]);
+        ticcmd->sidemove += AdjustAxisValue(&x_axis, joystickx, -sidemove[run]);
     }
     else
     {
@@ -225,8 +224,8 @@ static void far ControlCallback(ticcmd_t *ticcmd)
     }
     else if (!novert)
     {
-        ticcmd->forwardmove += AdjustAxisValue(
-            &y_axis, joysticky, forwardmove[run]);
+        ticcmd->forwardmove +=
+            AdjustAxisValue(&y_axis, joysticky, forwardmove[run]);
     }
 
     if (IS_PRESSED(buttons, joyb_fire))
@@ -276,4 +275,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

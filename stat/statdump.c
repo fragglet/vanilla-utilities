@@ -22,8 +22,8 @@
 #include "lib/log.h"
 
 #include "ctrl/control.h"
-#include "stat/stats.h"
 #include "stat/statprnt.h"
+#include "stat/stats.h"
 
 // Array of end-of-level statistics that have been captured.
 #define MAX_CAPTURES 32
@@ -90,8 +90,7 @@ int main(int argc, char *argv[])
 {
     char **args;
 
-    SetHelpText("Doom statistics driver",
-                "%s -o stats.txt doom2.exe -skill 4");
+    SetHelpText("Doom statistics driver", "%s -o stats.txt doom2.exe -skill 4");
     StringFlag("-o", &output_filename, "filename",
                "file to write captured statistics");
     ControlRegisterFlags();

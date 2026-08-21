@@ -8,14 +8,14 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
+#include "ctrl/control.h"
 #include "lib/dos.h"
 #include "lib/flag.h"
-#include "ctrl/control.h"
 #include "stat/stats.h"
 
 static stats_callback_t stats_callback;
@@ -27,7 +27,7 @@ static wbstartstruct_t stats_buffer;
 // This callback function is invoked in interrupt context by the
 // control API interrupt.
 //
-// We check the "maxfrags" variable, to see if the stats 
+// We check the "maxfrags" variable, to see if the stats
 // buffer has been written to.  If it has, save the contents of the
 // stats buffer into the captured_stats array for later processing.
 ///
@@ -73,4 +73,3 @@ wbstartstruct_t far *StatsGetHandle(long l)
 
     return result;
 }
-

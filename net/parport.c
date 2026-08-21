@@ -15,10 +15,10 @@
 // software, including SERSETUP and the Crynwr PLIP parallel port Internet
 // Protocol driver.
 
-#include <string.h>
-#include <stdio.h>
-#include <bios.h>
 #include "lib/inttypes.h"
+#include <bios.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -29,7 +29,7 @@
 #include "net/pktstats.h"
 
 #define NUM_RX_BUFFERS 16
-#define BUFSIZE 512
+#define BUFSIZE        512
 
 struct rx_buffer {
     uint8_t buffer[BUFSIZE];
@@ -198,4 +198,3 @@ void ShutdownPort(void)
 
     RestoreIRQ(&parport_interrupt);
 }
-

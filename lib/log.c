@@ -8,12 +8,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#include <bios.h>
+#include <ctype.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <bios.h>
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -121,7 +121,7 @@ static void DosIdle(void)
 
     if (dos_major_version == 0)
     {
-        inregs.h.ah = 0x30;   // GET DOS VERSION
+        inregs.h.ah = 0x30; // GET DOS VERSION
         inregs.h.al = 0;
         outregs.h.al = 0;
         int86(0x21, &inregs, &outregs);
@@ -153,4 +153,3 @@ void CheckAbort(const char *operation)
 
     DosIdle();
 }
-

@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
 
     SetHelpText("Replay demo through Doom control API",
                 "%s -playdemo old.lmp doom.exe -record new.lmp");
-    StringFlag("-playdemo", &demo_filename,
-               "filename", "play back the specified demo file");
+    StringFlag("-playdemo", &demo_filename, "filename",
+               "play back the specified demo file");
     BoolFlag("-strife", &is_strife, "play back a Strife demo");
     ControlRegisterFlags();
     args = ParseCommandLine(argc, argv);

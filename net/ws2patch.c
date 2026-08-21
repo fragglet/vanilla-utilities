@@ -24,18 +24,17 @@
 // Windows 9x runs 32-bit DOS programs with Windows kernel memory mapped in
 // within the C0000000+ range of memory.
 
+#include <i86.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <i86.h>
-#include <stdint.h>
 
-#define KERNEL_MEM_START  0xc0001000UL
-#define VXD_ID_WSOCK2     0x3b0a
+#define KERNEL_MEM_START 0xc0001000UL
+#define VXD_ID_WSOCK2    0x3b0a
 
 #pragma pack(push, 1)
-struct ddb
-{
+struct ddb {
     uint32_t next_ddb;
     uint16_t version;
     uint16_t vxd_id;
@@ -56,16 +55,11 @@ struct ddb
 #pragma pack(pop)
 
 extern uint16_t DS(void);
-#pragma aux DS = \
-    "mov ax, ds" \
-    value [ax];
+#pragma aux DS = "mov ax, ds" value[ax];
 
 extern uint8_t GetPriv(uint16_t sel);
-#pragma aux GetPriv = \
-    "movzx eax, bx" \
-    "and al, 3" \
-    parm [bx] \
-    value [al];
+#pragma aux GetPriv = "movzx eax, bx" \
+                      "and al, 3" parm[bx] value[al];
 
 uint16_t AllocDescriptor(void)
 {
@@ -133,9 +127,8 @@ void PrintVxD(struct ddb far *ddb)
     char buf[9];
     _fmemcpy(buf, ddb->name, 8);
     buf[8] = '\0';
-    printf("%s %04x %04x %08x %08x %08x %08x\n",
-           buf, ddb->vxd_id, ddb->version, ddb->data,
-           ddb->service_size, ddb->pm_proc, ddb->init);
+    printf("%s %04x %04x %08x %08x %08x %08x\n", buf, ddb->vxd_id, ddb->version,
+           ddb->data, ddb->service_size, ddb->pm_proc, ddb->init);
 }
 
 struct ddb far *FindVxD(uint16_t sel, struct ddb far *head, uint16_t vxd_id)
@@ -144,7 +137,7 @@ struct ddb far *FindVxD(uint16_t sel, struct ddb far *head, uint16_t vxd_id)
 
     for (;;)
     {
-        //PrintVxD(ddb);
+        // PrintVxD(ddb);
 
         if (ddb->vxd_id == vxd_id)
         {
@@ -179,17 +172,17 @@ void Hexdump(uint8_t far *addr)
 // Our version of the wrong[] array below deliberately stores the first byte
 // with the wrong value. This is in case we are somehow(?) reading from our own
 // memory; we don't want to overwrite the wrong[] array.
-#define WRONG_FIRST_BYTE  0x01
+#define WRONG_FIRST_BYTE 0x01
 
-uint8_t wrong[] = { 0xff, 0x01, 0x00, 0x01, 0x01, 0x01, 0x01, 0x00,
-                    0x00, 0x04, 0x03, 0x03, 0x00, 0x03 };
-uint8_t right[] = { 0xff, 0x01, 0x00, 0x01, 0x01, 0x01, 0x01, 0x00,
-                    0x00, 0x03, 0x03, 0x03, 0x00, 0x02 };
+uint8_t wrong[] = {0xff, 0x01, 0x00, 0x01, 0x01, 0x01, 0x01,
+                   0x00, 0x00, 0x04, 0x03, 0x03, 0x00, 0x03};
+uint8_t right[] = {0xff, 0x01, 0x00, 0x01, 0x01, 0x01, 0x01,
+                   0x00, 0x00, 0x03, 0x03, 0x03, 0x00, 0x02};
 //                     recv ^^                 send ^^
 
-static uint8_t far *FindByteSequence(
-    uint8_t far *haystack, uint8_t needle_first,
-    uint8_t *needle, size_t needle_len)
+static uint8_t far *FindByteSequence(uint8_t far *haystack,
+                                     uint8_t needle_first, uint8_t *needle,
+                                     size_t needle_len)
 {
     uint8_t far *addr;
 
@@ -197,8 +190,8 @@ static uint8_t far *FindByteSequence(
     // we've reached unreadable memory; currently we just crash.
     for (addr = haystack;; addr++)
     {
-        if (*addr == needle_first
-         && !_fmemcmp(addr + 1, needle + 1, needle_len - 1))
+        if (*addr == needle_first &&
+            !_fmemcmp(addr + 1, needle + 1, needle_len - 1))
         {
             return addr;
         }
@@ -223,13 +216,13 @@ int main()
     // Thanks to joncampbell123, this is essentially stolen (but
     // rewritten) from doslib.
     sel = AllocDescriptor();
-    SetSegmentAccess(sel, 0x90 | ((DS() & 3) << 5) | 0x02);  // R/W
+    SetSegmentAccess(sel, 0x90 | ((DS() & 3) << 5) | 0x02); // R/W
     SetSegmentBase(sel, 0);
     SetSegmentLimit(sel, 0xFFFFFFFF);
 
     printf("Looking for the head of the VxD chain...\n");
-    addr = FindByteSequence(MK_FP(sel, KERNEL_MEM_START),
-                            'V', "xMM     ", 8) - 12;
+    addr =
+        FindByteSequence(MK_FP(sel, KERNEL_MEM_START), 'V', "xMM     ", 8) - 12;
 
     printf("Found the VxD chain head at %08x, looking for WSOCK2 VxD...\n",
            (unsigned long) addr);
@@ -248,9 +241,9 @@ int main()
     printf("Found WSOCK2 VxD at %08x, searching for buggy table.\n",
            (unsigned long) ddb);
     printf("If the program crashes, the table may be patched already.\n");
-    //Hexdump(MK_FP(sel, ddb->pm_proc));
-    addr = FindByteSequence(MK_FP(sel, ddb->pm_proc), WRONG_FIRST_BYTE,
-                            wrong, sizeof(wrong));
+    // Hexdump(MK_FP(sel, ddb->pm_proc));
+    addr = FindByteSequence(MK_FP(sel, ddb->pm_proc), WRONG_FIRST_BYTE, wrong,
+                            sizeof(wrong));
 
     printf("Found buggy table at %08x, applying patch...\n",
            (unsigned long) addr);

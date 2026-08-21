@@ -18,7 +18,7 @@
 #define DOOM_MAXPLAYERS 4
 
 typedef struct {
-    long in;                    /* whether the player is in game */
+    long in; /* whether the player is in game */
 
     /* Player stats, kills, collected items etc. */
     long skills;
@@ -26,12 +26,12 @@ typedef struct {
     long ssecret;
     long stime;
     long frags[DOOM_MAXPLAYERS];
-    long score;                 /* current score on entry, modified on return */
+    long score; /* current score on entry, modified on return */
 
 } wbplayerstruct_t;
 
 typedef struct {
-    long epsd;                  /* episode # (0-2) */
+    long epsd; /* episode # (0-2) */
 
     /* if true, splash the secret level */
     long didsecret;

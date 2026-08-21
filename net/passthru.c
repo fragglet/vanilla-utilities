@@ -10,11 +10,11 @@
 
 // Pass-through driver. Minimal example of the networking API.
 
+#include "lib/inttypes.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <assert.h>
-#include "lib/inttypes.h"
 
 #include "lib/dos.h"
 #include "lib/flag.h"
@@ -80,4 +80,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

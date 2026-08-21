@@ -14,12 +14,12 @@
 
 // Fake standin for doom.exe that simulates use of some of its interfaces.
 
+#include "lib/inttypes.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
-#include "lib/inttypes.h"
 
 #include "lib/flag.h"
 #include "lib/log.h"
@@ -27,8 +27,7 @@
 
 #define MAGIC_NUMBER 0x83b3
 
-struct test_packet
-{
+struct test_packet {
     unsigned int magic;
     int consoleplayer;
     int secret;
@@ -151,11 +150,13 @@ static void RunNetworkTest(void)
             last_send = now;
         }
 
-        if (!NetGetPacket(doomcom)) {
+        if (!NetGetPacket(doomcom))
+        {
             continue;
         }
 
-        if (doomcom->datalength != sizeof(struct test_packet)) {
+        if (doomcom->datalength != sizeof(struct test_packet))
+        {
             LogMessage("Packet from %d wrong length, %d != %d",
                        doomcom->remotenode, doomcom->datalength,
                        sizeof(struct test_packet));
@@ -176,8 +177,7 @@ static void RunNetworkTest(void)
         }
     } while (end_time == 0 || clock() < end_time);
 
-    fprintf(log, "dup=%d extratics=%d\n", doomcom->ticdup,
-            doomcom->extratics);
+    fprintf(log, "dup=%d extratics=%d\n", doomcom->ticdup, doomcom->extratics);
     for (i = 0; i < doomcom->numplayers; ++i)
     {
         fprintf(log, "Player %d: secret=%d\n", i + 1, secrets[i]);
@@ -225,10 +225,9 @@ int main(int argc, char *argv[])
 
     fclose(log);
 
-    for (start = clock(); clock() < start + CLOCKS_PER_SEC / 2; )
+    for (start = clock(); clock() < start + CLOCKS_PER_SEC / 2;)
     {
     }
 
     return 0;
 }
-

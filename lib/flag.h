@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_LIB_FLAG_H
+#define VUTILS_LIB_FLAG_H
+
 typedef void (*api_pointer_callback_t)(long value);
 
 void SetHelpText(char *program_description, char *example_cmd);
@@ -29,3 +32,4 @@ void SquashToResponseFile(char **args);
 #define DuplicateArgList(args) \
     AppendArgList(NULL, ArgListLength(args), args)
 
+#endif /* #ifndef VUTILS_LIB_FLAG_H */

@@ -9,6 +9,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_DOOMNET_H
+#define VUTILS_NET_DOOMNET_H
+
 #include "lib/inttypes.h"
 
 // Original Doom *setup tools only allowed up to 4 players; however, Hexen
@@ -97,3 +100,4 @@ int NetGetPacket(doomcom_t far *doomcom);
 
 extern int doomnet_dup, doomnet_extratics;
 
+#endif /* #ifndef VUTILS_NET_DOOMNET_H */

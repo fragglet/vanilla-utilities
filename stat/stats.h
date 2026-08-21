@@ -12,8 +12,8 @@
 // Structure copied by Doom when using the -statcopy option.  From the
 // Doom source.
 
-#ifndef STATS_H
-#define STATS_H
+#ifndef VUTILS_STAT_STATS_H
+#define VUTILS_STAT_STATS_H
 
 #define DOOM_MAXPLAYERS 4
 
@@ -60,4 +60,4 @@ typedef void (*stats_callback_t)(wbstartstruct_t *);
 void StatsLaunchDoom(char **args, stats_callback_t callback);
 wbstartstruct_t far *StatsGetHandle(long l);
 
-#endif
+#endif /* #ifndef VUTILS_STAT_STATS_H */

@@ -8,8 +8,8 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
-#ifndef DOS16_INTTYPES_H
-#define DOS16_INTTYPES_H
+#ifndef VUTILS_LIB_INTTYPES_H
+#define VUTILS_LIB_INTTYPES_H
 
 #if !defined(__TURBOC__) && !defined(MSDOS)
 #include <inttypes.h>
@@ -37,4 +37,4 @@ typedef unsigned long uint32_t;
 
 #endif
 
-#endif /* #ifndef DOS16_INTTYPES_H */
+#endif /* #ifndef VUTILS_LIB_INTTYPES_H */

@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_LLCALL_H
+#define VUTILS_NET_LLCALL_H
+
 union ll_regs {
     struct {
         uint16_t ax, bx, cx, dx;
@@ -23,3 +26,4 @@ extern void __stdcall far (*ll_funcptr)();
 
 extern void __stdcall LowLevelCall(void);
 
+#endif /* #ifndef VUTILS_NET_LLCALL_H */

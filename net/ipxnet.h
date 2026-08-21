@@ -9,6 +9,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_IPXNET_H
+#define VUTILS_NET_IPXNET_H
+
 #include "lib/inttypes.h"
 
 //===========================================================================
@@ -62,3 +65,4 @@ packet_t *IPXGetPacket(void);
 void IPXStartGame(void);
 unsigned short ShortSwap(unsigned short i);
 
+#endif /* #ifndef VUTILS_NET_IPXNET_H */

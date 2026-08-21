@@ -8,10 +8,10 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
-// Functions for interacting with the Doom -control API.
+#ifndef VUTILS_CTRL_CONTROL_H
+#define VUTILS_CTRL_CONTROL_H
 
-#ifndef CONTROL_H
-#define CONTROL_H
+// Functions for interacting with the Doom -control API.
 
 #include "lib/inttypes.h"
 
@@ -61,4 +61,4 @@ void ControlLaunchDoom(char **args, control_callback_t callback);
 control_handle_t far *ControlGetHandle(long l);
 void ControlInvoke(control_handle_t far *handle, ticcmd_t *ticcmd);
 
-#endif                          /* CONTROL_H */
+#endif /* #ifndef VUTILS_CTRL_CONTROL_H */

@@ -8,8 +8,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_PKTAGGR_H
+#define VUTILS_NET_PKTAGGR_H
+
 void FlushPendingPackets(void);
 void AggregatedSendPacket(int node, void *data, size_t data_len);
 void InitAggregation(int numnodes,
                      void (*send)(int node, void *data, size_t data_len));
 
+#endif /* #ifndef VUTILS_NET_PKTAGGR_H */

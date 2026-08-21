@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_PKTSTATS_H
+#define VUTILS_NET_PKTSTATS_H
+
 struct counter
 {
     const char *name;
@@ -24,3 +27,5 @@ struct counter
 
 void RegisterCounter(struct counter *ctr);
 void PacketStatsRegisterFlags(void);
+
+#endif /* #ifndef VUTILS_NET_PKTSTATS_H */

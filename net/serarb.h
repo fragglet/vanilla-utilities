@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_SERARB_H
+#define VUTILS_NET_SERARB_H
+
 void StartArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void));
 int PollArbitratePlayers(void);
 void ArbitratePlayers(doomcom_t *dc, void (*net_cmd)(void));
@@ -15,3 +18,4 @@ void RegisterArbitrationFlags(void);
 
 extern int force_player1, force_player2;
 
+#endif /* #ifndef VUTILS_NET_SERARB_H */

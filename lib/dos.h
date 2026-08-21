@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_LIB_DOS_H
+#define VUTILS_LIB_DOS_H
+
 #include <conio.h>
 #include <dos.h>
 
@@ -39,3 +42,4 @@ int far_memcmp(void far *a, void far *b, size_t nbytes);
 void far_memmove(void far *dest, void far *src, size_t nbytes);
 void far_bzero(void far *dest, size_t nbytes);
 
+#endif /* #ifndef VUTILS_LIB_DOS_H */

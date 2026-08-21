@@ -8,8 +8,11 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_DBSERVER_H
+#define VUTILS_NET_DBSERVER_H
 
 void RunServer(void);
 void ShutdownServer(void);
 void StartServer(uint16_t port);
 
+#endif /* #ifndef VUTILS_NET_DBSERVER_H */

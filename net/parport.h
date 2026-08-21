@@ -11,9 +11,13 @@
 // GNU General Public License for more details.
 //
 
+#ifndef VUTILS_NET_PARPORT_H
+#define VUTILS_NET_PARPORT_H
+
 // Declarations for the DOOM parallel port driver.
 void ParallelRegisterFlags(void);
 void InitPort(void);
 void ShutdownPort(void);
 unsigned int NextPacket(uint8_t *result_buf, unsigned int max_len);
 
+#endif /* #ifndef VUTILS_NET_PARPORT_H */

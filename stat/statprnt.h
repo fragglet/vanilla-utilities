@@ -8,12 +8,12 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
-#ifndef STATPRNT_H
-#define STATPRNT_H
+#ifndef VUTILS_STAT_STATPRNT_H
+#define VUTILS_STAT_STATPRNT_H
 
 #include "stat/stats.h"
 
 void DiscoverGamemode(wbstartstruct_t *stats, int num_stats);
 void PrintStats(FILE *stream, wbstartstruct_t *stats);
 
-#endif                          /* #ifndef STATPRNT_H */
+#endif /* #ifndef VUTILS_STAT_STATPRNT_H */

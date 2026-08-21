@@ -8,9 +8,13 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_LIB_LOG_H
+#define VUTILS_LIB_LOG_H
+
 void SetLogDistinguisher(const char *name);
 void LogMessage(const char *fmt, ...);
 void Error(const char *error, ...);
 void ErrorPrintUsage(const char *fmt, ...);
 void CheckAbort(const char *operation);
 
+#endif /* #ifndef VUTILS_LIB_LOG_H */

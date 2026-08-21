@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_LIB_INTS_H
+#define VUTILS_LIB_INTS_H
+
 #include <dos.h>
 
 #define ISR_STACK_SIZE 1024
@@ -150,3 +153,4 @@ void ClearIRQMask(struct irq_hook *irq);
 
 extern unsigned char isr_stack_space[ISR_STACK_SIZE];
 
+#endif /* #ifndef VUTILS_LIB_INTS_H */

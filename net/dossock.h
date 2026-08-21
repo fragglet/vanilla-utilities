@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_DOSSOCK_H
+#define VUTILS_NET_DOSSOCK_H
+
 // DOS API code for accessing Winsock functions via VxD backdoors.
 
 #define AF_INET         2
@@ -134,3 +137,5 @@ int ioctlsocket(SOCKET socket, unsigned long cmd, void far *value);
 int inet_aton(const char *cp, struct in_addr *inp);
 
 extern unsigned long DosSockLastError;
+
+#endif /* #ifndef VUTILS_NET_DOSSOCK_H */

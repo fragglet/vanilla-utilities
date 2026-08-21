@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_LIB_BAKEDIN_H
+#define VUTILS_LIB_BAKEDIN_H
+
 // Definitions for baked-in command line argument config.
 
 #define BAKED_IN_MAGIC1    "_-_vUtILS_"
@@ -21,3 +24,4 @@ struct baked_in_config {
     char config[BAKED_IN_MAX_LEN];
 };
 
+#endif /* #ifndef VUTILS_LIB_BAKEDIN_H */

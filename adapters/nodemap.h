@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_ADAPTERS_NODEMAP_H
+#define VUTILS_ADAPTERS_NODEMAP_H
+
 #include "lib/inttypes.h"
 
 extern int nodetoplayer[MAXNETNODES];
@@ -15,3 +18,5 @@ extern int playertonode[MAXPLAYERS];
 
 int CheckLateDiscover(doomcom_t far *doomcom);
 void DiscoverPlayers(doomcom_t far *doomcom);
+
+#endif /* #ifndef VUTILS_ADAPTERS_NODEMAP_H */

@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_ADAPTERS_FRAGMENT_H
+#define VUTILS_ADAPTERS_FRAGMENT_H
+
 #include "lib/inttypes.h"
 #include "net/doomnet.h"
 
@@ -26,3 +29,4 @@ void InitFragmentReassembly(doomcom_t far *d);
 struct reassembled_packet *FragmentGetPacket(void);
 void FragmentSendPacket(int remotenode, uint8_t *buf, size_t len);
 
+#endif /* #ifndef VUTILS_ADAPTERS_FRAGMENT_H */

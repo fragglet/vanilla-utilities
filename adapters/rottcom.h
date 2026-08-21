@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_ADAPTERS_ROTTCOM_H
+#define VUTILS_ADAPTERS_ROTTCOM_H
+
 #define ROTT_MAXPACKETSIZE    2048
 
 #if __WATCOMC__
@@ -42,3 +45,4 @@ typedef struct
 #define ROTT_MODEM_GAME   0
 #define ROTT_NETWORK_GAME 1
 
+#endif /* #ifndef VUTILS_ADAPTERS_ROTTCOM_H */

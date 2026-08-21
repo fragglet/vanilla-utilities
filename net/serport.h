@@ -9,6 +9,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_NET_SERPORT_H
+#define VUTILS_NET_SERPORT_H
+
 #define TRANSMIT_HOLDING_REGISTER            0x00
 #define RECEIVE_BUFFER_REGISTER              0x00
 #define INTERRUPT_ENABLE_REGISTER            0x01
@@ -94,3 +97,5 @@ void JumpStart(void);
 void ResumeReceive(void);
 
 void SetDTR(int dtr);
+
+#endif /* #ifndef VUTILS_NET_SERPORT_H */

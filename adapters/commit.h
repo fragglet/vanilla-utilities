@@ -8,6 +8,9 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //
 
+#ifndef VUTILS_ADAPTERS_COMMIT_H
+#define VUTILS_ADAPTERS_COMMIT_H
+
 // Types for 3DRealms COMMIT interface, based on the description given
 // in "Communicating with 3DRealms Games" by Mark Dochtermann.
 
@@ -54,3 +57,4 @@ typedef struct
 #pragma pack (4)
 #endif
 
+#endif /* #ifndef VUTILS_ADAPTERS_COMMIT_H */

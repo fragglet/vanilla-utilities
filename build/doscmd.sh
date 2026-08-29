@@ -14,14 +14,14 @@
 #   passed back to this script (although only success/failure; not the
 #   full exit code)
 
-rm -f build/build.log build/result.txt
-touch build/build.log build/result.txt
+rm -f build/result.txt
+touch build/result.txt
 
-echo "$@ >> build\\\\build.log" > build/thecmd.bat
+echo "$@" > build/thecmd.bat
+cat build/thecmd.bat
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     dosbox -conf build/dosbox.conf -c "build\\doscmd.bat"
-cat build/build.log
 
 read result _ < build/result.txt
 rm -f build/result.txt build/thecmd.bat

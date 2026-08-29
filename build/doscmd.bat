@@ -1,17 +1,7 @@
 @echo off
-rem  Wrapper batch file that runs the command in thecmd.bat and saves its
-rem  exit code to a file so that we can pass it back in the exit code of
-rem  doscmd.sh.
+rem  Wrapper batch file that runs thecmd.bat using the dbpipe command,
+rem  and exits after it returns.
 
 build\dbpipe build\thecmd.bat
 
-if errorlevel 1 goto failure
-echo 0 result >> build\result.txt
-goto end
-
-:failure
-echo 1 result >> build\result.txt
-
-:end
 exit
-

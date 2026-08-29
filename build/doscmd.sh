@@ -15,7 +15,8 @@
 rm -f build/result.txt
 touch build/result.txt
 
-echo "$@" > build/thecmd.bat
+(echo "$@"
+ echo "@build\\\\printrtn > build\\\\result.txt") > build/thecmd.bat
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     dosbox -conf build/dosbox.conf -c "build\\doscmd.bat"
@@ -24,4 +25,3 @@ read result _ < build/result.txt
 rm -f build/result.txt build/thecmd.bat
 
 exit $result
-

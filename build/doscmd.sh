@@ -16,7 +16,6 @@ rm -f build/result.txt
 touch build/result.txt
 
 echo "$@" > build/thecmd.bat
-cat build/thecmd.bat
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     dosbox -conf build/dosbox.conf -c "build\\doscmd.bat"

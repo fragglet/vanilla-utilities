@@ -460,7 +460,7 @@ static void CheckWindowsVersion(void)
     {
         Error("This program only works under Windows 9x or 3.x enhanced "
               "mode.\nOr, under DOS you can use the MSClient stack (but "
-              "it doesn't seem to be installed).");
+              "it doesn't seem to be\ninstalled).");
     }
 
     // If this is Windows 3, the DOS version doesn't matter.
@@ -479,10 +479,10 @@ static void CheckWindowsVersion(void)
     {
         case 5:
             Error("This program doesn't work under Windows NT, only "
-                  "Windows 9x or Windows 3.x enhanced mode.");
+                  "Windows 9x\nor Windows 3.x enhanced mode.");
         case 8:
             LogMessage("This hasn't been tested under Windows ME. "
-                       "Let me know if it works.");
+                       "Let me know if it\nworks for you.");
         case 7:
             // 95 or 98
             break;

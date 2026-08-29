@@ -36,7 +36,7 @@ start_dosbox <<END
   serial1 modem listenport:4001
   ipx true
   ipxnet startserver 4000
-  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_A.TXT -secret 10001
+  bld\\sersetup -answer bld\\ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_A.TXT -secret 10001
 END
 
 sleep 1
@@ -46,7 +46,7 @@ start_dosbox <<END
   serial1 modem listenport:4002
   ipx true
   ipxnet connect localhost 4000
-  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet -forward
+  bld\\sersetup -answer bld\\ipxsetup -nodes 3 bld\\metanet -forward
 END
 
 sleep 1
@@ -56,7 +56,7 @@ start_dosbox <<END
   serial1 modem listenport:4003
   ipx true
   ipxnet connect localhost 4000
-  bld\\sersetup -answer ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_C.TXT -secret 10003
+  bld\\sersetup -answer bld\\ipxsetup -nodes 3 bld\\metanet test\\fakedoom -out MNTEST_C.TXT -secret 10003
 END
 
 sleep 1
@@ -92,7 +92,9 @@ start_dosbox <<END
   serial2 modem listenport:4005
   serial3 modem listenport:4006
   serial4 modem listenport:4007
-  bld\\sersetup -dial localhost:4003 bld\\sersetup -com2 -bg -answer bld\\sersetup -com3 -bg -answer bld\\sersetup -com4 -bg -answer bld\\metanet -forward
+  rem We have to split the command line because it's so long...
+  echo bld\\sersetup -com4 -bg -answer bld\\metanet -forward >t:pt2.rsp
+  bld\\sersetup -dial localhost:4003 bld\\sersetup -com2 -bg -answer bld\\sersetup -com3 -bg -answer @t:pt2.rsp
 END
 
 sleep 5

@@ -77,6 +77,16 @@ bld\vsetargs.exe: $(VSETARGS_OBJS)
 test\fakedoom.exe: $(FAKEDOOM_OBJS)
 	wcl -q -fe=$@ $(FAKEDOOM_OBJS)
 
+# There are a couple of utilities used for the build system; they are
+# precompiled and do not normally need to be touched, but can be rebuilt
+# conveniently with `wmake build-utils`:
+build-utils: build\dbpipe.exe build\printrtn.exe
+
+build\dbpipe.exe: build\dbpipe.c
+	wcl $(CFLAGS) -q -fe=$@ build\dbpipe.c
+build\printrtn.exe: build\printrtn.c
+	wcl $(CFLAGS) -q -fe=$@ build\printrtn.c
+
 # TODO: Not yet included in EXES until we have a working UDP/IP version
 # of IPXSETUP.
 bld\ws2patch.exe: net\ws2patch.c

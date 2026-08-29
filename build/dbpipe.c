@@ -15,11 +15,11 @@
 // printed to the virtual DOS screen that possibly nobody is able to see. Also,
 // unlike redirecting to a file, you'll see the output in real time.
 
+#include <assert.h>
+#include <io.h>
+#include <process.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <io.h>
-#include <assert.h>
-#include <process.h>
 
 #define DEV_DRIVE "X"
 

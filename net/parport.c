@@ -151,7 +151,7 @@ void GetPort(void)
         SetLogDistinguisher("LPT3");
         if (irq_flag == 0)
         {
-            Error("Cowardly refusing to guess IRQ for LPT3 because it's too "
+            Error("Cowardly refusing to guess IRQ for LPT3 because it's too\n"
                   "unusual. Please use the -irq flag to specify the IRQ "
                   "number for this port.");
         }

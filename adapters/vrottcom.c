@@ -102,8 +102,8 @@ int main(int argc, char *argv[])
     // Prepare to launch game
     if (!FindAndHookInterrupt(&net_interrupt, NetISR))
     {
-        Error("Warning: no free interrupt handlers found. You can specify"
-              "a vector with the -vector 0x<num> parameter.");
+        Error("Warning: no free interrupt handlers found. You can specify a\n"
+              "vector with the -vector 0x<num> parameter.");
     }
 
     rottcom.intnum = net_interrupt.interrupt_num;

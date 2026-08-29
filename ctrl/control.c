@@ -81,8 +81,8 @@ void ControlLaunchDoom(char **args, control_callback_t callback)
 
     if (!FindAndHookInterrupt(&control_interrupt, ControlISR))
     {
-        Error("Failed to find a free DOS interrupt. Try using -cvector "
-              "to manually force an interrupt.");
+        Error("Failed to find a free DOS interrupt. Try using -cvector to\n"
+              "manually force an interrupt.");
     }
 
     // Initialize the interrupt handler.

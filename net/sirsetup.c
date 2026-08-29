@@ -516,7 +516,7 @@ static void ProcessSetupPacket(void)
         if (node_data[0].player != -1 && node_data[0].player == setup->player)
         {
             Error("Other node is also using -player %d. One node must "
-                  "be changed to avoid clash.",
+                  "be changed to\navoid clash.",
                   force_player);
         }
         if (setup->wanted > node_data[0].wanted)

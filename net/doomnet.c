@@ -80,8 +80,8 @@ void NetLaunchDoom(doomcom_t far *doomcom, char **args, void (*callback)(void))
 
     if (!FindAndHookInterrupt(&net_interrupt, NetISR))
     {
-        Error("Warning: no free interrupt handlers found. You can specify "
-              "a vector with the -vector 0x<num> parameter.");
+        Error("Warning: no free interrupt handlers found. You can specify a\n"
+              "vector with the -vector 0x<num> parameter.");
     }
 
     doomcom->intnum = net_interrupt.interrupt_num;

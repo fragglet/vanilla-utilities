@@ -164,7 +164,7 @@ static void ProcessSetupPacket(packet_t *packet)
         if (force_player != -1 && force_player == setup->plnumwanted)
         {
             Error("Other node is also using -player %d. One node must "
-                  "be changed to avoid clash.",
+                  "be changed to\navoid clash.",
                   setup->plnumwanted);
         }
         if (setup->dupwanted > doomnet_dup)

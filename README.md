@@ -34,13 +34,14 @@ DOS MSClient stack. The protocol is the same as DOSbox's IPXNET protocol,
 so it can connect to DOSbox servers and play against emulated machines.
 [Example video](https://www.youtube.com/watch?v=1PLXPSP7ZBE); see
 [UDPSETUP-HOWTO](UDPSETUP-HOWTO.md) for more information.
-* **ipxsetup** - bugfixed and expanded version of the driver originally shipped
-with Doom. Supports the extensions from [xttl's version](https://github.com/AXDOOMER/ipxsetup_xttl)
-with further enhancements (not all players need specify the -dup or -player
-parameters).
-* **sersetup** - bugfixed and expanded version of the serial/modem driver
-originally included with Doom. Supports background answering, which allows the
-game to launch before the incoming call is received.
+* **[ipxsetup](man/ipxsetup.md)** - bugfixed and expanded version of the driver
+originally shipped with Doom. Supports the extensions from
+[xttl's version](https://github.com/AXDOOMER/ipxsetup_xttl) with further
+enhancements (not all players need specify the -dup or -player parameters).
+* **[sersetup](man/sersetup.md)** - bugfixed and expanded version of the
+serial/modem driver originally included with Doom. Supports background
+answering, which allows the game to launch before the incoming call is
+received.
 * **parsetup** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
 Performance has been significantly improved.

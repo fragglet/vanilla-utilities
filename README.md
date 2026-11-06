@@ -50,9 +50,9 @@ link (aka IrDA), as commonly found on many late '90s laptops.
 into a packet forwarding network. This allows you, for example, to build a
 a four player game from daisy-chaining null-modem cables.
 See [METANET-HOWTO](METANET-HOWTO.md) for more information.
-* **solo-net** - null/standalone network driver that starts a network game
-without any real connection. Replicates the `-solo-net` parameter found in
-many Doom source ports.
+* **[solo-net](man/solo-net.md)** - null/standalone network driver that starts
+a network game without any real connection. Replicates the `-solo-net`
+parameter found in many Doom source ports.
 * **analogjs** - PC joystick driver with analog control that is more precise
 than Doom's built in joystick support.
 * **replay** - demo replay tool that uses the external control API, so that

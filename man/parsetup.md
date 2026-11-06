@@ -2,11 +2,16 @@
 
 This is the manual for the `parsetup` driver included with Vanilla Utilities.
 
-The `parsetup` driver allows Doom to be played over a parallel port,
-using a ["LapLink cable"](https://en.wikipedia.org/wiki/Laplink#Cable) to
-connect two machines. This driver is based on
+The `parsetup` driver allows Doom to be played over a parallel port, using a
+["LapLink cable"](https://en.wikipedia.org/wiki/Laplink#Cable) to connect two
+machines. This driver is based on
 [the driver released by Scott Coleman](https://www.doomworld.com/idgames/utils/serial/psetup11)
 in 1995.
+
+The `parsetup` driver is unique among the Vanilla Utilities collection in that
+portions are released under
+[version 1 of the GNU GPL](https://www.gnu.org/licenses/old-licenses/gpl-1.0.en.html).
+See `COPYING1.txt` included in binary distributions for more details.
 
 ## Command line arguments
 

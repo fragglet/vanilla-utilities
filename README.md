@@ -42,7 +42,7 @@ enhancements (not all players need specify the -dup or -player parameters).
 serial/modem driver originally included with Doom. Supports background
 answering, which allows the game to launch before the incoming call is
 received.
-* **parsetup** - parallel port network driver, derived from
+* **[parsetup](man/parsetup.md)** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
 Performance has been significantly improved.
 * **sirsetup** - driver for running over a half-duplex serial infrared (SIR)

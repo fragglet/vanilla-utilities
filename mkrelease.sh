@@ -6,6 +6,7 @@ md_to_txt() {
     pandoc "$md" > /tmp/tmp.html
     elinks -dump-charset ascii -dump /tmp/tmp.html > "$out"
     unix2dos "$out"
+    rm -f /tmp/tmp.html
 }
 
 set -euo pipefail

@@ -20,7 +20,10 @@ unix2dos dist/COPYING1.txt
 
 md_to_txt COPYING.md dist/COPYING.txt
 md_to_txt METANET-HOWTO.md dist/metanet.txt
-md_to_txt man/udpsetup.md dist/udpsetup.txt
+for md in man/*.md; do
+    fn=$(basename $md)
+    md_to_txt $md dist/${fn/.md/.txt}
+done
 
 cd dist
 zip -X -r ../vanilla-utilities-${1:-unknown-version}.zip *

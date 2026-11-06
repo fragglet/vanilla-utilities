@@ -1,49 +1,44 @@
-`udpsetup` is a Doom network driver that communicates over the UDP/IP
-protocol, allowing Doom multiplayer games to be played over the
-Internet using the original DOS versions.
+# udpsetup
+
+`udpsetup` is a Doom network driver that communicates over the
+[User Datagram Protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol),
+allowing Doom multiplayer games to be played over the Internet using the
+original DOS versions.
 
 The driver supports multiple TCP/IP networking stacks, but crucially it
-supports the Winsock driver that exists in Windows 9x (to do this it
-makes use of undocumented operating system backdoors that allow 16-bit
-DOS programs to access the Internet stack). It also supports the
-MSClient TCP/IP stack that Microsoft shipped as part of its "MS Client
-3.0", MS LAN Manager, and "Workgroup Add-On for MS-DOS" products,
-allowing the driver to run under pure DOS.
+supports the Winsock driver that exists in Windows 9x (to do this it makes use
+of undocumented operating system backdoors that allow 16-bit DOS programs to
+access the Internet stack).
 
-A demo video [can be found here](https://youtu.be/1PLXPSP7ZBE).
+The driver works with several different network stacks:
+ * **Winsock 1**: This is the original version of the Windows networking stack
+   that shipped with Windows 95 and Windows for Workgroups 3.1. This should
+   just work out of the box.
+ * **Winsock 2**: This second version of Winsock shipped with Windows 98 and
+   later, but there was also an upgrade patch that allowed it to be used on
+   Windows 95. Winsock 2 has a driver bug that has to be worked around to be
+   used; after each boot the `WS2PATCH.EXE` program must be run before
+   `udpsetup` can be used.
+ * **MSClient**: This stack shipped as part of Microsoft's "MS Client 3.0", MS
+   LAN Manager, and "Workgroup Add-On for MS-DOS" products. It runs under pure
+   DOS and was used to allow DOS users to integrate into Windows networks.
+   The MSClient stack requires some initial work to set up, including providing
+   appropriate drivers for your network card. The stack uses quite a lot of
+   memory so you will probably want to tweak your system so that you only load
+   the stack when you want to use it.
 
-The following sections give some stack-specific information:
+## Command-line arguments
 
-### Winsock 1
-
-This is the original version of the Windows networking stack that
-shipped with Windows 95 and Windows for Workgroups 3.1. This should just
-work out of the box.
-
-### Winsock 2
-
-This second version of Winsock shipped with Windows 98 and later, but
-there was also an upgrade patch that allowed it to be used on Windows
-95. Winsock2 has a driver bug that has to be worked around to be used;
-after each boot the `WS2PATCH.EXE` program must be run before `udpsetup`
-can be used.
-
-### MSClient
-
-The MSClient stack shipped as part of Microsoft's "MS Client 3.0", MS
-LAN Manager, and "Workgroup Add-On for MS-DOS" products. It runs under
-pure DOS and was used to allow DOS users to integrate into Windows
-networks.
-
-The MSClient stack requires some initial work to set up, including
-providing appropriate drivers if your network card - real or emulated -
-is not one of those supported by the stack out of the box.  The stack
-uses quite a lot of memory so you will probably want to tweak your
-system so that you only load the stack when you want to use it.
-
-Once set up, `udpsetup` should work out of the box; the only important
-detail is that you need to run `SOCKETS.EXE` to load the sockets driver
-first.
+| Argument      | Parameter | Description                          |
+| ------------- | --------- | ------------------------------------ |
+| -nodes        | `n`       | Number of players in game, default 2. |
+| -connect / -c | `addr[:port]` | Connect to server at specified address. |
+| -server / -s  |           | Run server for other clients to connect to. |
+| -udpport      | `port`    | UDP port that server should use, default 213. |
+| -player       | `p`       | Force this to be player #p. |
+| -socket       | `socket`  | Use alternate IPX socket number. |
+| -dup          | `n`       | Reduce movement resolution & bandwidth by factor n. |
+| -extratics    | `n`       | Send n extra tics per packet as insurance. |
 
 ## Setting up a game
 

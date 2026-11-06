@@ -28,12 +28,11 @@ straightforward.
 
 ## Utilities
 
-* **udpsetup** - network driver for Internet play over the UDP protocol.
-Multiple network stacks are supported including Winsock1, Winsock2 and the
-DOS MSClient stack. The protocol is the same as DOSbox's IPXNET protocol,
-so it can connect to DOSbox servers and play against emulated machines.
-[Example video](https://www.youtube.com/watch?v=1PLXPSP7ZBE); see
-[UDPSETUP-HOWTO](UDPSETUP-HOWTO.md) for more information.
+* **[udpsetup](man/udpsetup.md)** - network driver for Internet play over the
+UDP protocol.  Multiple network stacks are supported including Winsock1,
+Winsock2 and the DOS MSClient stack. The protocol is the same as DOSbox's
+IPXNET protocol, so it can connect to DOSbox servers and play against emulated
+machines. [Example video](https://www.youtube.com/watch?v=1PLXPSP7ZBE).
 * **[ipxsetup](man/ipxsetup.md)** - bugfixed and expanded version of the driver
 originally shipped with Doom. Supports the extensions from
 [xttl's version](https://github.com/AXDOOMER/ipxsetup_xttl) with further

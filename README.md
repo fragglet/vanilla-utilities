@@ -57,7 +57,8 @@ parameter found in many Doom source ports.
 than Doom's built in joystick support.
 * **replay** - demo replay tool that uses the external control API, so that
 demos can be "continued" by recording a new demo from an old one.
-* **statdump** - external statistics driver that can write a text summary.
+* **[statdump](man/statdump.md)** - external statistics driver that can write a
+text summary.
 * **[vcommit](man/vcommit.md)** - adapter that converts a Doom network driver
 into a 3D Realms *COMMIT* driver, as used for *Duke Nukem 3D*, *Blood*, *Shadow
 Warrior* and various other games. This means that all of the above network

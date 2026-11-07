@@ -1,11 +1,11 @@
-`metanet` is a special Doom network driver that builds a packet forwarding
-network out of other Doom network drivers. This document explains how to
-use it through several example scenarios.  
-In the examples, `doom.exe` will be used for the game itself that is being
-launched, but this could be any other game or program that uses the Doom
-networking API; for example, `heretic.exe` or  `hexen.exe`.
+# metanet
 
-Firstly, some basic principles:
+This is the manual for the `metanet` driver included with Vanilla Utilities.
+
+`metanet` is a special Doom network driver that builds a packet forwarding
+network out of other Doom network drivers.
+
+Some basic principles:
 
 * `metanet` always runs "on top" of other networking drivers. For example,
 `sersetup.exe` is used to invoke `metanet.exe` which then invokes
@@ -17,7 +17,21 @@ Firstly, some basic principles:
 daisy-chaining computers together, there cannot be more than four links in
 the chain.
 
-## Example 1: Daisy-chaining three laptops
+## Command line arguments
+
+| Argument   | Parameter | Description                          |
+| ---------- | --------- | ------------------------------------ |
+| -forward   |           | Don't launch game, just forward packets. |
+| -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
+| -extratics | `n`       | Send n extra tics per packet as insurance. |
+
+## Examples
+
+In the examples, `doom.exe` will be used for the game itself that is being
+launched, but this could be any other game or program that uses the Doom
+networking API; for example, `heretic.exe` or  `hexen.exe`.
+
+### Example 1: Daisy-chaining three laptops
 
 Almost all '90s-era laptops had at least one serial port and one parallel
 port. If you have three such laptops and the appropriate cables, you can
@@ -119,9 +133,9 @@ command line since they do not launch the game. Instead, `-forward` is used
 to indicate that `metanet` should simply forward packets once the network
 has been constructed.
 
-### Debugging
+## Debugging
 
-`metanet` prints some statistics on exit and if a game is not starting up as 
+`metanet` prints some statistics on exit and if a game is not starting up as
 expected, it can be worth checking to see if any of these appear:
 
 * `wrong_magic`: Check that all machines in the network are using `metanet`.

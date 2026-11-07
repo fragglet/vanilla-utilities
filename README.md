@@ -46,10 +46,9 @@ received.
 Performance has been significantly improved.
 * **sirsetup** - driver for running over a half-duplex serial infrared (SIR)
 link (aka IrDA), as commonly found on many late '90s laptops.
-* **metanet** - networking driver that combines other networking drivers
-into a packet forwarding network. This allows you, for example, to build a
-a four player game from daisy-chaining null-modem cables.
-See [METANET-HOWTO](METANET-HOWTO.md) for more information.
+* **[metanet](man/metanet.md)** - networking driver that combines other
+networking drivers into a packet forwarding network. This allows you, for
+example, to build a a four player game from daisy-chaining null-modem cables.
 * **[solo-net](man/solo-net.md)** - null/standalone network driver that starts
 a network game without any real connection. Replicates the `-solo-net`
 parameter found in many Doom source ports.

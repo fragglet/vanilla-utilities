@@ -78,8 +78,6 @@ Note that it is also necessary to provide the name of the `.exe` program
 to run (when playing Doom, usually `DOOM.EXE` or `DOOM2.EXE`). The
 reason for this is covered in the next section.
 
-## Playing other games
-
 ### Source ports
 
 `udpsetup` can also be used with DOS source ports that support the original
@@ -104,32 +102,6 @@ C:\HEXEN>udpsetup -s -nodes 4 hexen -deathmatch
 and
 ```
 C:\HEXEN>udpsetup -c 10.0.3.4 -nodes 4 hexen -deathmatch
-```
-
-### Duke Nukem 3D and other BUILD engine games
-
-`udpsetup` can be used with BUILD engine games by using the `vcommit` adapter
-driver that also ships with the Vanilla Utilities.
-A demo video [can be found here](https://youtu.be/4L5wVLp5wVE).
-For example, to start a Duke Nukem 3D game:
-```
-C:\DUKE3D>udpsetup -s -nodes 4 vcommit duke3d
-```
-and
-```
-C:\DUKE3D>udpsetup -c 10.0.3.4 -nodes 4 vcommit duke3d
-```
-
-### Rise of the Triad
-
-`udpsetup` can be used to play *Rise of the Triad* using the `vrottcom` adapter
-that ships with the Vanilla Utilities. For example:
-```
-C:\ROTT>udpsetup -s -nodes 4 vrottcom rott
-```
-and
-```
-C:\ROTT>udpsetup -c 10.0.3.4 -nodes 4 vrottcom rott
 ```
 
 ## Interfacing with DOSbox

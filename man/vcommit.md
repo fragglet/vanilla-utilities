@@ -20,3 +20,16 @@ over a parallel port connection (Laplink cable):
 ```
 C:\DUKE3D>parsetup.exe vcommit.exe duke3d.exe
 ```
+The `vcommit` adapter can be used with the `udpsetup` driver to play
+multiplayer games over the Internet. A demo video [can be found
+here](https://youtu.be/4L5wVLp5wVE).
+
+For example, to create the server:
+```
+C:\DUKE3D>udpsetup -s -nodes 4 vcommit duke3d
+```
+and from the clients (here, `10.0.3.4` is the IP address of the server):
+```
+C:\DUKE3D>udpsetup -c 10.0.3.4 -nodes 4 vcommit duke3d
+```
+See `udpsetup.txt` for more information about this driver.

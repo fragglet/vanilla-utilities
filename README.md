@@ -44,8 +44,9 @@ received.
 * **[parsetup](man/parsetup.md)** - parallel port network driver, derived from
 [the version from the idgames archive](https://www.doomworld.com/idgames/utils/serial/psetup11).
 Performance has been significantly improved.
-* **sirsetup** - driver for running over a half-duplex serial infrared (SIR)
-link (aka IrDA), as commonly found on many late '90s laptops.
+* **[sirsetup](man/sirsetup.md)** - driver for running over a half-duplex
+serial infrared (SIR) link (aka IrDA), as commonly found on many late '90s
+laptops.
 * **[metanet](man/metanet.md)** - networking driver that combines other
 networking drivers into a packet forwarding network. This allows you, for
 example, to build a a four player game from daisy-chaining null-modem cables.

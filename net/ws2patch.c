@@ -61,6 +61,33 @@ extern uint8_t GetPriv(uint16_t sel);
 #pragma aux GetPriv = "movzx eax, bx" \
                       "and al, 3" parm[bx] value[al];
 
+static void CheckForWindows(void)
+{
+    union REGS inregs, outregs;
+
+    inregs.w.ax = 0x160a;
+    int386(0x2f, &inregs, &outregs);
+
+    // Must be Windows 4.x (9x).
+    if (outregs.w.ax != 0 || outregs.h.bh < 3 || outregs.w.cx != 3)
+    {
+        fprintf(stderr, "This program only works under Windows 9x.\n");
+        exit(1);
+    }
+
+    // We don't allow NT. Check for DOS 7 (NT pretends to be DOS 5).
+    inregs.h.ah = 0x30;
+    inregs.h.al = 1;
+    int386(0x21, &inregs, &outregs);
+
+    if (outregs.h.al == 5)
+    {
+        fprintf(stderr, "This program doesn't work under Windows NT, only "
+                "Windows 9x.");
+        exit(1);
+    }
+}
+
 uint16_t AllocDescriptor(void)
 {
     union REGS regs = {0};
@@ -210,7 +237,7 @@ int main()
            "This program applies a hotfix to Win9x kernel memory to fix\n"
            "a bug in WSOCK2.VXD.\n\n");
 
-    // TODO: Check Windows version and that we're on Win9x.
+    CheckForWindows();
     // TODO: Use VXDLDR to ensure WSOCK2.VXD is loaded first.
 
     // Thanks to joncampbell123, this is essentially stolen (but

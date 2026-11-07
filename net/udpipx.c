@@ -63,7 +63,7 @@ void IPXGetLocalAddress(ipx_addr_t *addr)
 void IPXRegisterFlags(void)
 {
     SetHelpText("Doom UDP/IP network device driver",
-                "See UDPSETUP-HOWTO for examples.");
+                "See the manual file (udpsetup.txt) for examples.");
     StringFlag("-connect", &server_addr_flag, "addr[:port]",
                "(or -c) connect to server at specified address");
     StringFlag("-c", &server_addr_flag, NULL, NULL);

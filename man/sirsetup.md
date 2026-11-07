@@ -35,7 +35,7 @@ likely to affect reliability.
 | -com2      |           | Use COM2 for communication. |
 | -com3      |           | Use COM3 for communication. |
 | -com4      |           | Use COM4 for communication. |
-| -9600/-14400/-19200/-38400/-57600/-115200 | | Set baud rate |
+| -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
 | -extratics | `n`       | Send n extra tics per packet as insurance |
 

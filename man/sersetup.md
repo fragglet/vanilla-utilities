@@ -26,7 +26,7 @@ manufacturers. Copy the appropriate .cfg file and rename it to `modem.cfg`.
 
 | Argument   | Parameter | Description                          |
 | ---------- | --------- | ------------------------------------ |
-| -dial      | <phone#>  | Dial the given phone number |
+| -dial      | `phone#`  | Dial the given phone number |
 | -answer    |           | Listen for incoming call |
 | -bg        |           | Answer call in the background |
 | -player1   |           | Force player 1 |
@@ -35,9 +35,9 @@ manufacturers. Copy the appropriate .cfg file and rename it to `modem.cfg`.
 | -com2      |           | Use COM2 for communication |
 | -com3      |           | Use COM3 for communication |
 | -com4      |           | Use COM4 for communication |
-| -9600/-14400/-19200/-38400/-57600/-115200 | | Set baud rate |
-| -dup       | <n>       | Reduce movement resolution & bandwidth by factor n |
-| -extratics | <n>       | Send n extra tics per packet as insurance |
+| -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate |
+| -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
+| -extratics | `n`       | Send n extra tics per packet as insurance |
 
 ## Examples
 

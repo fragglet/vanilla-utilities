@@ -21,10 +21,10 @@ See `COPYING1.txt` included in binary distributions for more details.
 | -player2   |           | Force player 2. |
 | -lpt2      |           | Use the LPT2 port instead of LPT1. |
 | -lpt3      |           | Use the LPT3 port instead of LPT1. You must also specify IRQ using `-irq`. |
-| -port      |           | Manually specify the I/O port for the parallel port. |
-| -irq       |           | Manually specify the IRQ channel for the parallel port. |
-| -dup       | <n>       | Reduce movement resolution & bandwidth by factor n. |
-| -extratics | <n>       | Send n extra tics per packet as insurance. |
+| -port      | `p`       | Use I/O port `p` for the parallel port. |
+| -irq       | `i`       | Use IRQ channel `i` for the parallel port. |
+| -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
+| -extratics | `n`       | Send n extra tics per packet as insurance. |
 
 ## Examples
 

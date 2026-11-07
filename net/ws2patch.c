@@ -83,7 +83,7 @@ static void CheckForWindows(void)
     if (outregs.h.al == 5)
     {
         fprintf(stderr, "This program doesn't work under Windows NT, only "
-                "Windows 9x.");
+                        "Windows 9x.");
         exit(1);
     }
 }

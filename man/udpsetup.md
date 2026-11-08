@@ -11,6 +11,7 @@ of undocumented operating system backdoors that allow 16-bit DOS programs to
 access the Internet stack).
 
 The driver works with several different network stacks:
+
  * **Winsock 1**: This is the original version of the Windows networking stack
    that shipped with Windows 95 and Windows for Workgroups 3.1. This should
    just work out of the box.
@@ -150,7 +151,7 @@ C:\DOOM>ipxnet connect 34.66.233.240 10000
 C:\DOOM>ipxsetup -nodes 3 doom -deathmatch
 ```
 
-Other udpsetup` clients can also connect:
+Other `udpsetup` clients can also connect:
 ```
 C:\DOOM>udpsetup -c 34.66.233.240:10000 -nodes 3 doom -deathmatch
 ```

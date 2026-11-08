@@ -9,6 +9,7 @@ shipped with Heretic, Hexen and Strife. This version of `sersetup` is
 compatible with the original versions, but includes some improvements.
 
 The driver has three different modes:
+
  * **Null modem connection**: This is the default, used for directly
    connecting two computers via a cable connected to their serial ports.
  * **Answer call**: This mode is used if the `-answer` command-line argument

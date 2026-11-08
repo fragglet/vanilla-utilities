@@ -11,7 +11,9 @@ md_to_txt() {
 
 set -euo pipefail
 
-rm -rf dist
+zip_filename="vanilla-utilities-${1:-unknown-version}.zip"
+
+rm -rf dist $zip_filename
 mkdir dist
 
 cp -R bld/*.EXE modemcfg/ vutils.ico dist/
@@ -29,5 +31,4 @@ for md in man/*.md; do
 done
 
 cd dist
-zip -X -r ../vanilla-utilities-${1:-unknown-version}.zip *
-
+zip -X -r ../$zip_filename *

@@ -60,9 +60,9 @@ E1M1 / MAP01
 Time: 0:29 (par: 0:30)
 
 Player 1 (Green):
-	Kills: 29 / 29 (100%)
-	Items: 3 / 38 (7%)
-	Secrets: 3 / 3 (100%)
+        Kills: 29 / 29 (100%)
+        Items: 3 / 38 (7%)
+        Secrets: 3 / 3 (100%)
 ```
 In multiplayer mode, a table of frags is also produced:
 ```
@@ -73,18 +73,18 @@ MAP17
 Time: 9:08 (par: 7:00)
 
 Player 1 (Green):
-	Kills: 25 / 126 (19%)
-	Items: 36 / 112 (32%)
-	Secrets: 0 / 3 (0%)
+        Kills: 25 / 126 (19%)
+        Items: 36 / 112 (32%)
+        Secrets: 0 / 3 (0%)
 Player 2 (Indigo):
-	Kills: 95 / 126 (75%)
-	Items: 74 / 112 (66%)
-	Secrets: 3 / 3 (100%)
+        Kills: 95 / 126 (75%)
+        Items: 74 / 112 (66%)
+        Secrets: 3 / 3 (100%)
 Frags:
-		Green	Indigo	
-		-------------------------------- VICTIMS
-	Green	|0	0	
-	Indigo	|0	0	
-		|
-	     KILLERS
+                Green   Indigo
+                -------------------------------- VICTIMS
+        Green   |0      0
+        Indigo  |0      0
+                |
+             KILLERS
 ```

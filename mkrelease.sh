@@ -21,10 +21,9 @@ for exe in dist/*.EXE; do
     mv $exe $(echo $exe | tr A-Z a-z)
 done
 
-cp COPYING.GPL1 dist/COPYING1.txt
-unix2dos dist/COPYING1.txt
-
 md_to_txt COPYING.md dist/COPYING.txt
+md_to_txt COPYING1.md dist/COPYING1.txt
+
 for md in man/*.md; do
     fn=$(basename $md)
     md_to_txt $md dist/${fn/.md/.txt}

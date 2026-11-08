@@ -3,6 +3,11 @@
 This is the manual for *Vanilla Utilities*, a collection of DOS utilities for
 interacting with Doom's external driver APIs.
 
+The Vanilla Utilities are distributed under the GNU General Public License,
+version 2. See the file named COPYING.txt for more details. Portions of the
+`parsetup` driver are under version 1 of the GNU GPL for historical reasons;
+see COPYING1.txt.
+
 ## Utilities
 
 These are the utilities that are included in the collection. For more

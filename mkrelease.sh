@@ -15,6 +15,9 @@ rm -rf dist
 mkdir dist
 
 cp -R bld/*.EXE modemcfg/ vutils.ico dist/
+for exe in dist/*.EXE; do
+    mv $exe $(echo $exe | tr A-Z a-z)
+done
 
 cp COPYING.GPL1 dist/COPYING1.txt
 unix2dos dist/COPYING1.txt

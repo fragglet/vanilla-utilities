@@ -31,8 +31,8 @@ game of Doom II in cooperative mode, type this on both machines:
 ```
 C:\DOOM2>ipxsetup.exe doom2.exe
 ```
-For more than two players, use `-node`. This launches a three player deathmatch
-game:
+For more than two players, use `-nodes`. This launches a three player
+deathmatch game:
 ```
 C:\DOOM2>ipxsetup.exe -nodes 3 doom2.exe -deathmatch
 ```

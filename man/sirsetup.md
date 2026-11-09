@@ -49,7 +49,7 @@ To specify a different COM port and baud rate:
 ```
 C:\DOOM>sirsetup.exe -9600 -com2 doom.exe
 ```
-For more than two players, use `-node`; for example, for a four player game:
+For more than two players, use `-nodes`; for example, for a four player game:
 ```
 C:\DOOM>sirsetup.exe -9600 -com2 -nodes 4 doom.exe
 ```

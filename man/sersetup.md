@@ -73,4 +73,5 @@ arguments.
 * This version of the driver supports background answering. If the `-bg`
   argument is given, the game will launch immediately rather than waiting
   for the incoming call. This allows the game's slow `R_Init` sequence to
-  complete before the call is answered.
+  complete before the call is answered. Background answering implies
+  `-player1`, unless `-player2` is given.

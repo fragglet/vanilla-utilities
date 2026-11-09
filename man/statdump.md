@@ -39,7 +39,7 @@ C:\DOOM2>statdump.exe -o 30nm4949.txt doom2.exe -timedemo 30nm4949 -nodraw -nobl
  * The driver cannot always determine whether Doom or Doom II is being played.
    It can sometimes be discovered heuristically (for example, if the player
    plays a level higher than MAP09, or on an episode other than episode 1). If
-   the game cannot be determined, levels in the form "E1M3 / MAP03".
+   the game cannot be determined, levels are listed in the form "E1M3 / MAP03".
  * Statistics are not saved on the last level (whenever the intermission screen
    is not displayed). These are E1M8, E2M8, E3M8, E4M8 and MAP30.
  * Statistics are saved for a maximum of 32 levels. This is enough for a full

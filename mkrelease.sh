@@ -3,6 +3,7 @@
 md_to_txt() {
     pandoc "$1" \
            -o "$2" \
+           -f markdown-smart \
            -t plain \
            --reference-location=section \
            --lua-filter=man/tweaks.lua \

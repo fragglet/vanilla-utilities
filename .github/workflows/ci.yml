@@ -18,7 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt -q install dosbox dos2unix pandoc elinks
+        sudo apt -q install dosbox pandoc
     - name: build
       timeout-minutes: 20
       run: |

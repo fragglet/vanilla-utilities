@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 md_to_txt() {
-    local md=$1
-    local out=$2
-    pandoc "$md" > /tmp/tmp.html
-    elinks -dump-charset ascii -dump /tmp/tmp.html > "$out"
-    unix2dos "$out"
-    rm -f /tmp/tmp.html
+    pandoc "$1" \
+           -o "$2" \
+           -t plain \
+           --reference-location=section \
+           --lua-filter=man/tweaks.lua \
+           --eol=crlf
 }
 
 set -euo pipefail

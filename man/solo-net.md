@@ -12,7 +12,7 @@ in-game items in multiplayer mode.
 
 | Argument   | Parameter | Description                          |
 | ---------- | --------- | ------------------------------------ |
-| -nodes     | `n`       | Number of players in game, default 2 |
+| -nodes     | `n`       | Number of players in game, default 1 |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
 | -extratics | `n`       | Send n extra tics per packet as insurance |
 

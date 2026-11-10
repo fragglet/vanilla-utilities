@@ -2,8 +2,8 @@
 
 This is the manual for the `vcommit` driver included with Vanilla Utilities.
 
-The `vcommit` driver allows Doom network drivers to be used with games from 3D
-Realms that support the COMMIT network interface. These include *Duke Nukem 3D*,
+The `vcommit` driver allows Doom network drivers to be used with BUILD engine
+games that support the COMMIT network interface. These include *Duke Nukem 3D*,
 *Blood*, *Shadow Warrior*, *Redneck Rampage* and others.
 
 ## Command line arguments

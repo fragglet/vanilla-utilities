@@ -13,8 +13,8 @@ interface supported by *Rise of the Triad*.
 
 ## Examples
 
-The `vrottcom` driver has no special command line options of its own. It must be
-invoked from a Doom network driver, and it then invokes the game.
+The `vrottcom` driver has few special command line options of its own. It must
+be invoked from a Doom network driver, and it then invokes the game.
 
 The following simple example uses the `parsetup` driver to start a Rise of the
 Triad multiplayer game over a parallel port connection (Laplink cable):

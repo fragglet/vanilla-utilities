@@ -32,6 +32,7 @@ likely to affect reliability.
 | Argument   | Parameter | Description                          |
 | ---------- | --------- | ------------------------------------ |
 | -player    | `p`       | Force player `p`. |
+| -nodes     | `n`       | Number of players in game, default 2 |
 | -com2      |           | Use COM2 for communication. |
 | -com3      |           | Use COM3 for communication. |
 | -com4      |           | Use COM4 for communication. |

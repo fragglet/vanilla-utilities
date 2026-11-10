@@ -15,7 +15,7 @@ versions, but includes some improvements.
 | ---------- | --------- | ------------------------------------ |
 | -nodes     | `n`       | Number of players in game, default 2 |
 | -player    | `p`       | Force this to be player #p |
-| -socket    | `socket`  | Use alternate IPX socket number |
+| -socket    | `socket`  | Use alternate IPX socket number, default 0x869b (34459) |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
 | -extratics | `n`       | Send n extra tics per packet as insurance |
 
@@ -43,8 +43,12 @@ For example, to force the machine to be player 2 (indigo), use:
 C:\DOOM2>ipxsetup.exe -nodes 3 -player 2 doom2.exe -deathmatch
 ```
 
-## Enhancements
+## Notes
 
 * This version of `ipxsetup` supports the "xttl" protocol extensions. These
   automatically synchronize the `-dup` parameter and allow the player number
   to be specified using `-player`.
+* The "official" IPX socket number that was registered with Novell by id
+  Software was 0x869c (34460), but due to an integer overflow bug, the driver
+  used 0x869b (34459) as its default instead. This version of the driver
+  preserves that default for backwards compatibility reasons.

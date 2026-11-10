@@ -66,7 +66,7 @@ analogjs: Failed to read config file analogjs.cfg
 | --------------        | -----------                     |
 | `always_run`          | If 1, equivalent to always holding down run key. Default 0. |
 | `turn_speed`          | Multiplier to adjust turning speed. Default 512. |
-| `novert`              | If 1, vertical joystick movement is disabled. Default 0. |
+| `novert`              | If 1, forward/backward movement is disabled. Default 0. |
 | `cal_x_min`           | Joystick X value when pushed to extreme left. |
 | `cal_x_max`           | Joystick X value when pushed to extreme right. |
 | `cal_x_center`        | Joystick X value when centered. |

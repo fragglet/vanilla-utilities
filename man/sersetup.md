@@ -75,3 +75,7 @@ arguments.
   for the incoming call. This allows the game's slow `R_Init` sequence to
   complete before the call is answered. Background answering implies
   `-player1`, unless `-player2` is given.
+* If a `modem.cfg` file does not exist, and `-modemcfg` is not specified,
+  a default internal configuration is used that will work fine if you're
+  using DOSbox's emulated modem. However, if you're using a real modem,
+  you should provide a proper configuration file.

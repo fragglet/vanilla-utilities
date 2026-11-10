@@ -13,7 +13,7 @@ access the Internet stack).
 The driver works with several different network stacks:
 
  * **Winsock 1**: This is the original version of the Windows networking stack
-   that shipped with Windows 95 and Windows for Workgroups 3.1. This should
+   that shipped with Windows 95 and Windows for Workgroups 3.11. This should
    just work out of the box.
  * **Winsock 2**: This second version of Winsock shipped with Windows 98 and
    later, but there was also an upgrade patch that allowed it to be used on
@@ -37,7 +37,6 @@ The driver works with several different network stacks:
 | -server / -s  |           | Run server for other clients to connect to. |
 | -udpport      | `port`    | UDP port that server should use, default 213. |
 | -player       | `p`       | Force this to be player #p. |
-| -socket       | `socket`  | Use alternate IPX socket number. |
 | -dup          | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics    | `n`       | Send n extra tics per packet as insurance. |
 
@@ -73,11 +72,8 @@ C:\DOOM>udpsetup -c 10.0.3.4 -nodes 4 doom -deathmatch
 Unfortunately at the time of writing, DNS names are not supported (you
 *must* provide an IP address).
 
-As with other DOS Doom network drivers, the same command line options
-must be provided by all players or a desync may occur.
-Note that it is also necessary to provide the name of the `.exe` program
-to run (when playing Doom, usually `DOOM.EXE` or `DOOM2.EXE`). The
-reason for this is covered in the next section.
+As with other DOS Doom network drivers, the same command line options must be
+provided by all players or a desync may occur.
 
 ### Source ports
 

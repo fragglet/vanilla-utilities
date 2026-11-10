@@ -42,7 +42,7 @@ What you'll need:
  * Machine *B*, with at least one serial port and one parallel port
  * Machine *C*, with at least one parallel port
  * Null-modem (serial cable)
- * Straight-through parallel port cable
+ * Parallel port interlink cable
    (aka [laplink cable](https://en.wikipedia.org/wiki/Laplink_cable)).
 
 Connect machine *A* to machine *B* with the null-modem cable, and machine
@@ -64,8 +64,8 @@ parsetup.exe -lpt1 metanet.exe doom.exe
 This example can be expanded to include a fourth machine, connecting it either
 to machine *A* using a second parallel port cable, or to machine *C* using a
 second null-modem cable. Note however that this increases the number of hops in
-the network, potentially affecting performance (since sending a message from
-*A* to *D* requires three hops).
+the network, potentially affecting performance (since sending a message now
+requires up to three hops).
 
 ### Example 2: Four player mixed IPX/serial game
 

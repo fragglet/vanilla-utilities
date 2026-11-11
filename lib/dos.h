@@ -24,6 +24,11 @@ typedef int ssize_t;
 #define cmdline_argv __argv
 #endif
 
+// Turbo C doesn't have this constant:
+#ifndef PATH_MAX
+#define PATH_MAX 260
+#endif
+
 #define strcasecmp  stricmp
 #define strncasecmp strnicmp
 

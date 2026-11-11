@@ -93,6 +93,7 @@ DECLARE_COUNTER(tx_handoffs);
 
 static struct setup_data node_data[MAXNETNODES];
 
+static int quiet = 0;
 static int led_debug_mode = 0;
 static int nodes_flag = 2;
 static int force_player = -1;
@@ -531,6 +532,11 @@ static void ProcessSetupPacket(void)
                        setup->dup);
             node_data[0].dup = setup->dup;
         }
+
+        if (!quiet)
+        {
+            PlayerFoundSound();
+        }
     }
 
     // update setup info
@@ -706,6 +712,7 @@ void main(int argc, char *argv[])
                 "%s -com2 doom.exe -deathmatch -nomonsters");
     IntFlag("-nodes", &nodes_flag, "n", "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
+    BoolFlag("-q", &quiet, "disable sound when player found");
     BoolFlag("-led", &led_debug_mode, NULL);
 
     SerialRegisterFlags();

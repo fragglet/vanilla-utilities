@@ -37,6 +37,7 @@ The driver works with several different network stacks:
 | -server / -s  |           | Run server for other clients to connect to. |
 | -udpport      | `port`    | UDP port that server should use, default 213. |
 | -player       | `p`       | Force this to be player #p. |
+| -q            |           | Quiet mode (disable sound when new player found). |
 | -dup          | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics    | `n`       | Send n extra tics per packet as insurance. |
 

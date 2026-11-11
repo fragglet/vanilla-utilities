@@ -15,6 +15,7 @@ versions, but includes some improvements.
 | ---------- | --------- | ------------------------------------ |
 | -nodes     | `n`       | Number of players in game, default 2 |
 | -player    | `p`       | Force this to be player #p |
+| -q         |           | Quiet mode (disable sound when new player found) |
 | -socket    | `socket`  | Use alternate IPX socket number, default 0x869b (34459) |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
 | -extratics | `n`       | Send n extra tics per packet as insurance |

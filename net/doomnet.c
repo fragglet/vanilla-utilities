@@ -132,3 +132,18 @@ int NetGetPacket(doomcom_t far *doomcom)
     int86(doomcom->intnum, &regs, &regs);
     return doomcom->remotenode != -1;
 }
+
+// This plays the sound when another player is detected during setup.
+// Note that there is a delay while playing before this returns.
+void PlayerFoundSound(void)
+{
+    const int notes[] = {294, 370, 440};  // D for Doom
+    int i;
+
+    for (i = 0; i < 3; ++i)
+    {
+        sound(notes[i]);
+        delay(15);
+    }
+    nosound();
+}

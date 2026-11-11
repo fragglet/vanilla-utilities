@@ -38,6 +38,7 @@ DECLARE_COUNTER(rx_unknown_src);
 doomcom_t doomcom;
 static int numnetnodes;
 
+static int quiet = 0;
 static int force_player = -1;
 static ipx_addr_t nodeaddr[MAXNETNODES];
 static setupdata_t nodesetup[MAXNETNODES];
@@ -172,6 +173,11 @@ static void ProcessSetupPacket(packet_t *packet)
             LogMessage("Other node is using -dup %d. Adjusting to match.",
                        setup->dupwanted);
             doomnet_dup = setup->dupwanted;
+        }
+
+        if (!quiet)
+        {
+            PlayerFoundSound();
         }
     }
 
@@ -346,6 +352,7 @@ void main(int argc, char *argv[])
             "number of players in game, default 2");
     IntFlag("-player", &force_player, "p", "force this to be player #p");
     IPXRegisterFlags();
+    BoolFlag("-q", &quiet, "disable sound when player found");
     NetRegisterFlags();
     PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);

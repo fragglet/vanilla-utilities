@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "ctrl/control.h"
 #include "lib/flag.h"
@@ -70,6 +71,17 @@ static void OpenDemo(char *filename)
     }
 
     demo_stream = fopen(filename, "rb");
+
+    // Vanilla Doom's -playdemo option expects the filename to be given without
+    // the .lmp extension, and indeed it won't work if you do provide the
+    // extension. So, just for consistency we allow the .lmp to be omitted.
+    // If the file isn't found, append the .lmp and try again.
+    if (demo_stream == NULL && errno == ENOENT)
+    {
+        char filename2[PATH_MAX];
+        snprintf(filename2, sizeof(filename2), "%s.lmp", filename);
+        demo_stream = fopen(filename2, "rb");
+    }
 
     if (demo_stream == NULL)
     {

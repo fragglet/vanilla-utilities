@@ -22,6 +22,8 @@ For example:
 ```
 C:\DOOM2>replay.exe -playdemo asdf.lmp doom2.exe
 ```
+(For consistency with Doom, the `.lmp` extension can also be omitted.)
+
 The game will start and you will see the movements from the demo start to
 replay. To avoid the game going out of sync, avoid touching the controls until
 playback finishes. Once the demo finishes playing back, the game will continue,

@@ -42,4 +42,8 @@ int far_memcmp(void far *a, void far *b, size_t nbytes);
 void far_memmove(void far *dest, void far *src, size_t nbytes);
 void far_bzero(void far *dest, size_t nbytes);
 
+void *checked_realloc(void *old, size_t len);
+#define checked_malloc(len) checked_realloc(NULL, len)
+char *checked_strdup(const char *s);
+
 #endif /* #ifndef VUTILS_LIB_DOS_H */

@@ -9,7 +9,9 @@
 //
 
 #include <bios.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "lib/dos.h"
 #include "lib/inttypes.h"
@@ -120,4 +122,28 @@ void far_bzero(void far *dest, size_t nbytes)
         *dest_p = 0;
         ++dest_p;
     }
+}
+
+void *checked_realloc(void *old, size_t len)
+{
+    void *result = realloc(old, len);
+    if (result == NULL && len > 0)
+    {
+        fprintf(stderr, "Failed allocation of %ld bytes, aborting.\n",
+                (long) len);
+        exit(1);
+    }
+    return result;
+}
+
+char *checked_strdup(const char *s)
+{
+    char *result = strdup(s);
+    if (result == NULL)
+    {
+        fprintf(stderr, "Failed strdup of %ld byte string, aborting.\n",
+                (long) strlen(s));
+        exit(1);
+    }
+    return result;
 }

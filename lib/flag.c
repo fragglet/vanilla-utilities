@@ -266,8 +266,7 @@ static char **ReadResponseFile(char *filename)
             if (arg_len + 1 > readbuf_len)
             {
                 readbuf_len += 64;
-                readbuf = realloc(readbuf, readbuf_len);
-                assert(readbuf != NULL);
+                readbuf = checked_realloc(readbuf, readbuf_len);
             }
             readbuf[arg_len] = c;
             ++arg_len;
@@ -277,8 +276,7 @@ static char **ReadResponseFile(char *filename)
         }
 
         readbuf[arg_len] = '\0';
-        arg = strdup(readbuf);
-        assert(arg != NULL);
+        arg = checked_strdup(readbuf);
         result = AppendArgList(result, 1, &arg);
     }
 
@@ -578,9 +576,8 @@ static char **ExtendArgList(char **args, int *current_argc, int extra_args)
 {
     *current_argc = ArgListLength(args);
 
-    args = realloc(args, sizeof(*args) * (*current_argc + extra_args + 1));
-    assert(args != NULL);
-    return args;
+    return checked_realloc(args,
+                           sizeof(*args) * (*current_argc + extra_args + 1));
 }
 
 char **AppendArgList(char **args, int argc, char **argv)
@@ -678,8 +675,7 @@ void SquashToResponseFile(char **args)
     if (response_file_arg == NULL)
     {
         char *name = tmpnam(NULL);
-        response_file_arg = malloc(strlen(name) + 2);
-        assert(response_file_arg != NULL);
+        response_file_arg = checked_malloc(strlen(name) + 2);
         sprintf(response_file_arg, "@%s", name);
         atexit(DeleteResponseFile);
     }

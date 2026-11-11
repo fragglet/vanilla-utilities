@@ -11,6 +11,7 @@
 // Program to use the -control API to play back a recorded .lmp
 // demo. The game can be continued when the demo finishes.
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,9 +80,11 @@ static void OpenDemo(char *filename)
     // If the file isn't found, append the .lmp and try again.
     if (demo_stream == NULL && errno == ENOENT)
     {
-        char filename2[PATH_MAX];
-        snprintf(filename2, sizeof(filename2), "%s.lmp", filename);
+        char *filename2 = malloc(strlen(filename) + 5);
+        assert(filename2 != NULL);
+        sprintf(filename2, "%s.lmp", filename);
         demo_stream = fopen(filename2, "rb");
+        free(filename2);
     }
 
     if (demo_stream == NULL)

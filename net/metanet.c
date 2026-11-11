@@ -921,8 +921,7 @@ int main(int argc, char *argv[])
     SetHelpText("Forwarding network-of-networks driver.",
                 "See the manual file (metanet.txt) for examples.");
     APIPointerFlag("-net", AddDriver);
-    BoolFlag("-forward", &forwarder,
-             "don't launch game, just forward packets");
+    BoolFlag("-forward", &forwarder, "don't launch game, just forward packets");
     NetRegisterFlags();
     PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);

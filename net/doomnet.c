@@ -137,7 +137,7 @@ int NetGetPacket(doomcom_t far *doomcom)
 // Note that there is a delay while playing before this returns.
 void PlayerFoundSound(void)
 {
-    const int notes[] = {294, 370, 440};  // D for Doom
+    const int notes[] = {294, 370, 440}; // D for Doom
     int i;
 
     for (i = 0; i < 3; ++i)

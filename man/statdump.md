@@ -14,7 +14,7 @@ same information used to construct the intermission screen shown to the player.
 
 | Argument   | Parameter  | Description                                 |
 | ---------- | ---------- | ------------------------------------------- |
-| -o         | `filename` | Write captured statistics to the given file |
+| -o         | `filename` | Write captured statistics to the given file. |
 
 ## Examples
 

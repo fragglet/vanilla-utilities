@@ -33,13 +33,13 @@ likely to affect reliability.
 | ---------- | --------- | ------------------------------------ |
 | -player    | `p`       | Force player `p`. |
 | -q         |           | Quiet mode (disable sound when new player found). |
-| -nodes     | `n`       | Number of players in game, default 2 |
+| -nodes     | `n`       | Number of players in game, default 2. |
 | -com2      |           | Use COM2 for communication. |
 | -com3      |           | Use COM3 for communication. |
 | -com4      |           | Use COM4 for communication. |
-| -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate |
-| -dup       | `n`       | Reduce movement resolution & bandwidth by factor n |
-| -extratics | `n`       | Send n extra tics per packet as insurance |
+| -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate. |
+| -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
+| -extratics | `n`       | Send n extra tics per packet as insurance. |
 
 ## Examples
 

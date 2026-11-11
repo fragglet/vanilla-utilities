@@ -7,9 +7,9 @@ interface supported by *Rise of the Triad*.
 
 ## Command line arguments
 
-| Argument        | Description            |
-| --------------- | ---------------------- |
-| -remoteridicule | Enable remote ridicule |
+| Argument        | Description             |
+| --------------- | ----------------------- |
+| -remoteridicule | Enable remote ridicule. |
 
 ## Examples
 

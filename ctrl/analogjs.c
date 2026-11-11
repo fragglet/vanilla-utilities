@@ -243,8 +243,8 @@ int main(int argc, char *argv[])
     char **args;
 
     StringFlag("-jscfg", &config_file, "filename",
-               "Path to config file to use");
-    BoolFlag("-calibrate", &calibrate, "Calibrate joystick");
+               "specify path to config file to use");
+    BoolFlag("-calibrate", &calibrate, "calibrate joystick");
     ControlRegisterFlags();
 
     args = ParseCommandLine(argc, argv);

@@ -51,6 +51,6 @@ void RegisterCounter(struct counter *ctr)
 
 void PacketStatsRegisterFlags(void)
 {
-    BoolFlag("-stats", &print_stats_on_exit, "Print statistics on exit");
+    BoolFlag("-stats", &print_stats_on_exit, "print statistics on exit");
     atexit(PrintStats);
 }

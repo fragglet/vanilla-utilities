@@ -922,7 +922,7 @@ int main(int argc, char *argv[])
                 "See the manual file (metanet.txt) for examples.");
     APIPointerFlag("-net", AddDriver);
     BoolFlag("-forward", &forwarder,
-             "Don't launch game, just forward packets.");
+             "don't launch game, just forward packets");
     NetRegisterFlags();
     PacketStatsRegisterFlags();
     args = ParseCommandLine(argc, argv);

@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
                 "ipxsetup -nodes 3 %s rott.exe");
 
     APIPointerFlag("-net", SetDriver);
-    BoolFlag("-remoteridicule", &remoteridicule, "Enable remote ridicule");
+    BoolFlag("-remoteridicule", &remoteridicule, "enable remote ridicule");
     args = ParseCommandLine(argc, argv);
     if (args == NULL)
     {

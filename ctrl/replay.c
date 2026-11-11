@@ -11,9 +11,9 @@
 // Program to use the -control API to play back a recorded .lmp
 // demo. The game can be continued when the demo finishes.
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "ctrl/control.h"
 #include "lib/flag.h"

@@ -40,6 +40,7 @@ likely to affect reliability.
 | -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate. |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics | `n`       | Send n extra tics per packet as insurance. |
+| -stats     |           | Print packet statistics on exit. |
 
 ## Examples
 
@@ -55,3 +56,22 @@ For more than two players, use `-nodes`; for example, for a four player game:
 ```
 C:\DOOM>sirsetup.exe -9600 -com2 -nodes 4 doom.exe
 ```
+
+## Statistics
+
+If the `-stats` argument is given, statistics are printed to the screen on
+exit. The statistics counters supported by this driver are:
+
+| Counter      | Purpose                          |
+| ------------ | -------------------------------- |
+| `rx_bytes`   | Number of received bytes. |
+| `rx_overlength_bytes` | Number of overlength packets discarded at receive. |
+| `rx_packets_dropped` | Number of packets dropped on receive (receive queue full). |
+| `rx_packets` | Number of received packets. |
+| `tx_bytes`   | Number of transmitted bytes. |
+| `tx_handoffs` | Number of handoffs transmitted to other nodes. |
+| `tx_overlength_packets` | Number of overlength packets discarded at transmit. |
+| `tx_packets_dropped` | Number of packets dropped on transmit (transmit queue full). |
+| `tx_packets` | Number of transmitted packets. |
+
+If a counter's is not printed, its value was zero.

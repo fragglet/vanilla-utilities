@@ -24,6 +24,7 @@ the chain.
 | -forward   |           | Don't launch game, just forward packets. |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics | `n`       | Send n extra tics per packet as insurance. |
+| -stats     |           | Print packet statistics on exit. |
 
 ## Examples
 

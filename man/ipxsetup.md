@@ -19,6 +19,7 @@ versions, but includes some improvements.
 | -socket    | `socket`  | Use alternate IPX socket number, default 0x869b (34459). |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics | `n`       | Send n extra tics per packet as insurance. |
+| -stats     |           | Print packet statistics on exit. |
 
 ## Examples
 
@@ -53,3 +54,15 @@ C:\DOOM2>ipxsetup.exe -nodes 3 -player 2 doom2.exe -deathmatch
   Software was 0x869c (34460), but due to an integer overflow bug, the driver
   used 0x869b (34459) as its default instead. This version of the driver
   preserves that default for backwards compatibility reasons.
+
+## Statistics
+
+If the `-stats` argument is given, statistics are printed to the screen on
+exit. The statistics counters supported by this driver are:
+
+| Counter      | Purpose                          |
+| ------------ | -------------------------------- |
+| `rx_packets` | Number of received packets. |
+| `tx_packets` | Number of transmitted packets. |
+
+If a counter's is not printed, its value was zero.

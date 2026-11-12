@@ -39,6 +39,7 @@ manufacturers. Copy the appropriate .cfg file and rename it to `modem.cfg`.
 | -9600 / -14400 / -19200 / -38400 / -57600 / -115200 | | Set baud rate. |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics | `n`       | Send n extra tics per packet as insurance. |
+| -stats     |           | Print packet statistics on exit. |
 
 ## Examples
 
@@ -79,3 +80,19 @@ arguments.
   a default internal configuration is used that will work fine if you're
   using DOSbox's emulated modem. However, if you're using a real modem,
   you should provide a proper configuration file.
+
+## Statistics
+
+If the `-stats` argument is given, statistics are printed to the screen on
+exit. The statistics counters supported by this driver are:
+
+| Counter      | Purpose                          |
+| ------------ | -------------------------------- |
+| `rx_bytes`   | Number of received bytes. |
+| `rx_overlength_bytes` | Number of overlength packets discarded at receive. |
+| `rx_packets` | Number of received packets. |
+| `tx_bytes`   | Number of transmitted bytes. |
+| `tx_overlength_packets` | Number of overlength packets discarded at transmit. |
+| `tx_packets` | Number of transmitted packets. |
+
+If a counter's is not printed, its value was zero.

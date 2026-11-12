@@ -25,6 +25,7 @@ See `COPYING1.txt` included in binary distributions for more details.
 | -irq       | `i`       | Use IRQ channel `i` for the parallel port. |
 | -dup       | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics | `n`       | Send n extra tics per packet as insurance. |
+| -stats     |           | Print packet statistics on exit. |
 
 ## Examples
 
@@ -44,3 +45,17 @@ C:\DOOM>parsetup.exe -player2 doom.exe
 ```
 It is not necessary for both machines to use the `-player1` / `-player2`
 arguments.
+
+
+## Statistics
+
+If the `-stats` argument is given, statistics are printed to the screen on
+exit. The statistics counters supported by this driver are:
+
+| Counter                     | Purpose                          |
+| --------------------------- | -------------------------------- |
+| `errors_packet_overwritten` | Number of packets received but discarded because the receive queue was full. |
+| `errors_timeout`            | Number of timeouts on receive. |
+| `errors_wrong_checksum`     | Number of checksum errors detected on receive. |
+
+If a counter's is not printed, its value was zero.

@@ -40,6 +40,7 @@ The driver works with several different network stacks:
 | -q            |           | Quiet mode (disable sound when new player found). |
 | -dup          | `n`       | Reduce movement resolution & bandwidth by factor n. |
 | -extratics    | `n`       | Send n extra tics per packet as insurance. |
+| -stats        |           | Print packet statistics on exit. |
 
 ## Setting up a game
 
@@ -167,3 +168,22 @@ $ chocolate-doom -dbconnect 10.0.3.4:10000 -deathmatch -iwad doom.wad
 ```
 
 At the time of writing Chocolate Doom does not have a built-in server.
+
+## Statistics
+
+If the `-stats` argument is given, statistics are printed to the screen on
+exit. The statistics counters supported by this driver are:
+
+| Counter          | Purpose                          |
+| ---------------- | -------------------------------- |
+| `rx_packets`     | Number of packets received by client. |
+| `rx_wrong_dest`  | Number of packets received with wrong destination IPX address. |
+| `rx_wrong_src`   | Number of packets received from wrong IP address (not the server). |
+| `tx_errors`      | Number of errors on transmit by client. |
+| `tx_packets`     | Number of packets transmitted by client. |
+| `srv_rx_errors`  | Number of errors on receive by server. |
+| `srv_rx_packets` | Number of packets received by server. |
+| `srv_tx_errors`  | Number of errors on transmit by server. |
+| `srv_tx_packets` | Number of packets transmitted by server. |
+
+If a counter's is not printed, its value was zero.
